@@ -8,6 +8,10 @@ func getDynDNS(c *gin.Context) {
 
 }
 
+func putDynDNS(c *gin.Context) {
+
+}
+
 // SetupEnpoints registers the http endpoints
 func SetupEndpoints(r *gin.Engine) {
 	r.GET("api/dyndns", getDynDNS)
