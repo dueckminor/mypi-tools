@@ -8,48 +8,9 @@ import (
 	"github.com/dueckminor/mypi-api/go/webhandler"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-
-	"github.com/tiaguinho/gosoap"
-)
-
-type GetGeoIPResponse struct {
-	GetGeoIPResult GetGeoIPResult
-}
-
-type GetGeoIPResult struct {
-	ReturnCode        string
-	IP                string
-	ReturnCodeDetails string
-	CountryName       string
-	CountryCode       string
-}
-
-var (
-	r GetGeoIPResponse
 )
 
 func main() {
-	{
-		soap, err := gosoap.SoapClient("http://fritz.box:49000/tr64desc.xml")
-		if err != nil {
-			panic(fmt.Errorf("error not expected: %s", err))
-		}
-
-		params := gosoap.Params{
-			"IPAddress": "8.8.8.8",
-		}
-
-		err = soap.Call("GetInfo", params)
-		if err != nil {
-			panic(fmt.Errorf("error in soap call: %s", err))
-		}
-
-		soap.Unmarshal(&r)
-		if r.GetGeoIPResult.CountryCode != "USA" {
-			panic(fmt.Errorf("error: %+v", r))
-		}
-	}
-
 	cfg, err := config.ReadConfig()
 	if err != nil {
 		panic(err)
