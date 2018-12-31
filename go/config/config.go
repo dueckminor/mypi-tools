@@ -15,18 +15,52 @@ func fileExists(filename string) bool {
 	return false
 }
 
-func findConfig() string {
+var (
+	mypiRoot   string
+	mypiConfig Config
+)
+
+func findRoot() string {
+	if 0 != len(mypiRoot) {
+		return mypiRoot
+	}
+
+	var err error
+
 	mypiYML := os.Getenv("MYPI_CONFIG")
-	if !fileExists(mypiYML) {
-		dir, _ := os.Executable()
-		dir = filepath.Dir(dir)
-		mypiYML = filepath.Join(dir, "mypi.yml")
+	mypiRoot = os.Getenv("MYPI_ROOT")
+
+	for mypiYML != mypiRoot+"/config/mypi.yml" {
+		if len(mypiYML) > 0 && fileExists(mypiYML) {
+			mypiConfig, err = ReadConfigFile(mypiYML)
+			if err != nil {
+				panic(err)
+			}
+			root := mypiConfig.GetString("config", "root")
+			if len(root) > 0 {
+				mypiRoot = root
+				mypiYML = mypiRoot + "/config/mypi.yml"
+				mypiConfig = nil
+			}
+		} else if len(mypiRoot) > 0 {
+			mypiYML = mypiRoot + "/config/mypi.yml"
+		} else {
+			dir, _ := os.Executable()
+			dir = filepath.Dir(dir)
+			mypiYML = filepath.Join(dir, "mypi.yml")
+			if !fileExists(mypiYML) {
+				dir, _ := os.Getwd()
+				mypiYML = filepath.Join(dir, "mypi.yml")
+			}
+			if !fileExists(mypiYML) {
+				panic("cant find mypi.yml")
+			}
+		}
 	}
-	if !fileExists(mypiYML) {
-		dir, _ := os.Getwd()
-		mypiYML = filepath.Join(dir, "mypi.yml")
+	if nil == mypiConfig {
+		mypiConfig, err = ReadConfigFile(mypiYML)
 	}
-	return mypiYML
+	return mypiRoot
 }
 
 type Config interface {
@@ -109,6 +143,16 @@ func ReadConfigFile(filename string) (Config, error) {
 	return r, nil
 }
 
-func ReadConfig() (Config, error) {
-	return ReadConfigFile(findConfig())
+func GetConfig() (c Config) {
+	if nil == mypiConfig {
+		findRoot()
+	}
+	return mypiConfig
+}
+
+func GetRoot() string {
+	if len(mypiRoot) == 0 {
+		findRoot()
+	}
+	return mypiRoot
 }

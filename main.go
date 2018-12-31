@@ -1,21 +1,15 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/dueckminor/mypi-api/go/config"
 	"github.com/dueckminor/mypi-api/go/debug"
+	"github.com/dueckminor/mypi-api/go/pki"
 	"github.com/dueckminor/mypi-api/go/webhandler"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	cfg, err := config.ReadConfig()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(cfg.GetString("config", "root"))
+	pki.Setup()
 
 	r := gin.Default()
 	webhandler.SetupEndpoints(r)
