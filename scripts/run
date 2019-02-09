@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
+
+cd "${DIR_ROOT}"
+
+if ! tmux has-session -t mypi-api-debug ; then
+    "${DIR_ROOT}/scripts/prepare_debug"
+fi
+
+MYPI_CONFIG="${DIR_ROOT}/mypi.yml" MYPI_ADMIN="https://localhost:8081" DOCKER_HOST="tcp://127.0.0.1:11111" go run main.go

@@ -10,7 +10,11 @@
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/main.go",
-            "env": {"MYPI_CONFIG":"${workspaceFolder}/mypi.yml"},
+            "env": {
+                "MYPI_CONFIG":"${workspaceFolder}/mypi.yml",
+                "MYPI_ADMIN":"https://localhost:8081",
+                "DOCKER_HOST":"tcp://127.0.0.1:11111"
+            },
             "args": []
         }
     ]

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"os"
+	"strings"
+
 	"github.com/dueckminor/mypi-api/go/debug"
 	"github.com/dueckminor/mypi-api/go/pki"
 	"github.com/dueckminor/mypi-api/go/webhandler"
@@ -12,11 +15,23 @@ func main() {
 	pki.Setup()
 
 	r := gin.Default()
-	webhandler.SetupEndpoints(r)
 
-	r.Use(static.Serve("/", static.LocalFile("dist", false)))
+	wh := &webhandler.WebHandler{}
+	err := wh.SetupEndpoints(r)
+	if err != nil {
+		panic(err)
+	}
 
-	debug.SetupProxy(r, "http://localhost:8081")
+	mypiAdmin := os.Getenv("MYPI_ADMIN")
+	if strings.HasPrefix(mypiAdmin, "http://") || strings.HasPrefix(mypiAdmin, "https://") {
+		debug.SetupProxy(r, mypiAdmin)
+	} else {
+		if len(mypiAdmin) == 0 {
+			mypiAdmin = "dist"
+		}
+		l := static.LocalFile(mypiAdmin, false)
+		r.Use(static.Serve("/", l))
+	}
 
 	r.Run()
 }
