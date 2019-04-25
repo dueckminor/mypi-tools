@@ -16,6 +16,25 @@
                 "DOCKER_HOST":"tcp://127.0.0.1:11111"
             },
             "args": []
+        },
+        {
+            "name": "Launch - adduser",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-adduser/mypi-adduser.go",
+            "env": {
+                "MYPI_CONFIG":"${workspaceFolder}/mypi.yml",
+            },
+            "args": ["admin","secret"]
+        },
+        {
+            "name": "Launch - Report-Stats",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/report-stats/report-stats.go",
+            "args": []
         }
     ]
 }

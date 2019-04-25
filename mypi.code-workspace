@@ -5,7 +5,17 @@
 		},
 		{
 			"path": "../mypi-admin"
+		},
+		{
+			"path": "/opt/mypi"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"cSpell.words": [
+			"dueckminor",
+			"mqtt",
+			"mypi",
+			"paho"
+		]
+	}
 }

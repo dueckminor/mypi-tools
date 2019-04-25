@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/dueckminor/mypi-api/go/users"
+
 	"github.com/docker/docker/api/types"
 	"github.com/dueckminor/mypi-api/go/docker"
 
@@ -12,6 +14,36 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 )
+
+func (wh *WebHandler) postLogin(c *gin.Context) {
+	var params struct {
+		Username string
+		Password string
+	}
+	err := c.BindJSON(&params)
+
+	cookie, _ := c.Cookie("token")
+	fmt.Println("Cookie:", cookie)
+
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	if !users.CheckPasswd(params.Username, params.Password) {
+		c.AbortWithStatus(http.StatusUnauthorized)
+		return
+	}
+
+	var response struct {
+		Username string
+	}
+	response.Username = params.Username
+
+	c.SetCookie("token", params.Username, 3600, "/", "rpi.fritz.box", true, false)
+
+	c.JSON(http.StatusOK, response)
+}
 
 func (wh *WebHandler) getDynDNS(c *gin.Context) {
 	c.Data(200, "text/plain", []byte("foo"))
@@ -63,6 +95,7 @@ func (wh *WebHandler) SetupEndpoints(r *gin.Engine) (err error) {
 		return err
 	}
 
+	r.POST("api/login", wh.postLogin)
 	r.GET("api/dyndns", wh.getDynDNS)
 	r.PUT("api/dyndns", wh.putDynDNS)
 	r.GET("api/containers", wh.getContainers)

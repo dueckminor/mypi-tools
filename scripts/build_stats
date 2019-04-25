@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+buildAndDeploy() {
+    local GOOS=$1
+    local GOARCH=$2
+    local USER_AT_HOST=$3
+    local EXE="report-stats-${GOOS}-${GOARCH}"
+
+    GOOS="${GOOS}" GOARCH="${GOARCH}" go build -o "${EXE}"  cmd/report-stats/report-stats.go
+    
+    ssh "${USER_AT_HOST}" killall "${EXE}" || true
+    scp "${EXE}" "${USER_AT_HOST}:"
+    ssh -n "${USER_AT_HOST}" "nohup ./${EXE} >/dev/null 2>&1 &"
+}
+
+buildAndDeploy linux amd64 root@rockstor
+buildAndDeploy linux arm64 pi@rpi
+buildAndDeploy linux arm pi@raspberrypi

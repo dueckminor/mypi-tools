@@ -1,6 +1,8 @@
 package config
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -32,7 +34,7 @@ func findRoot() string {
 
 	for mypiYML != mypiRoot+"/config/mypi.yml" {
 		if len(mypiYML) > 0 && fileExists(mypiYML) {
-			mypiConfig, err = ReadConfigFile(mypiYML)
+			mypiConfig, err = readConfigFile(mypiYML)
 			if err != nil {
 				panic(err)
 			}
@@ -58,7 +60,7 @@ func findRoot() string {
 		}
 	}
 	if nil == mypiConfig {
-		mypiConfig, err = ReadConfigFile(mypiYML)
+		mypiConfig, err = readConfigFile(mypiYML)
 	}
 	return mypiRoot
 }
@@ -66,13 +68,22 @@ func findRoot() string {
 type Config interface {
 	GetString(path ...interface{}) string
 	GetBool(path ...interface{}) bool
+	GetArray(path ...interface{}) []Config
+	AddArrayElement(obj interface{}, path ...interface{}) error
+	SetString(name, value string) error
+	Write() error
 }
 
 type configImpl struct {
 	cfg interface{}
 }
 
-func (c configImpl) FollowPath(path ...interface{}) (interface{}, error) {
+type configImplOnFile struct {
+	configImpl
+	filename string
+}
+
+func (c *configImpl) FollowPath(path ...interface{}) (interface{}, error) {
 	cfg := c.cfg
 	for _, pathElement := range path {
 		switch pathElementV := pathElement.(type) {
@@ -101,7 +112,7 @@ func (c configImpl) FollowPath(path ...interface{}) (interface{}, error) {
 	return cfg, nil
 }
 
-func (c configImpl) GetString(path ...interface{}) string {
+func (c *configImpl) GetString(path ...interface{}) string {
 	cfg, err := c.FollowPath(path...)
 	if err != nil {
 		return ""
@@ -114,7 +125,16 @@ func (c configImpl) GetString(path ...interface{}) string {
 	}
 }
 
-func (c configImpl) GetBool(path ...interface{}) bool {
+func (c *configImpl) SetString(name, value string) error {
+	switch v := c.cfg.(type) {
+	case map[interface{}]interface{}:
+		v[name] = value
+		return nil
+	}
+	return errors.New("wrong type")
+}
+
+func (c *configImpl) GetBool(path ...interface{}) bool {
 	cfg, err := c.FollowPath(path...)
 	if err != nil {
 		return false
@@ -130,17 +150,76 @@ func (c configImpl) GetBool(path ...interface{}) bool {
 	return false
 }
 
-func ReadConfigFile(filename string) (Config, error) {
+func (c *configImpl) GetArray(path ...interface{}) []Config {
+	cfg, err := c.FollowPath(path...)
+	if err != nil {
+		return nil
+	}
+	a, ok := cfg.([]interface{})
+	if !ok {
+		return nil
+	}
+	result := make([]Config, len(a))
+	for i, e := range a {
+		result[i] = &configImpl{cfg: e}
+	}
+	return result
+}
+
+func (c *configImpl) AddArrayElement(obj interface{}, path ...interface{}) error {
+	cfg, err := c.FollowPath(path...)
+	if err != nil {
+		return err
+	}
+	a, ok := cfg.([]interface{})
+	if !ok {
+		fmt.Println(cfg)
+		if cfg != nil {
+			return nil
+		}
+		a = make([]interface{}, 1)
+	}
+	a = append(a, obj)
+
+	c.cfg = a
+	return nil
+}
+
+func (c *configImpl) Write() error {
+	return nil
+}
+
+func (c *configImplOnFile) Write() error {
+
+	data, err := yaml.Marshal(c.cfg)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(c.filename, data, 0644)
+}
+
+func readConfigFile(filename string) (Config, error) {
 	dat, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	r := configImpl{}
+	r := &configImplOnFile{filename: filename}
 	err = yaml.Unmarshal(dat, &r.cfg)
 	if err != nil {
 		return nil, err
 	}
 	return r, nil
+}
+
+func ReadConfigFile(filename string) (Config, error) {
+	if nil == mypiConfig {
+		findRoot()
+	}
+
+	if !filepath.IsAbs(filename) {
+		filename = filepath.Join(mypiRoot, filename)
+	}
+	return readConfigFile(filename)
 }
 
 func GetConfig() (c Config) {
@@ -155,4 +234,17 @@ func GetRoot() string {
 		findRoot()
 	}
 	return mypiRoot
+}
+
+func New(filename string, cfg interface{}) (c Config) {
+	if nil == mypiConfig {
+		findRoot()
+	}
+	if !filepath.IsAbs(filename) {
+		filename = filepath.Join(mypiRoot, filename)
+	}
+	return &configImplOnFile{
+		configImpl: configImpl{cfg: cfg},
+		filename:   filename,
+	}
 }
