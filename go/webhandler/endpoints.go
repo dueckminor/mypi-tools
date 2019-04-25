@@ -30,7 +30,7 @@ func (wh *WebHandler) postLogin(c *gin.Context) {
 		return
 	}
 
-	if !users.CheckPasswd(params.Username, params.Password) {
+	if !users.CheckPassword(params.Username, params.Password) {
 		c.AbortWithStatus(http.StatusUnauthorized)
 		return
 	}
@@ -84,11 +84,12 @@ func (wh *WebHandler) postServicesStart(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
+// WebHandler handles all http endpoints
 type WebHandler struct {
 	dockerCLI *client.Client
 }
 
-// SetupEnpoints registers the http endpoints
+// SetupEndpoints registers the http endpoints
 func (wh *WebHandler) SetupEndpoints(r *gin.Engine) (err error) {
 	wh.dockerCLI, err = client.NewEnvClient()
 	if err != nil {

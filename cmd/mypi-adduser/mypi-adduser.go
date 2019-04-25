@@ -39,5 +39,5 @@ func main() {
 
 	users.AddUser(username, password)
 
-	fmt.Println(users.CheckPasswd(username, password))
+	fmt.Println(users.CheckPassword(username, password))
 }

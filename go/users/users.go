@@ -82,7 +82,7 @@ func AddUser(username, password string) error {
 	return userCfg.Write()
 }
 
-func CheckPasswd(username, password string) bool {
+func CheckPassword(username, password string) bool {
 	userCfg, err := ReadUserCfg()
 	if err != nil {
 		return false
