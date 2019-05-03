@@ -29,6 +29,14 @@
             "args": ["admin","secret"]
         },
         {
+            "name": "Launch - adduser (local)",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-adduser/mypi-adduser.go",
+            "args": ["--mypi-root=${workspaceFolder}/../mypi-auth/.mypi","admin","secret"]
+        },
+        {
             "name": "Launch - Report-Stats",
             "type": "go",
             "request": "launch",

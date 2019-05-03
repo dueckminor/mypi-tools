@@ -66,16 +66,27 @@ func findRoot() string {
 }
 
 type Config interface {
+	Get(path ...interface{}) (Config, error)
 	GetString(path ...interface{}) string
 	GetBool(path ...interface{}) bool
 	GetArray(path ...interface{}) []Config
+	GetMap(path ...interface{}) (ConfigMap,error)
+	CreateMap(path ...interface{}) (ConfigMap,error)
 	AddArrayElement(obj interface{}, path ...interface{}) error
 	SetString(name, value string) error
 	Write() error
 }
 
+type ConfigMap interface {
+	Config
+}
+
 type configImpl struct {
 	cfg interface{}
+}
+
+type configMapImpl struct {
+	configImpl
 }
 
 type configImplOnFile struct {
@@ -83,13 +94,26 @@ type configImplOnFile struct {
 	filename string
 }
 
-func (c *configImpl) FollowPath(path ...interface{}) (interface{}, error) {
-	cfg := c.cfg
+func toMap(cfg interface{}) map[interface{}]interface{} {
+	if m, ok := cfg.(map[interface{}]interface{}); ok {
+		return m
+	}
+	return nil
+}
+
+func toArray(cfg interface{}) []interface{} {
+	if a, ok := cfg.([]interface{}); ok {
+		return a
+	}
+	return nil
+}
+
+func followPath(cfg interface{}, path ...interface{}) (interface{}, error) {
 	for _, pathElement := range path {
 		switch pathElementV := pathElement.(type) {
 		case int:
-			a, ok := cfg.([]interface{})
-			if !ok {
+			a := toArray(cfg)
+			if a == nil {
 				return nil, nil
 			}
 			if (pathElementV < 0) || (pathElementV >= len(a)) {
@@ -97,10 +121,11 @@ func (c *configImpl) FollowPath(path ...interface{}) (interface{}, error) {
 			}
 			cfg = a[pathElementV]
 		case string:
-			m, ok := cfg.(map[interface{}]interface{})
-			if !ok {
+			m := toMap(cfg)
+			if m == nil {
 				return nil, nil
 			}
+			var ok bool
 			cfg, ok = m[pathElementV]
 			if !ok {
 				return nil, nil
@@ -111,6 +136,28 @@ func (c *configImpl) FollowPath(path ...interface{}) (interface{}, error) {
 	}
 	return cfg, nil
 }
+
+func (c *configImpl) FollowPath(path ...interface{}) (interface{}, error) {
+	return followPath(c.cfg, path...)
+}
+
+func (c *configImpl) Get(path ...interface{}) (Config, error) {
+	if (len(path)==0) {
+		return c, nil
+	}
+	var err error
+	result := &configImpl{}
+	result.cfg, err = followPath(c.cfg, path...)
+	if (err != nil) {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (c *configImpl) GetMap(path ...interface{}) (ConfigMap, error) {
+	return nil,nil
+}
+
 
 func (c *configImpl) GetString(path ...interface{}) string {
 	cfg, err := c.FollowPath(path...)
@@ -132,6 +179,35 @@ func (c *configImpl) SetString(name, value string) error {
 		return nil
 	}
 	return errors.New("wrong type")
+}
+
+func (c *configImpl) CreateMap(path ...interface{}) (result ConfigMap, err error) {
+	if (len(path)==0) {
+		if (c.cfg != nil) {
+			if (nil == toMap(c.cfg)) {
+				return nil, errors.New("wrong type")
+			}
+		} else {
+			c.cfg = make(map[interface{}]interface{})
+		}
+		return &configMapImpl{configImpl: *c}, nil
+	}
+	switch v := path[0].(type) {
+	case string:
+		if (c.cfg == nil) {
+			c.cfg = make(map[interface{}]interface{})
+		}
+		m := toMap(c.cfg)
+		if (m != nil) {
+			if (len(path)==1) {
+				m[v] = make(map[interface{}]interface{})
+				return &configMapImpl{configImpl: configImpl{cfg:m[v]}}, nil
+			} else {
+				panic("not yet implemented")
+			}
+		}
+	}
+	panic("not yet implemented")
 }
 
 func (c *configImpl) GetBool(path ...interface{}) bool {
@@ -247,4 +323,21 @@ func New(filename string, cfg interface{}) (c Config) {
 		configImpl: configImpl{cfg: cfg},
 		filename:   filename,
 	}
+}
+
+// InitApp creates an in-memory-config containing only a single value:
+// `config.root`
+func InitApp(root string) error {
+	mypiRoot   = root
+	mypiConfig = &configImpl{}
+
+	cfg, err := mypiConfig.CreateMap("config")
+	if (err != nil) {
+		return err;
+	}
+	cfg.SetString("root",root)
+
+	fmt.Println(mypiConfig.GetString("config","root"))
+
+	return nil
 }

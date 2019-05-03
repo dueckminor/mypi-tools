@@ -4,10 +4,33 @@ import (
 	"fmt"
 	"os"
 	"syscall"
-
+	"flag"
+	"os/signal"
+	"github.com/dueckminor/mypi-api/go/config"
 	"github.com/dueckminor/mypi-api/go/users"
 	"golang.org/x/crypto/ssh/terminal"
 )
+
+var (
+	mypiRoot = flag.String("mypi-root","","The root of the mypi filesystem")
+)
+
+func init() {
+	flag.Parse()
+	if (mypiRoot != nil && len(*mypiRoot) > 0) {
+		config.InitApp(*mypiRoot)
+	}
+	
+	state, _ := terminal.GetState(int(syscall.Stdin))
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		terminal.Restore(int(syscall.Stdin),state)
+		fmt.Println("")
+		os.Exit(1)
+	}()
+}
 
 func readPassword(prompt string) string {
 	fmt.Print(prompt + ": ")
@@ -22,11 +45,11 @@ func readPassword(prompt string) string {
 func main() {
 	username := ""
 	password := ""
-	if len(os.Args) > 1 {
-		username = os.Args[1]
+	if flag.NArg() > 0 {
+		username = flag.Arg(0)
 	}
-	if len(os.Args) > 2 {
-		password = os.Args[2]
+	if flag.NArg() > 1 {
+		password = flag.Arg(1)
 	} else {
 		for {
 			password = readPassword("Enter Password")
@@ -37,7 +60,10 @@ func main() {
 		}
 	}
 
-	users.AddUser(username, password)
+	err := users.AddUser(username, password)
+	if (err != nil) {
+		panic(err)
+	}
 
 	fmt.Println(users.CheckPassword(username, password))
 }
