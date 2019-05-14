@@ -70,8 +70,8 @@ type Config interface {
 	GetString(path ...interface{}) string
 	GetBool(path ...interface{}) bool
 	GetArray(path ...interface{}) []Config
-	GetMap(path ...interface{}) (ConfigMap,error)
-	CreateMap(path ...interface{}) (ConfigMap,error)
+	GetMap(path ...interface{}) (ConfigMap, error)
+	CreateMap(path ...interface{}) (ConfigMap, error)
 	AddArrayElement(obj interface{}, path ...interface{}) error
 	SetString(name, value string) error
 	Write() error
@@ -142,22 +142,21 @@ func (c *configImpl) FollowPath(path ...interface{}) (interface{}, error) {
 }
 
 func (c *configImpl) Get(path ...interface{}) (Config, error) {
-	if (len(path)==0) {
+	if len(path) == 0 {
 		return c, nil
 	}
 	var err error
 	result := &configImpl{}
 	result.cfg, err = followPath(c.cfg, path...)
-	if (err != nil) {
+	if err != nil {
 		return nil, err
 	}
 	return result, nil
 }
 
 func (c *configImpl) GetMap(path ...interface{}) (ConfigMap, error) {
-	return nil,nil
+	return nil, nil
 }
-
 
 func (c *configImpl) GetString(path ...interface{}) string {
 	cfg, err := c.FollowPath(path...)
@@ -182,9 +181,9 @@ func (c *configImpl) SetString(name, value string) error {
 }
 
 func (c *configImpl) CreateMap(path ...interface{}) (result ConfigMap, err error) {
-	if (len(path)==0) {
-		if (c.cfg != nil) {
-			if (nil == toMap(c.cfg)) {
+	if len(path) == 0 {
+		if c.cfg != nil {
+			if nil == toMap(c.cfg) {
 				return nil, errors.New("wrong type")
 			}
 		} else {
@@ -194,14 +193,14 @@ func (c *configImpl) CreateMap(path ...interface{}) (result ConfigMap, err error
 	}
 	switch v := path[0].(type) {
 	case string:
-		if (c.cfg == nil) {
+		if c.cfg == nil {
 			c.cfg = make(map[interface{}]interface{})
 		}
 		m := toMap(c.cfg)
-		if (m != nil) {
-			if (len(path)==1) {
+		if m != nil {
+			if len(path) == 1 {
 				m[v] = make(map[interface{}]interface{})
-				return &configMapImpl{configImpl: configImpl{cfg:m[v]}}, nil
+				return &configMapImpl{configImpl: configImpl{cfg: m[v]}}, nil
 			} else {
 				panic("not yet implemented")
 			}
@@ -279,7 +278,7 @@ func readConfigFile(filename string) (Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	r := &configImplOnFile{filename: filename}
+	r := &configImplOnFile{filename: GetFilename(filename)}
 	err = yaml.Unmarshal(dat, &r.cfg)
 	if err != nil {
 		return nil, err
@@ -288,14 +287,7 @@ func readConfigFile(filename string) (Config, error) {
 }
 
 func ReadConfigFile(filename string) (Config, error) {
-	if nil == mypiConfig {
-		findRoot()
-	}
-
-	if !filepath.IsAbs(filename) {
-		filename = filepath.Join(mypiRoot, filename)
-	}
-	return readConfigFile(filename)
+	return readConfigFile(GetFilename(filename))
 }
 
 func GetConfig() (c Config) {
@@ -328,16 +320,16 @@ func New(filename string, cfg interface{}) (c Config) {
 // InitApp creates an in-memory-config containing only a single value:
 // `config.root`
 func InitApp(root string) error {
-	mypiRoot   = root
+	mypiRoot = root
 	mypiConfig = &configImpl{}
 
 	cfg, err := mypiConfig.CreateMap("config")
-	if (err != nil) {
-		return err;
+	if err != nil {
+		return err
 	}
-	cfg.SetString("root",root)
+	cfg.SetString("root", root)
 
-	fmt.Println(mypiConfig.GetString("config","root"))
+	fmt.Println(mypiConfig.GetString("config", "root"))
 
 	return nil
 }

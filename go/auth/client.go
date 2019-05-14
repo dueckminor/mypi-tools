@@ -1,14 +1,15 @@
 package auth
 
 import (
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +18,7 @@ type AuthClient struct {
 	AuthURI      string
 	ClientID     string
 	ClientSecret string
+	ServerKey    *rsa.PublicKey
 }
 
 func (ac *AuthClient) RegisterHandler(e *gin.Engine) {
@@ -64,7 +66,7 @@ func (ac *AuthClient) handleAuth(c *gin.Context) {
 	values = redirectToAuthURI.Query()
 	values.Add("redirect_uri", authRequest.RedirectURI)
 	values.Add("response_type", "code")
-	values.Add("client_id", "id")
+	values.Add("client_id", ac.ClientID)
 	redirectToAuthURI.Path = "/oauth/authorize"
 	redirectToAuthURI.RawQuery = values.Encode()
 
@@ -109,13 +111,32 @@ func (ac *AuthClient) handleLoginCallback(c *gin.Context) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 
 	bodyText, err := ioutil.ReadAll(resp.Body)
 
 	var data map[string]interface{}
 	json.Unmarshal(bodyText, &data)
+
+	jwtToken, ok := data["access_token"].(string)
+	if !ok {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+
+	token, err := jwt.Parse(jwtToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); ok {
+			return ac.ServerKey, nil
+		}
+		return nil, fmt.Errorf("Unexpected Signing Method")
+	})
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
+	fmt.Println(token)
 
 	session.Set("access_token", data["access_token"])
 	session.Save()
