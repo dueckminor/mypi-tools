@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/dueckminor/mypi-api/go/ginutil"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
@@ -27,20 +28,16 @@ func (ac *AuthClient) RegisterHandler(e *gin.Engine) {
 }
 
 func (ac *AuthClient) handleAuth(c *gin.Context) {
+	scheme := ginutil.GetScheme(c)
+	hostname := ginutil.GetHostname(c)
+
 	session := sessions.Default(c)
 	accessToken := session.Get("access_token")
 	if nil != accessToken {
+		if hostname != session.Get("hostname") {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
 		return
-	}
-
-	scheme := c.Request.Header.Get("X-Forwarded-Proto")
-	if len(scheme) == 0 {
-		scheme = "http"
-	}
-
-	hostname := c.Request.Header.Get("X-Forwarded-Host")
-	if len(hostname) == 0 {
-		hostname = c.Request.Host
 	}
 
 	authRequest, err := NewRequest()
@@ -139,6 +136,7 @@ func (ac *AuthClient) handleLoginCallback(c *gin.Context) {
 	fmt.Println(token)
 
 	session.Set("access_token", data["access_token"])
+	session.Set("hostname", ginutil.GetHostname(c))
 	session.Save()
 
 	c.Header("Location", path)

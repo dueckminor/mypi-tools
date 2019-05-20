@@ -58,7 +58,9 @@ func ReadUserCfg() (result *UserCfg, err error) {
 }
 
 func AddUser(username, password string) error {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password),
+		bcrypt.DefaultCost-2, // DefaultCost takes to long on a Raspberry-Pi
+	)
 	if err != nil {
 		return err
 	}
