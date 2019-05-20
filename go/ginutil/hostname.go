@@ -1,6 +1,8 @@
 package ginutil
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 func GetHostname(c *gin.Context) (hostname string) {
 	hostname = c.Request.Header.Get("X-Forwarded-Host")
@@ -20,7 +22,10 @@ func GetScheme(c *gin.Context) (scheme string) {
 
 func OnHostname(hostname string, f gin.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !c.IsAborted() && hostname == GetHostname(c) {
+		if c.IsAborted() {
+			return
+		}
+		if hostname == GetHostname(c) {
 			f(c)
 		}
 	}
