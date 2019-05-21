@@ -1,7 +1,6 @@
 package ginutil
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -10,15 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SingleHostReverseProxy(target string) gin.HandlerFunc {
+func SingleHostReverseProxy(target string, flags ...string) gin.HandlerFunc {
 	url, _ := url.Parse(target)
 	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	deleteHeaders := (len(flags) > 0) && "delete" == flags[0]
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		location := resp.Header.Get("Location")
 		if strings.HasPrefix(location, target) {
 			newLocation := location[len(target):]
-			fmt.Println("Change header Location from", location, "to", newLocation)
 			resp.Header.Set("Location", newLocation)
 		}
 		return nil
@@ -30,6 +30,10 @@ func SingleHostReverseProxy(target string) gin.HandlerFunc {
 		}
 		req := c.Request
 		req.Host = url.Hostname()
+		if deleteHeaders {
+			req.Header.Del("X-Forwarded-Host")
+			req.Header.Del("X-Forwarded-Proto")
+		}
 		proxy.ServeHTTP(c.Writer, req)
 	}
 }
