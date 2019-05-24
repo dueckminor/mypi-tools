@@ -6,8 +6,8 @@ import (
 	"syscall"
 	"flag"
 	"os/signal"
-	"github.com/dueckminor/mypi-api/go/config"
-	"github.com/dueckminor/mypi-api/go/users"
+	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/users"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/dueckminor/mypi-api/go/users"
+	"github.com/dueckminor/mypi-tools/go/users"
 
 	"github.com/docker/docker/api/types"
-	"github.com/dueckminor/mypi-api/go/docker"
+	"github.com/dueckminor/mypi-tools/go/docker"
 
 	// "github.com/docker/docker/api/types/container"
 	// "github.com/docker/docker/api/types/mount"

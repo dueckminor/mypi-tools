@@ -6,9 +6,9 @@ import (
 	"path"
 	"strconv"
 
-	"github.com/dueckminor/mypi-api/go/auth"
-	"github.com/dueckminor/mypi-api/go/config"
-	"github.com/dueckminor/mypi-api/go/ginutil"
+	"github.com/dueckminor/mypi-tools/go/auth"
+	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"

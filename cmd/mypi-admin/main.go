@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dueckminor/mypi-api/go/ginutil"
-	"github.com/dueckminor/mypi-api/go/pki"
-	"github.com/dueckminor/mypi-api/go/webhandler"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
+	"github.com/dueckminor/mypi-tools/go/pki"
+	"github.com/dueckminor/mypi-tools/go/webhandler"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )

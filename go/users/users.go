@@ -4,7 +4,7 @@ import (
 	"errors"
 	"os"
 
-	"github.com/dueckminor/mypi-api/go/config"
+	"github.com/dueckminor/mypi-tools/go/config"
 	"golang.org/x/crypto/bcrypt"
 )
 

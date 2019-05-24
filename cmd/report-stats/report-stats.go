@@ -14,7 +14,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/dueckminor/mypi-api/go/tlsconfig"
+	"github.com/dueckminor/mypi-tools/go/tlsconfig"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 

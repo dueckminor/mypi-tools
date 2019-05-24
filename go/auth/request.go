@@ -3,7 +3,7 @@ package auth
 import (
 	"time"
 
-	"github.com/dueckminor/mypi-api/go/rand"
+	"github.com/dueckminor/mypi-tools/go/rand"
 )
 
 type AuthRequest struct {

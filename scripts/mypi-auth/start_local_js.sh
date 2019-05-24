@@ -2,19 +2,19 @@
 
 set -ex
 
-DIR_MYPI_API="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)"
+DIR_MYPI_TOOLS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)"
 
-if [[ ! -d "${DIR_MYPI_API}/../mypi-workspace/.git" ]]; then
+if [[ ! -d "${DIR_MYPI_TOOLS}/../mypi-workspace/.git" ]]; then
     echo
     echo "Please do the following:"
     echo 
-    echo "cd \"$(cd ${DIR_MYPI_API}/..)\""
+    echo "cd \"$(cd ${DIR_MYPI_TOOLS}/..)\""
     echo "git clone git@github.com:dueckminor/mypi-workspace.git"
     echo
     exit 1
 fi
 
-DIR_MYPI_WORKSPACE="$(cd "${DIR_MYPI_API}/../mypi-workspace"; pwd)"
+DIR_MYPI_WORKSPACE="$(cd "${DIR_MYPI_TOOLS}/../mypi-workspace"; pwd)"
 DIR_MYPI_ROOT="${DIR_MYPI_WORKSPACE}/.mypi"
 
 DIR_AUTH_SERVER="${DIR_MYPI_ROOT}/etc/auth/server"
@@ -52,6 +52,6 @@ if [[ -n "${PID}" ]]; then
     kill -9 "${PID}"
 fi
 
-cd "${DIR_MYPI_API}/web/mypi-auth"
+cd "${DIR_MYPI_TOOLS}/web/mypi-auth"
 
 npm run dev

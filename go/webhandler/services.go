@@ -3,7 +3,7 @@ package webhandler
 import (
 	"net/http"
 
-	"github.com/dueckminor/mypi-api/go/services"
+	"github.com/dueckminor/mypi-tools/go/services"
 
 	"github.com/gin-gonic/gin"
 )

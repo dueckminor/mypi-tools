@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/dueckminor/mypi-api/go/docker"
+	"github.com/dueckminor/mypi-tools/go/docker"
 
-	"github.com/dueckminor/mypi-api/go/config"
+	"github.com/dueckminor/mypi-tools/go/config"
 )
 
 type Status string

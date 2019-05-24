@@ -4,7 +4,7 @@ set -e
 
 DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
 
-SESSION_NAME=mypi-api-debug
+SESSION_NAME=mypi-tools-debug
 tmux kill-session -t "${SESSION_NAME}" &> /dev/null || true
 tmux new-session -d -s "${SESSION_NAME}" -n tmp
 if [[ -d "${DIR_ROOT}/../mypi-admin" ]]; then

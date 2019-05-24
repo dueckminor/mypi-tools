@@ -6,7 +6,7 @@ DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
 
 cd "${DIR_ROOT}"
 
-if ! tmux has-session -t mypi-api-debug ; then
+if ! tmux has-session -t mypi-tools-debug ; then
     "${DIR_ROOT}/scripts/prepare_debug"
 fi
 

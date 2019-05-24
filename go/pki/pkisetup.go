@@ -7,7 +7,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/dueckminor/mypi-api/go/config"
+	"github.com/dueckminor/mypi-tools/go/config"
 )
 
 func Setup() {

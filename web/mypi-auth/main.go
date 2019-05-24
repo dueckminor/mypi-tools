@@ -13,11 +13,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dueckminor/mypi-api/go/auth"
-	"github.com/dueckminor/mypi-api/go/config"
-	"github.com/dueckminor/mypi-api/go/ginutil"
-	"github.com/dueckminor/mypi-api/go/rand"
-	"github.com/dueckminor/mypi-api/go/users"
+	"github.com/dueckminor/mypi-tools/go/auth"
+	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
+	"github.com/dueckminor/mypi-tools/go/rand"
+	"github.com/dueckminor/mypi-tools/go/users"
 
 	"github.com/dgrijalva/jwt-go"
 
