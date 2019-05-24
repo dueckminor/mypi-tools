@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dueckminor/mypi-api/go/debug"
 	"github.com/dueckminor/mypi-api/go/pki"
 	"github.com/dueckminor/mypi-api/go/webhandler"
 	"github.com/gin-contrib/static"
@@ -24,7 +23,7 @@ func main() {
 
 	mypiAdmin := os.Getenv("MYPI_ADMIN")
 	if strings.HasPrefix(mypiAdmin, "http://") || strings.HasPrefix(mypiAdmin, "https://") {
-		debug.SetupProxy(r, mypiAdmin)
+		r.NoRoute(SingleHostReverseProxy(mypiAdmin))
 	} else {
 		if len(mypiAdmin) == 0 {
 			mypiAdmin = "dist"
