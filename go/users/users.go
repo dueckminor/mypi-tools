@@ -3,6 +3,7 @@ package users
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/config"
 	"golang.org/x/crypto/bcrypt"
@@ -22,6 +23,7 @@ type UserCfg struct {
 }
 
 func (cfg *UserCfg) GetUser(username string) (*User, error) {
+	username = strings.ToLower(username)
 	for _, userEntry := range cfg.GetArray() {
 		name := userEntry.GetString("name")
 		if name == username {
