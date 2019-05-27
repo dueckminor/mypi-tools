@@ -5,16 +5,16 @@
         <v-icon>folder_open</v-icon>
       </v-btn>
       <v-spacer />
-      <v-btn @click.stop="prev()">
+      <v-btn @click.stop="prev()" class="hidden-sm-and-down">
         <v-icon>skip_previous</v-icon>
       </v-btn>
       <v-btn @click.stop="play()">
         <v-icon>play_arrow</v-icon>
       </v-btn>
-      <v-btn @click.stop="pause()">
+      <v-btn @click.stop="pause()" class="hidden-sm-and-down">
         <v-icon>pause</v-icon>
       </v-btn>
-      <v-btn @click.stop="next()">
+      <v-btn @click.stop="next()" class="hidden-sm-and-down">
         <v-icon>skip_next</v-icon>
       </v-btn>
       <v-spacer />
@@ -56,6 +56,12 @@ export default {
           hls.on(Hls.Events.MANIFEST_PARSED, function () {
               this.videoElement.play();
           })
+      } else {
+        var source = document.createElement('source');
+        source.setAttribute('src', '/cams/0/stream.m3u8')
+        video.innerHTML = '';
+        video.appendChild(source)
+        video.play();
       }
     },
     pause() {
@@ -72,6 +78,8 @@ export default {
           video.msRequestFullscreen();
       } else if (video.webkitRequestFullscreen) {
           video.webkitRequestFullscreen();
+      } else if (video.webkitEnterFullscreen) {
+        video.webkitEnterFullscreen();
       }
     }
   },
