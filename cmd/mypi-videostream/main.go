@@ -1,14 +1,33 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 
+	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
+
+var (
+	// authURI   string
+	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
+	port         = flag.Int("port", 8080, "The port")
+	execDebug    = flag.String("exec", "", "start process")
+	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+)
+
+func init() {
+	flag.Parse()
+	if mypiRoot != nil && len(*mypiRoot) > 0 {
+		config.InitApp(*mypiRoot)
+	}
+}
 
 func runFFMPEG(dir, url string) {
 	for {
@@ -47,6 +66,14 @@ func runFFMPEG(dir, url string) {
 func main() {
 	r := gin.Default()
 
+	if len(*execDebug) > 0 {
+		cmd := exec.Command(*execDebug)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Start()
+		defer cmd.Wait()
+	}
+
 	tmpDir := os.TempDir()
 	if _, err := os.Stat("/dev/shm"); !os.IsNotExist(err) {
 		tmpDir = "/dev/shm"
@@ -57,18 +84,42 @@ func main() {
 
 	fmt.Println("Using dir:", tmpDir)
 
-	for i, arg := range os.Args[1:] {
+	iCam := 0
 
-		dir := path.Join(tmpDir, fmt.Sprintf("%d", i))
-		path := fmt.Sprintf("/cams/%d/", i)
+	for _, url := range flag.Args() {
+
+		dir := path.Join(tmpDir, fmt.Sprintf("%d", iCam))
+		path := fmt.Sprintf("/cams/%d/", iCam)
 
 		os.MkdirAll(dir, os.ModePerm)
 
-		go runFFMPEG(dir, arg)
+		go runFFMPEG(dir, url)
 
 		r.Use(static.ServeRoot(path, dir))
 		r.Use(static.ServeRoot(path, "./web"))
+		iCam++
 	}
 
-	panic(r.Run(":8080"))
+	for _, e := range config.GetConfig().GetArray("config", "webcams") {
+		url := e.GetString("url")
+
+		dir := path.Join(tmpDir, fmt.Sprintf("%d", iCam))
+		path := fmt.Sprintf("/cams/%d/", iCam)
+
+		os.MkdirAll(dir, os.ModePerm)
+
+		go runFFMPEG(dir, url)
+
+		r.Use(static.ServeRoot(path, dir))
+		r.Use(static.ServeRoot(path, "./web"))
+		iCam++
+	}
+
+	if len(*webpackDebug) > 0 {
+		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
+	} else {
+		r.Use(static.ServeRoot("/", "./dist"))
+	}
+
+	panic(r.Run(":" + strconv.Itoa(*port)))
 }

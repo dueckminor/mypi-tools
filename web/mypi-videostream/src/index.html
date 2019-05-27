@@ -1,56 +1,18 @@
 <!doctype html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Live Video</title>
-    <style>
-        video {
-            width: 640px;
-            height: 360px;
-        }
-    </style>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>MYPI - Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 
 <body>
-    <div>
-        <video id="videoPlayer" muted="muted" autoplay playsinline />
-        <source src="stream.m3u8" />
-        </video>
-        <br />
-        <button onclick="playVideo()">&#9658;</button>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <script>
-        (function () {
-            video = document.querySelector("#videoPlayer");
-            if (Hls.isSupported()) {
-                var hls = new Hls();
-                hls.loadSource("stream.m3u8");
-                hls.attachMedia(video);
-                hls.on(Hls.Events.MANIFEST_PARSED, function () {
-                    video.play();
-                })
-            }
-        })();
-    </script>
-    <script type="text/javascript">
-        function playVideo() {
-            video = document.querySelector("#videoPlayer");
-            if (video.paused) { video.play(); }
-            enterFullscreen(video);
-        };
-        function enterFullscreen(element) {
-            if (element.requestFullscreen) {
-                element.requestFullscreen();
-            } else if (element.mozRequestFullScreen) {
-                element.mozRequestFullScreen();
-            } else if (element.msRequestFullscreen) {
-                element.msRequestFullscreen();
-            } else if (element.webkitRequestFullscreen) {
-                element.webkitRequestFullscreen();
-            }
-        }
-    </script>
+    <!-- Our vue app will be mounted on this DOM element -->
+    <div id="app"></div>
+    <!-- Bundle will be injected below -->
 </body>
 
 </html>

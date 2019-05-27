@@ -319,8 +319,17 @@ func New(filename string, cfg interface{}) (c Config) {
 
 // InitApp creates an in-memory-config containing only a single value:
 // `config.root`
-func InitApp(root string) error {
+func InitApp(root string) (err error) {
 	mypiRoot = root
+
+	mypiConfigFile := filepath.Join(mypiRoot, "config/mypi.yml")
+	if fileExists(mypiConfigFile) {
+		mypiConfig, err = readConfigFile(mypiConfigFile)
+		if err == nil {
+			return nil
+		}
+	}
+
 	mypiConfig = &configImpl{}
 
 	cfg, err := mypiConfig.CreateMap("config")

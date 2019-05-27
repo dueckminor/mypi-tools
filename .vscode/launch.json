@@ -88,6 +88,20 @@
                 "--exec=${workspaceFolder}/scripts/mypi-auth/start_local_js.sh",
                 "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
             ]
+        },
+        {
+            "name": "Launch - Videostream",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-videostream/main.go",
+            "env": {},
+            "args": [
+                "--port=8083",
+                "--webpack-debug=http://localhost:8084",
+                "--exec=${workspaceFolder}/scripts/mypi-videostream/start_local_js.sh",
+                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+            ]
         }
     ]
 }

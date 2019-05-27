@@ -1,0 +1,9 @@
+# Ignore files from node.js
+node_modules
+dist
+
+# Ignore files from golang
+main
+debug
+
+.mypi
