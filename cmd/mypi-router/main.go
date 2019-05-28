@@ -11,6 +11,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
@@ -34,6 +35,7 @@ var (
 	redirectSource string
 	redirectTarget string
 	mypiRoot       string
+	staticRoot     string
 	ac             *auth.AuthClient
 	routerConfig   RouterConfig
 )
@@ -44,6 +46,7 @@ func init() {
 	flag.StringVar(&ac.AuthURI, "auth", "", "The URI of the authentication server")
 	flag.IntVar(&port, "port", 8080, "The port")
 	flag.StringVar(&targetURI, "target", "", "The target URI")
+	flag.StringVar(&staticRoot, "static-root", "", "The target URI")
 	flag.StringVar(&redirectSource, "redirect-source", "", "The redirect source")
 	flag.StringVar(&redirectTarget, "redirect-target", "", "The redirect target")
 	flag.StringVar(&ac.ClientID, "client-id", "", "The client ID")
@@ -94,6 +97,10 @@ func main() {
 	r.Use(sessions.Sessions("MYPI_ROUTER_SESSION", store))
 
 	ac.RegisterHandler(r)
+
+	if len(staticRoot) > 0 {
+		r.Use(static.ServeRoot("/", staticRoot))
+	}
 
 	for _, redirect := range routerConfig.Redirects {
 		r.GET(redirect.Source, ginutil.Redirect(redirect.Target))
