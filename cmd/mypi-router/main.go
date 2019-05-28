@@ -18,17 +18,24 @@ type RouteConfig struct {
 	Hostname string `yaml: "hostname"`
 	Target   string `yaml: "target"`
 }
+type RedirectConfig struct {
+	Source string `yaml: "source"`
+	Target string `yaml: "target"`
+}
 
 type RouterConfig struct {
-	Routes []RouteConfig `yaml: "routes"`
+	Routes    []RouteConfig    `yaml: "routes,omitempty"`
+	Redirects []RedirectConfig `yaml: "redirects,omitempty"`
 }
 
 var (
-	port         int
-	targetURI    string
-	mypiRoot     string
-	ac           *auth.AuthClient
-	routerConfig RouterConfig
+	port           int
+	targetURI      string
+	redirectSource string
+	redirectTarget string
+	mypiRoot       string
+	ac             *auth.AuthClient
+	routerConfig   RouterConfig
 )
 
 func init() {
@@ -37,6 +44,8 @@ func init() {
 	flag.StringVar(&ac.AuthURI, "auth", "", "The URI of the authentication server")
 	flag.IntVar(&port, "port", 8080, "The port")
 	flag.StringVar(&targetURI, "target", "", "The target URI")
+	flag.StringVar(&redirectSource, "redirect-source", "", "The redirect source")
+	flag.StringVar(&redirectTarget, "redirect-target", "", "The redirect target")
 	flag.StringVar(&ac.ClientID, "client-id", "", "The client ID")
 	flag.StringVar(&ac.ClientSecret, "client-secret", "", "The client secret")
 	flag.StringVar(&mypiRoot, "mypi-root", "", "The root of the mypi filesystem")
@@ -73,11 +82,6 @@ func init() {
 			panic(err)
 		}
 	}
-
-	if len(targetURI) > 0 && len(routerConfig.Routes) > 0 {
-		panic("It's not allowed to specify a config file with routes and a target")
-	}
-
 }
 
 func main() {
@@ -91,12 +95,27 @@ func main() {
 
 	ac.RegisterHandler(r)
 
-	if len(targetURI) > 0 {
-		r.Use(ginutil.SingleHostReverseProxy(targetURI))
+	for _, redirect := range routerConfig.Redirects {
+		r.GET(redirect.Source, ginutil.Redirect(redirect.Target))
+	}
+
+	if len(redirectSource) > 0 {
+		r.GET(redirectSource, ginutil.Redirect(redirectTarget))
 	}
 
 	for _, route := range routerConfig.Routes {
+		if len(route.Hostname) == 0 || route.Hostname == "*" {
+			if (len(targetURI)) > 0 {
+				panic("more than one default route speciefed")
+			}
+			targetURI = route.Target
+			continue
+		}
 		r.Use(ginutil.OnHostname(route.Hostname, ginutil.SingleHostReverseProxy(route.Target)))
+	}
+
+	if len(targetURI) > 0 {
+		r.Use(ginutil.SingleHostReverseProxy(targetURI))
 	}
 
 	panic(r.Run(":" + strconv.Itoa(port)))
