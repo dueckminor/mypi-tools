@@ -24,18 +24,26 @@ func Setup() {
 
 	ca, err := LoadCA(mypiRoot + "/config/pki/root_ca")
 	if err != nil {
-		ca, err = CreateRootCA("CN=MyPi-ROOT-CA")
+		ca, err = CreateRootCA("MyPi-ROOT-CA")
 		if err != nil {
 			panic(err)
 		}
-		ca.Save(mypiRoot + "/config/pki/root_ca")
+		err = ca.Save(mypiRoot + "/config/pki/root_ca")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	dNSNames := []string{hostname}
+	for _, hostname := range mypiCfg.GetArray("config", "hostnames") {
+		dNSNames = append(dNSNames, hostname.GetString())
 	}
 
 	id, err := LoadIdentity(mypiRoot + "/config/pki/tls")
 	if err != nil {
 		template := &x509.Certificate{
 			Subject:     pkix.Name{CommonName: hostname},
-			DNSNames:    []string{hostname, "localhost"},
+			DNSNames:    dNSNames,
 			IPAddresses: []net.IP{net.IPv4(127, 0, 0, 1)},
 			NotBefore:   time.Now(),
 			NotAfter:    time.Now().AddDate(20, 0, 0),

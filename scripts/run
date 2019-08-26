@@ -10,4 +10,4 @@ if ! tmux has-session -t mypi-tools-debug ; then
     "${DIR_ROOT}/scripts/prepare_debug"
 fi
 
-MYPI_CONFIG="${DIR_ROOT}/mypi.yml" MYPI_ADMIN="https://localhost:8081" DOCKER_HOST="tcp://127.0.0.1:11111" go run main.go
+MYPI_CONFIG="${DIR_ROOT}/mypi.yml" MYPI_ADMIN="https://localhost:9100" DOCKER_HOST="tcp://127.0.0.1:11111" go run main.go

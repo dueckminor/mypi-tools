@@ -4,6 +4,7 @@ import (
 	"context"
 	"io/ioutil"
 	"log"
+	"sync"
 
 	"github.com/dueckminor/mypi-tools/go/docker"
 
@@ -25,28 +26,31 @@ type Service struct {
 }
 
 var (
+	initOnce sync.Once
 	services []*Service
 )
 
-func init() {
-	config.GetRoot()
-	files, err := ioutil.ReadDir(config.GetRoot() + "/services")
-	if err != nil {
-		log.Fatal(err)
-	}
+func initServices() {
+	initOnce.Do(func() {
+		config.GetRoot()
+		files, err := ioutil.ReadDir(config.GetRoot() + "/services")
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	services = make([]*Service, 0, len(files))
+		services = make([]*Service, 0, len(files))
 
-	for _, f := range files {
-		services = append(services, &Service{
-			Name:   f.Name(),
-			Status: StatusUnknown,
-		})
-	}
-
+		for _, f := range files {
+			services = append(services, &Service{
+				Name:   f.Name(),
+				Status: StatusUnknown,
+			})
+		}
+	})
 }
 
 func GetServices(ctx context.Context) (result []*Service, err error) {
+	initServices()
 	for _, service := range services {
 		container, err := docker.GetContainer(ctx, service.Name)
 		if err != nil {

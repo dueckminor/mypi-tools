@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "webpack-dev-server --mode development --progress --hot --open",
+    "dev": "webpack-dev-server --mode development --progress --hot --open --port 9001",
     "dev-remote": "webpack-dev-server --mode development --progress --hot --https --cert /opt/mypi/etc/nginx/conf.d/pki/tls_cert.pem --key /opt/mypi/etc/nginx/conf.d/pki/tls_priv.pem",
     "build": "webpack --mode production --progress",
     "test": "echo \"Error: no test specified\" && exit 1"

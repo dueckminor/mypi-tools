@@ -1,9 +1,12 @@
 package main
 
 import (
+	"flag"
 	"os"
-	"strings"
+	"os/exec"
+	"strconv"
 
+	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/pki"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
@@ -11,8 +14,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	// authURI   string
+	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
+	port         = flag.Int("port", 8080, "The port")
+	execDebug    = flag.String("exec", "", "start process")
+	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+)
+
+func init() {
+	flag.Parse()
+	if mypiRoot != nil && len(*mypiRoot) > 0 {
+		config.InitApp(*mypiRoot)
+	}
+}
+
 func main() {
 	pki.Setup()
+
+	if len(*execDebug) > 0 {
+		cmd := exec.Command(*execDebug)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Start()
+		defer cmd.Wait()
+	}
 
 	r := gin.Default()
 
@@ -22,16 +48,11 @@ func main() {
 		panic(err)
 	}
 
-	mypiAdmin := os.Getenv("MYPI_ADMIN")
-	if strings.HasPrefix(mypiAdmin, "http://") || strings.HasPrefix(mypiAdmin, "https://") {
-		r.NoRoute(ginutil.SingleHostReverseProxy(mypiAdmin))
+	if len(*webpackDebug) > 0 {
+		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
 	} else {
-		if len(mypiAdmin) == 0 {
-			mypiAdmin = "dist"
-		}
-		l := static.LocalFile(mypiAdmin, false)
-		r.Use(static.Serve("/", l))
+		r.Use(static.ServeRoot("/", "./dist"))
 	}
 
-	r.Run()
+	panic(r.Run(":" + strconv.Itoa(*port)))
 }

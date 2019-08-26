@@ -17,11 +17,11 @@ fi
 DIR_MYPI_WORKSPACE="$(cd "${DIR_MYPI_TOOLS}/../mypi-workspace"; pwd)"
 DIR_MYPI_ROOT="${DIR_MYPI_WORKSPACE}/.mypi"
 
-PID="$(pgrep -f " --port 9301" || true)"
+PID="$(pgrep -f " --port 9001" || true)"
 if [[ -n "${PID}" ]]; then
     kill -9 "${PID}"
 fi
 
-cd "${DIR_MYPI_TOOLS}/web/mypi-videostream"
+cd "${DIR_MYPI_TOOLS}/web/mypi-admin"
 
 npm run dev

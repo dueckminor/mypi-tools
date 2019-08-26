@@ -1,5 +1,14 @@
 # MyPi-API
 
+## Used Ports
+
+| Component   | Port | Webpack-Port |
+|-------------|------|--------------|
+| admin       | 9000 | 9001         |
+| auth        | 9100 | 9101         |
+| router      | 9200 | N/A          |
+| videostream | 9300 | 9301         |
+
 ## Dev-Environment
 
 ```bash
@@ -20,7 +29,7 @@ Developer-PC                 | Raspberry-PI
 | (GO)      |---->----|             |-->--+
 +-----------+  11111  +-------------+     |
       |                      |            |
-      | 8081                 |            |
+      | 9100                 |            |
       |                      |  +--------------+
 +------------|               |  | Docker-API   |
 | MyPI-Admin |               |  +--------------+

@@ -13,8 +13,8 @@ export default {
     mounted() {
         this._xterm = new Xterm();
         this._xterm.open(this.$refs['xterm']);
-        // gotty --port 8081 --ws-origin ".*" tmux attach -t foo
-        this._factory = new ConnectionFactory('ws://127.0.0.1:8081/ws', protocols);
+        // gotty --port 9100 --ws-origin ".*" tmux attach -t foo
+        this._factory = new ConnectionFactory('ws://127.0.0.1:9100/ws', protocols);
         this._wt = new WebTTY(this, this._factory, '', '');
         this.closer = this._wt.open();
         window.addEventListener('resize', this.handleResize)

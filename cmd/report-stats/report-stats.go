@@ -142,6 +142,7 @@ func main() {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker("ssl://rpi:8883")
 	opts.SetClientID(hostname).SetTLSConfig(tlsconfig)
+	opts.SetWill(prefix+"stat", `{"CPU":0,"Conn":0}`, 0, false)
 
 	ignoreConnections, _ := net.LookupHost("rpi")
 	for i, hostname := range ignoreConnections {
@@ -151,6 +152,7 @@ func main() {
 
 	// Start the connection
 	c := mqtt.NewClient(opts)
+
 	if token := c.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}

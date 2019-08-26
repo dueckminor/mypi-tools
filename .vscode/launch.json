@@ -5,19 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/main.go",
-            "env": {
-                "MYPI_CONFIG":"${workspaceFolder}/mypi.yml",
-                "MYPI_ADMIN":"https://localhost:8081",
-                "DOCKER_HOST":"tcp://127.0.0.1:11111"
-            },
-            "args": []
-        },
-        {
             "name": "Launch - adduser",
             "type": "go",
             "request": "launch",
@@ -44,6 +31,34 @@
             "program": "${workspaceFolder}/cmd/report-stats/report-stats.go",
             "args": []
         },
+                {
+            "name": "Launch - Admin",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-admin/main.go",
+            "env": {},
+            "args": [
+                "--port=9000",
+                "--webpack-debug=http://localhost:9001",
+                "--exec=${workspaceFolder}/scripts/mypi-admin/start_local_js.sh",
+                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+            ]
+        },
+        {
+            "name": "Launch - Auth",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-auth/main.go",
+            "env": {},
+            "args": [
+                "--port=9100",
+                "--webpack-debug=http://localhost:9101",
+                "--exec=${workspaceFolder}/scripts/mypi-auth/start_local_js.sh",
+                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+            ]
+        },
         {
             "name": "Launch - Router",
             "type": "go",
@@ -52,10 +67,10 @@
             "program": "${workspaceFolder}/cmd/mypi-router/main.go",
             "env": {},
             "args": [ 
-                "--auth=http://localhost:8081",
+                "--auth=http://localhost:9100",
                 "--target=http://fritz.box", 
                 //"--target=http://rpi.fritz.box:1880",
-                "--port=8080",
+                "--port=9200",
                 "--client-id=sample",
                 "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
              ]
@@ -68,26 +83,12 @@
             "program": "${workspaceFolder}/cmd/mypi-router/main.go",
             "env": {},
             "args": [ 
-                "--auth=http://localhost:8081",
-                "--port=8080",
+                "--auth=http://localhost:9100",
+                "--port=9200",
                 "--client-id=sample",
                 "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi",
                 "${workspaceFolder}/../mypi-workspace/.mypi/router.yml"
              ]
-        },
-        {
-            "name": "Launch - Auth",
-            "type": "go",
-            "request": "launch",
-            "mode": "auto",
-            "program": "${workspaceFolder}/cmd/mypi-auth/main.go",
-            "env": {},
-            "args": [
-                "--port=8081",
-                "--webpack-debug=http://localhost:8082",
-                "--exec=${workspaceFolder}/scripts/mypi-auth/start_local_js.sh",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
-            ]
         },
         {
             "name": "Launch - Videostream",
@@ -97,8 +98,8 @@
             "program": "${workspaceFolder}/cmd/mypi-videostream/main.go",
             "env": {},
             "args": [
-                "--port=8083",
-                "--webpack-debug=http://localhost:8084",
+                "--port=9300",
+                "--webpack-debug=http://localhost:9301",
                 "--exec=${workspaceFolder}/scripts/mypi-videostream/start_local_js.sh",
                 "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
             ]

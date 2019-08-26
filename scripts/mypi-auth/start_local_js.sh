@@ -47,7 +47,7 @@ if [[ ! -f "${DIR_AUTH_CLIENTS}/sample.yml" ]]; then
     }' > "${DIR_AUTH_CLIENTS}/sample.yml"
 fi
 
-PID="$(pgrep -f " --port 8082" || true)"
+PID="$(pgrep -f " --port 9101" || true)"
 if [[ -n "${PID}" ]]; then
     kill -9 "${PID}"
 fi
