@@ -2,16 +2,28 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"os"
-	"os/signal"
+	"os/exec"
+	"strconv"
 
+	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/tlsconfig"
 	"github.com/dueckminor/mypi-tools/go/util"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/gin-contrib/static"
+	"github.com/gin-gonic/gin"
 )
 
 var (
+	// authURI   string
+	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
+	port         = flag.Int("port", 8080, "The port")
+	execDebug    = flag.String("exec", "", "start process")
+	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	// targetURI string
+
 	hostname string
 	autoOpen = false
 	nearHome = true
@@ -23,6 +35,12 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	flag.Parse()
+	if mypiRoot != nil && len(*mypiRoot) > 0 {
+		config.InitApp(*mypiRoot)
+	}
+	config.GetConfig()
 }
 
 type OwntracksMsg struct {
@@ -62,6 +80,16 @@ func mqttAutoOpen(client mqtt.Client, msg mqtt.Message) {
 
 func main() {
 
+	r := gin.Default()
+
+	if len(*execDebug) > 0 {
+		cmd := exec.Command(*execDebug)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Start()
+		defer cmd.Wait()
+	}
+
 	tlsconfig := tlsconfig.NewTLSConfig()
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker("ssl://rpi:8883")
@@ -77,15 +105,7 @@ func main() {
 	mqttClient.Subscribe("tor/autoopen", 2, mqttAutoOpen)
 	mqttClient.Subscribe("owntracks/#", 2, mqttOwnTracks)
 
-	quit := make(chan struct{})
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func() {
-		<-c
-		mqttClient.Disconnect(250)
-		fmt.Println("[MQTT] Disconnected")
+	r.Use(static.ServeRoot("/config", "/opt/owntracks/config"))
 
-		quit <- struct{}{}
-	}()
-	<-quit
+	panic(r.Run(":" + strconv.Itoa(*port)))
 }

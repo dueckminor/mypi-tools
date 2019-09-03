@@ -103,6 +103,18 @@
                 "--exec=${workspaceFolder}/scripts/mypi-videostream/start_local_js.sh",
                 "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
             ]
-        }
+        },
+        {
+            "name": "Launch - Owntracks",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-owntracks/mypi-owntracks.go",
+            "env": {},
+            "args": [
+                "--port=9400",
+                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+            ]
+        },
     ]
 }
