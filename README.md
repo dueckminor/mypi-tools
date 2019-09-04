@@ -8,6 +8,7 @@
 | auth        | 9100 | 9101         |
 | router      | 9200 | N/A          |
 | videostream | 9300 | 9301         |
+| owntracks   | 9400 | N/A          |
 
 ## Dev-Environment
 
@@ -35,5 +36,4 @@ Developer-PC                 | Raspberry-PI
 | MyPI-Admin |               |  +--------------+
 | (JS)       |               |
 +------------+               |
-
 ```

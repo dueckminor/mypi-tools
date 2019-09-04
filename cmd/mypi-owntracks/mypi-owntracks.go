@@ -14,6 +14,7 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	qrcode "github.com/skip2/go-qrcode"
 )
 
 var (
@@ -78,6 +79,12 @@ func mqttAutoOpen(client mqtt.Client, msg mqtt.Message) {
 	autoOpen = shouldAutoOpen
 }
 
+func handleQR(c *gin.Context) {
+	c.Header("Content-Type", "image/png")
+	png, _ := qrcode.Encode("todo", qrcode.Medium, 256)
+	c.Writer.Write(png)
+}
+
 func main() {
 
 	r := gin.Default()
@@ -106,6 +113,7 @@ func main() {
 	mqttClient.Subscribe("owntracks/#", 2, mqttOwnTracks)
 
 	r.Use(static.ServeRoot("/config", "/opt/owntracks/config"))
+	r.GET("/qr", handleQR)
 
 	panic(r.Run(":" + strconv.Itoa(*port)))
 }
