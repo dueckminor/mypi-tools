@@ -12,10 +12,23 @@
 
 ## Dev-Environment
 
+To allow debugging of the GoLang and Web Applications you could use do the
+following:
+
+1. mount your `mypi` installation of your Raspberry-PI in the same directory
+as it is remote:
+
 ```bash
 sshfs pi@rpi.fritz.box:/opt/mypi /opt/mypi
+```
+
+2. call the `prepare_debug` script:
+
+```bash
 ./scripts/prepare_debug
 ```
+
+
 
 ```txt
 Developer-PC                 | Raspberry-PI
@@ -25,12 +38,12 @@ Developer-PC                 | Raspberry-PI
 | Browser      |-------------|--->--| ngnix |----+
 +--------------+             |      +-------+    |
                              |                   |
-+-----------+  8080   +------+------+            |
-| MyPI-API  |----<----|  SSH-Tunnel |-----<------+
-| (GO)      |---->----|             |-->--+
-+-----------+  11111  +-------------+     |
-      |                      |            |
-      | 9100                 |            |
++-------------+  8080   +----+--------+          |
+| MyPI-Admin  |----<----|  SSH-Tunnel |-----<----+
+| (GO)        |---->----|             |-->--+
++-------------+  11111  +-------------+     |
+      |                      |              |
+      | 9100                 |              |
       |                      |  +--------------+
 +------------|               |  | Docker-API   |
 | MyPI-Admin |               |  +--------------+
