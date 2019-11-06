@@ -59,7 +59,7 @@ func mqttOwnTracks(client mqtt.Client, msg mqtt.Message) {
 		if autoOpen {
 			autoOpen = false
 			fmt.Println("Open gate")
-			client.Publish("tor/open", 2, true, `1`)
+			client.Publish("tor/open", 2, false, `1`)
 		}
 		client.Publish("tor/autoopen", 2, true, `false`)
 		nearHome = true
