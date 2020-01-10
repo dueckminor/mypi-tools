@@ -9,6 +9,7 @@
 | router      | 9200 | N/A          |
 | videostream | 9300 | 9301         |
 | owntracks   | 9400 | N/A          |
+| setup       | 9500 | 9501         |
 
 ## Dev-Environment
 

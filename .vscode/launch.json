@@ -116,5 +116,19 @@
                 "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
             ]
         },
+        {
+            "name": "Launch - Setup",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-setup/main.go",
+            "env": {},
+            "args": [
+                "--port=9500",
+                "--webpack-debug=http://localhost:9501",
+                "--exec=${workspaceFolder}/scripts/mypi-setup/start_local_js.sh",
+                //"--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+            ]
+        },
     ]
 }
