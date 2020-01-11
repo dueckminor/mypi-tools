@@ -1,6 +1,6 @@
 <template>
   <v-dialog v-model="show" max-width="500px" persistent>
-    <v-btn flat slot="activator" class="success">Login</v-btn>
+    <!-- <v-btn text class="success">Login</v-btn> -->
 <!--    <v-flex xs12 sm8 md4> -->
       <v-card class="elevation-12">
         <v-toolbar dark color="primary">
