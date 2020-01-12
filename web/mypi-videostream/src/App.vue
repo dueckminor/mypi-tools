@@ -1,6 +1,6 @@
 <template>
   <v-app light id="app">
-    <v-toolbar app>
+    <v-app-bar app>
       <v-btn @click.stop="folder()" >
         <v-icon>folder_open</v-icon>
       </v-btn>
@@ -21,7 +21,7 @@
       <v-btn @click.stop="fullscreen()" >
         <v-icon>fullscreen</v-icon>
       </v-btn>
-    </v-toolbar>
+    </v-app-bar>
     <v-content>
       <video ref="video" muted="muted" autoplay playsinline width="100%"/>
     </v-content>
@@ -29,7 +29,7 @@
 </template>
 
 <script>
-import VueRouter from 'vue-router'
+import Hls from "hls.js";
 
 export default {
   name: 'app',
