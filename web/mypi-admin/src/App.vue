@@ -1,6 +1,6 @@
 <template>
   <v-app light id="app">
-    <v-toolbar app></v-toolbar>
+    <v-app-bar app></v-app-bar>
     <v-content>
       <v-container fluid>
         <v-card class="elevation-12">
