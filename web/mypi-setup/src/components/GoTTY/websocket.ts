@@ -5,11 +5,11 @@ export class ConnectionFactory {
     constructor(url: string, protocols: string[]) {
         this.url = url;
         this.protocols = protocols;
-    };
+    }
 
     create(): Connection {
         return new Connection(this.url, this.protocols);
-    };
+    }
 }
 
 export class Connection {
@@ -22,15 +22,15 @@ export class Connection {
 
     open() {
         // nothing todo for websocket
-    };
+    }
 
     close() {
         this.bare.close();
-    };
+    }
 
     send(data: string) {
         this.bare.send(data);
-    };
+    }
 
     isOpen(): boolean {
         if (this.bare.readyState == WebSocket.CONNECTING ||
@@ -41,20 +41,20 @@ export class Connection {
     }
 
     onOpen(callback: () => void) {
-        this.bare.onopen = (event) => {
+        this.bare.onopen = (/*event*/) => {
             callback();
         }
-    };
+    }
 
     onReceive(callback: (data: string) => void) {
         this.bare.onmessage = (event) => {
             callback(event.data);
         }
-    };
+    }
 
     onClose(callback: () => void) {
-        this.bare.onclose = (event) => {
+        this.bare.onclose = (/*event*/) => {
             callback();
         };
-    };
+    }
 }

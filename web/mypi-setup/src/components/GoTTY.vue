@@ -6,7 +6,7 @@
 import { Terminal as Xterm } from 'xterm';
 import { fit } from 'xterm/lib/addons/fit/fit';
 import 'xterm/lib/xterm.css';
-import { Terminal, WebTTY, protocols } from './GoTTY/webtty'
+import { WebTTY, protocols } from './GoTTY/webtty'
 import { ConnectionFactory } from "./GoTTY/websocket";
 export default {
     name: "XTerm",
@@ -30,7 +30,7 @@ export default {
         write(...args) {
             this._xterm.write(...args);
         },
-        clear(...args) {
+        clear(/*...args*/) {
             this._xterm.clear();
         },
         blur() {
@@ -39,7 +39,7 @@ export default {
         focus() {
             this._xterm.focus();
         },
-        handleResize (event) {
+        handleResize (/*event*/) {
           fit(this._xterm);
         },
         info() {
@@ -49,16 +49,16 @@ export default {
           this._xterm.write(decodeURIComponent(escape(data)));
         },
         showMessage() {
-          console.log("showMessage")
+          //console.log("showMessage")
         },
         removeMessage() {
-          console.log("removeMessage")
+          //console.log("removeMessage")
         },
-        setWindowTitle(title) {
-          console.log("setWindowTitle: " + title)
+        setWindowTitle(/*title*/) {
+          //console.log("setWindowTitle: " + title)
         },
-        setPreferences(value) {
-          console.log("setPreferences")
+        setPreferences(/*value*/) {
+          //console.log("setPreferences")
         },
         onInput(callback) {
           this._xterm.on("data", (data) => {

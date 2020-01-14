@@ -55,12 +55,12 @@ export class WebTTY {
         this.args = args;
         this.authToken = authToken;
         this.reconnect = -1;
-    };
+    }
 
     open() {
         let connection = this.connectionFactory.create();
-        let pingTimer: number;
-        let reconnectTimeout: number;
+        let pingTimer: NodeJS.Timeout;
+        let reconnectTimeout: NodeJS.Timeout;
 
         const setup = () => {
             connection.onOpen(() => {
@@ -112,13 +112,17 @@ export class WebTTY {
                         this.term.setWindowTitle(payload);
                         break;
                     case msgSetPreferences:
-                        const preferences = JSON.parse(payload);
-                        this.term.setPreferences(preferences);
+                        {
+                            const preferences = JSON.parse(payload);
+                            this.term.setPreferences(preferences);
+                        }
                         break;
                     case msgSetReconnect:
-                        const autoReconnect = JSON.parse(payload);
-                        console.log("Enabling reconnect: " + autoReconnect + " seconds")
-                        this.reconnect = autoReconnect;
+                        {
+                            const autoReconnect = JSON.parse(payload);
+                            //console.log("Enabling reconnect: " + autoReconnect + " seconds")
+                            this.reconnect = autoReconnect;
+                        }
                         break;
                 }
             });
@@ -144,5 +148,5 @@ export class WebTTY {
             clearTimeout(reconnectTimeout);
             connection.close();
         }
-    };
-};
+    }
+}

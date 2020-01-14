@@ -1,6 +1,6 @@
 <template>
   <v-app light id="app">
-    <v-toolbar app></v-toolbar>
+    <v-app-bar app></v-app-bar>
     <v-content>
       <v-container fluid>
         <v-card class="elevation-12">
@@ -16,13 +16,11 @@
 
 <script>
 import GoTTY from './components/GoTTY'
-import Login from './Login'
 
 export default {
   name: 'app',
   components: {
-    GoTTY,
-    Login
+    GoTTY
   },
   data: function () {
     return {
