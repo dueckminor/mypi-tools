@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -x
+set -e
+
+# shellcheck source=/dev/null
+. /mypi-setup/config
+
+USERNAME="pi2"
+
+apk add sudo bash
+
+adduser -D -s "$(command -v bash)" "${USERNAME}"
+
+if [ -n "${SSH_AUTHORIZED_KEYS}" ]; then
+    mkdir -p /home/${USERNAME}/.ssh
+    echo "${SSH_AUTHORIZED_KEYS}" >> /home/${USERNAME}/.ssh/authorized_keys
+    chown -R "${USERNAME}:${USERNAME}" /home/${USERNAME}/.ssh
+    PASSWD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c"${1:-32}")
+    printf "%s\n%s\n" "${PASSWD}" "${PASSWD}" | passwd "${USERNAME}"
+fi
+
+mkdir -p /opt/mypi
+chown "${USERNAME}:${USERNAME}" /opt/mypi

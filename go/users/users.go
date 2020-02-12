@@ -16,10 +16,30 @@ var (
 type User struct {
 	Name     string
 	Password string
+	Mail     string
+	Groups   []string
 }
 
 type UserCfg struct {
 	config.Config
+}
+
+func parseUser(userEntry config.Config) *User {
+	return &User{
+		Name:     userEntry.GetString("name"),
+		Password: userEntry.GetString("password"),
+	}
+}
+
+func (cfg *UserCfg) GetUsers() ([]*User, error) {
+	userEntries := cfg.GetArray()
+
+	result := make([]*User, 0, len(userEntries))
+
+	for _, userEntry := range userEntries {
+		result = append(result, parseUser(userEntry))
+	}
+	return result, nil
 }
 
 func (cfg *UserCfg) GetUser(username string) (*User, error) {

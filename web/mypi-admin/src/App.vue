@@ -1,64 +1,21 @@
 <template>
   <v-app light id="app">
-    <v-app-bar app></v-app-bar>
-    <v-content>
-      <v-container fluid>
-        <v-card class="elevation-12">
-          <v-card-text>
-          </v-card-text>
-          <v-btn color="accent" large @click.stop="showLogin=true">
-            foo
-          </v-btn>
-        </v-card>
-      </v-container>
+    <app-navigation></app-navigation>
+    <v-content transition="slide-x-transition">
+        <router-view></router-view>
     </v-content>
-    <v-footer app></v-footer>
-    <Login v-model="showLogin"/>
+    <!--<v-footer app></v-footer>-->
   </v-app>
 </template>
 
 <script>
-//import GoTTY from './components/GoTTY'
-import Login from './Login'
+import AppNavigation from '@/components/AppNavigation';
 
 export default {
   name: 'app',
   components: {
-    //GoTTY
-    Login
+    AppNavigation
   },
-  data: function () {
-    return {
-      user: 'jochen',
-      password: '',
-      passcode: '',
-      showLogin: true
-    }
-  },
-  methods: {
-    focusNext: function (next) {
-      alert(JSON.stringify(this))
-      alert(next)
-    },
-    setFocus: function (id) {
-      document.getElementById(id).focus()
-    },
-    submit: function () {
-      this.$refs.form.validate()
-      fetch("/api/login",{
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          user: this.user,
-          password: this.password,
-          passcode: this.passcode
-        })
-      })
-      alert("submit")
-    }
-  }
 }
 </script>
 

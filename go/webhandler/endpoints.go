@@ -1,6 +1,7 @@
 package webhandler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -43,6 +44,29 @@ func (wh *WebHandler) postLogin(c *gin.Context) {
 	c.SetCookie("token", params.Username, 3600, "/", "rpi.fritz.box", true, false)
 
 	c.JSON(http.StatusOK, response)
+}
+
+type UserInfo struct {
+	Name string `json:"text,omitempty"`
+	Icon string `json:"icon,omitempty"`
+}
+
+func (wh *WebHandler) getUsers(c *gin.Context) {
+	userCfg, err := users.ReadUserCfg()
+	if err != nil {
+		fmt.Println(err)
+	}
+	users, err := userCfg.GetUsers()
+
+	userInfos := make([]UserInfo, len(users), len(users))
+
+	for i, user := range users {
+		userInfos[i].Name = user.Name
+		userInfos[i].Icon = "mdi-account" // "mdi-account-star"
+	}
+
+	data, err := json.Marshal(userInfos)
+	c.Data(200, "application/json", data)
 }
 
 func (wh *WebHandler) getDynDNS(c *gin.Context) {
@@ -96,6 +120,7 @@ func (wh *WebHandler) SetupEndpoints(r *gin.Engine) (err error) {
 		return err
 	}
 
+	r.GET("api/users", wh.getUsers)
 	r.POST("api/login", wh.postLogin)
 	r.GET("api/dyndns", wh.getDynDNS)
 	r.PUT("api/dyndns", wh.putDynDNS)
