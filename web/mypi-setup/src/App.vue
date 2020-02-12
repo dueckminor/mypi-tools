@@ -21,25 +21,24 @@
           </v-stepper-content>
           <v-stepper-step step="2" :complete="step > 2">System Preferences</v-stepper-step>
           <v-stepper-content step="2">
-            <v-text-field name="hostname" label="Hostname" id="root_password" :value="hostname"></v-text-field>
+            <v-text-field name="hostname" label="Hostname" id="hostname" :value="hostname"></v-text-field>
+            <!--
             <v-text-field prepend-icon="lock" name="password" label="root-Password" id="root_password" type="password" :value="root_password"></v-text-field>
             <v-container class="px-0" fluid>
               <v-checkbox label="Enable WiFi"></v-checkbox>
             </v-container>
+            -->
             <v-btn color="primary" @click="step=3">Continue</v-btn>
 
 
             <v-btn @click="step=1">Back</v-btn>
           </v-stepper-content>
-          <v-stepper-step step="3" :complete="step > 3">Features</v-stepper-step>
+          <v-stepper-step step="3" :complete="step > 3">SD-Card</v-stepper-step>
           <v-stepper-content step="3">
-            <v-btn color="primary" @click="step=4">Continue</v-btn>
-            <v-btn @click="step=2">Back</v-btn>
-          </v-stepper-content>
-          <v-stepper-step step="4" :complete="step > 4">SD-Card</v-stepper-step>
-          <v-stepper-content step="4">
+            Select the SD-Card for your Alpine-Linux
+            <v-select :items="sd_cards" label="SD-Card" :value="sd_card"></v-select>
             <v-btn color="primary" @click="step=5">Continue</v-btn>
-            <v-btn @click="step=3">Back</v-btn>
+            <v-btn @click="step=2">Back</v-btn>
           </v-stepper-content>
         </v-stepper>
       </v-container>
@@ -50,6 +49,7 @@
 
 <script>
 //import GoTTY from './components/GoTTY'
+import axios from "axios";
 
 export default {
   name: 'app',
@@ -69,8 +69,29 @@ export default {
       wifi: true,
       password: '',
       passcode: '',
+      sd_cards: [],
+      sd_card: "",
       showLogin: true
     }
+  },
+  mounted() {
+    axios({ method: "GET", "url": "/api/disks" }).then(result => {
+            var sd_cards = [] ;
+            var selectionOK = false;
+            for (var i = 0; i < result.data.length; i++) {
+              sd_cards.push(result.data[i].name)
+              selectionOK |= (result.data[i].name == this.sd_card)
+            }
+            this.sd_cards = sd_cards;
+            if (!selectionOK) {
+              this.sd_card = (result.data.length > 0) ? result.data[0].name : ""
+            }
+          }, error => {
+            if (error != null) {
+              error = null
+            }
+            this.sd_cards = []
+          });
   },
   methods: {
     focusNext: function (next) {

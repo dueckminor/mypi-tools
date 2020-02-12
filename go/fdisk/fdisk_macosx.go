@@ -266,3 +266,8 @@ func GetDisks() ([]Disk, error) {
 
 	return result, nil
 }
+
+// GetDisk returns information about a single disk
+func GetDisk(diskName string) (Disk, error) {
+	return newDiskMacos(diskName)
+}
