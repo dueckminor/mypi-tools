@@ -1,5 +1,5 @@
 <template>
-    <div ref="xterm"></div>
+  <v-container fluid fill-height ref="xterm"/>
 </template>
 
 <script>
@@ -11,11 +11,19 @@ import { ConnectionFactory } from "./GoTTY/websocket";
 export default {
     name: "XTerm",
     mounted() {
-        this._xterm = new Xterm();
+        this._xterm = new Xterm({fontFamily:"Hack, monospace"});
         this._xterm.open(this.$refs['xterm']);
-        // gotty --port 9100 --ws-origin ".*" tmux attach -t foo
-        // this._factory = new ConnectionFactory('ws://127.0.0.1:9100/ws', protocols);
-        this._factory = new ConnectionFactory('ws://localhost:9500/ws', protocols);
+
+        var loc = window.location, new_uri;
+        if (loc.protocol === "https:") {
+            new_uri = "wss:";
+        } else {
+            new_uri = "ws:";
+        }
+        new_uri += "//" + loc.host;
+        new_uri += "/ws";
+
+        this._factory = new ConnectionFactory(new_uri, protocols);
         this._wt = new WebTTY(this, this._factory, '', '');
         this.closer = this._wt.open();
         window.addEventListener('resize', this.handleResize)

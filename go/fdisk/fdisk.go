@@ -11,6 +11,7 @@ type BlockDevice interface {
 // Partition represents a Partition on a Hard-Disk
 type Partition interface {
 	BlockDevice
+	GetMountPoint() (mountPoint string, err error)
 }
 
 type PartitionInfo struct {

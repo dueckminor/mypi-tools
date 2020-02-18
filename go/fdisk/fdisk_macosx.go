@@ -134,6 +134,10 @@ func macosNewPartition(deviceName string) (result macosPartition, err error) {
 	return result, err
 }
 
+func (partition macosPartition) GetMountPoint() (mountPoint string, err error) {
+	return partition.info.getString("MountPoint")
+}
+
 type macosDisk struct {
 	macosBlockDevice
 	partitionNames []string
@@ -146,8 +150,10 @@ func newDiskMacos(deviceName string) (result macosDisk, err error) {
 		return macosDisk{}, nil
 	}
 
+	partinfo, err := callDiskutil("list", "-plist", deviceName)
+
 	result.deviceName = deviceName
-	result.partitionNames, err = result.info.GetPartitionNames(deviceName)
+	result.partitionNames, err = partinfo.GetPartitionNames(deviceName)
 	if err != nil {
 		return macosDisk{}, nil
 	}
@@ -155,6 +161,10 @@ func newDiskMacos(deviceName string) (result macosDisk, err error) {
 }
 
 func (dev macosDisk) IsRemovable() bool {
+	ejectableOnly, err := dev.info.getBool("EjectableOnly")
+	if err == nil && !ejectableOnly {
+		return false
+	}
 	removeable, _ := dev.info.getBool("Removable")
 	removeableMedia, _ := dev.info.getBool("RemovableMediaOrExternalDevice")
 	return removeable || removeableMedia

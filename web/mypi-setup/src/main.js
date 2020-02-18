@@ -7,16 +7,9 @@ import VueRouter from 'vue-router'
 
 import App from './App.vue';
 import 'vuetify/dist/vuetify.min.css'
+import router from "./router";
 
 Vue.use(VueRouter)
-
-const router = new VueRouter({
-  mode: 'history',
-  base: __dirname,
-  routes: [
-    { path: '/', component: App },
-  ]
-})
 
 new Vue({
   router,

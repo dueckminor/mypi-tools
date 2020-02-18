@@ -4,34 +4,19 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/dueckminor/mypi-tools/go/fdisk"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
 	"github.com/gin-gonic/gin"
-	//	"github.com/gorilla/websocket"
+
+	"github.com/dueckminor/mypi-tools/go/gotty/localcommand"
+	"github.com/dueckminor/mypi-tools/go/gotty/server/ginhandler"
+
+	"github.com/dueckminor/mypi-tools/go/cmd"
+	_ "github.com/dueckminor/mypi-tools/go/cmd/cmdmakesd"
 )
-
-// var wsupgrader = websocket.Upgrader{
-// 	ReadBufferSize:  1024,
-// 	WriteBufferSize: 1024,
-// }
-
-// func wshandler(w http.ResponseWriter, r *http.Request) {
-// 	conn, err := wsupgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		//fmt.Println("Failed to set websocket upgrade: %+v", err)
-// 		return
-// 	}
-
-// 	for {
-// 		t, msg, err := conn.ReadMessage()
-// 		if err != nil {
-// 			break
-// 		}
-// 		conn.WriteMessage(t, msg)
-// 	}
-// }
 
 func setupDisk() error {
 	disks, err := fdisk.GetDisks()
@@ -53,6 +38,13 @@ func setupDisk() error {
 }
 
 func main() {
+	if len(os.Args) > 1 {
+		if cmd.IsAvailable(os.Args[1]) {
+			cmd.Execute(os.Args[1], os.Args[2:]...)
+			return
+		}
+	}
+
 	flag.Parse()
 
 	r := gin.Default()
@@ -81,8 +73,8 @@ func main() {
 		data, err := json.Marshal(diskInfos)
 		c.Data(200, "application/json", data)
 	})
-	r.POST("/api/actions/create_sd", func(c *gin.Context) {
-		type CreateSD struct {
+	r.POST("/api/actions/makesd", func(c *gin.Context) {
+		type MakeSD struct {
 			DiskName      string `json:"diskname,omitempty"`
 			AlpineVersion string `json:"alpineversion,omitempty"`
 			AlpineArch    string `json:"alpinearch,omitempty"`
@@ -91,9 +83,12 @@ func main() {
 
 	})
 
-	// r.GET("/ws", func(c *gin.Context) {
-	// 	wshandler(c.Writer, c.Request)
-	// })
+	r.GET("/ws", func(c *gin.Context) {
+		factory, err := localcommand.NewFactory(os.Args[0], []string{"makesd"}, &localcommand.Options{})
+		if err == nil {
+			ginhandler.Handler(c, factory)
+		}
+	})
 
 	if err != nil {
 		panic(err)
