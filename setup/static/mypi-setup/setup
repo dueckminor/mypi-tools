@@ -21,6 +21,10 @@ if [ -z "$(ifconfig)" ]; then
     /etc/init.d/networking --quiet start >/dev/null
 fi
 
+if [ -f /mypi-setup/bin/mypi-setup ]; then
+    /mypi-setup/bin/mypi-setup &
+fi
+
 exit 0
 
 #cd "/media/${BOOT_DEVICE_NAME}"

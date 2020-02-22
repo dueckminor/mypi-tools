@@ -10,6 +10,7 @@ import { WebTTY, protocols } from './GoTTY/webtty'
 import { ConnectionFactory } from "./GoTTY/websocket";
 export default {
     name: "XTerm",
+    props: ['path'],
     mounted() {
         this._xterm = new Xterm({fontFamily:"Hack, monospace"});
         this._xterm.open(this.$refs['xterm']);
@@ -21,7 +22,7 @@ export default {
             new_uri = "ws:";
         }
         new_uri += "//" + loc.host;
-        new_uri += "/ws";
+        new_uri += this.$props.path;
 
         this._factory = new ConnectionFactory(new_uri, protocols);
         this._wt = new WebTTY(this, this._factory, '', '');

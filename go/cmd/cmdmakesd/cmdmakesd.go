@@ -21,8 +21,10 @@ import (
 type cmdMakeSD struct{}
 
 type settings struct {
-	Hostname     string
-	DirSetup     string
+	Hostname string
+	DirSetup string
+	DirDist  string
+
 	BootDevice   string
 	RootDevice   string
 	WlanSSID     string
@@ -183,6 +185,19 @@ func createAPKOVL(tarfile string, settings settings) error {
 		return nil
 	})
 
+	mypiSetup := path.Join(settings.DirDist, "mypi-setup-linux-arm64")
+	stat, err := os.Stat(mypiSetup)
+	if err != nil {
+		return err
+	}
+	tarCreateFile(tw, "mypi-setup/bin/mypi-setup", 0755, stat.Size())
+	f, err := os.Open(mypiSetup)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = io.Copy(tw, f)
+
 	return err
 }
 
@@ -193,6 +208,7 @@ func (cmd cmdMakeSD) Execute(args []string) error {
 	settings := settings{
 		Hostname: args[0],
 		DirSetup: args[1],
+		DirDist:  args[2],
 	}
 
 	fmt.Println("")

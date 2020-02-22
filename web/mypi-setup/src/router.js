@@ -2,6 +2,7 @@ import Vue from "vue";
 import Router from "vue-router";
 import WizardSD from "./views/WizardSD.vue";
 import InitializedSD from "./views/InitializeSD.vue";
+import Terminal from "./views/Terminal.vue";
 import About from "./views/About.vue";
 
 Vue.use(Router);
@@ -24,6 +25,11 @@ const router = new Router({
       path: "/initializesd",
       name: "initializesd",
       component: InitializedSD
+    },
+    {
+      path: "/terminal",
+      name: "terminal",
+      component: Terminal
     },
     {
       path: "/about",

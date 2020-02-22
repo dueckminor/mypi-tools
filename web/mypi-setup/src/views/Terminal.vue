@@ -1,6 +1,6 @@
 <template>
     <v-container fluid fill-height>
-        <GoTTY path="/ws"></GoTTY>
+        <GoTTY path="/ws/terminal"></GoTTY>
     </v-container>
 </template>
 
