@@ -2,7 +2,8 @@
 
 set -e
 
-source /mypi-setup/config
+# shellcheck source=/dev/null
+. /mypi-setup/config
 
 setup-disk -m sys /mnt
 

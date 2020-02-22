@@ -1,4 +1,38 @@
-# MyPi-API
+# MyPi-Tools
+
+## Tools
+
+### mypi-setup
+
+Runs on your PC/Notebook and creates an SD-Card for a automated installation
+of Alpine-Linux on a Raspberry-PI. It's not necessary to connect a keyboard
+or display to your Raspberry-PI. All you need is a network cable and a power
+supply.
+
+When you start `mypi-setup` a browser window will open. Just follow the
+instructions and you will get a SD-Card ready for your Raspberry-PI. After
+you have inserted this SD-Card to your Raspberry-PI, `mypi-setup` will connect
+to it and completes the installation.
+
+### mypi-admin
+
+The admin UI running on your Raspberry-PI.
+
+### mypi-auth
+
+The user authentication service. Provides a Login-UI.
+
+### mypi-router
+
+Allows to add authentication in front of apps.
+
+### mypi-videostream
+
+Allows to access web-cams
+
+### mypi-owntracks
+
+Reacts on owntracks events. It opens my gate when I come home.
 
 ## Used Ports
 

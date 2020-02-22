@@ -138,7 +138,7 @@
             "program": "${workspaceFolder}/cmd/mypi-setup/main.go",
             "env": {},
             "args": [
-                "makesd",
+                "makesd","rpi2","${workspaceFolder}/setup"
             ]
         },
     ]

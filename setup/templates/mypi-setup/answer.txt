@@ -1,0 +1,25 @@
+KEYMAPOPTS="us us"
+
+HOSTNAMEOPTS="-n {{.Hostname}}"
+
+INTERFACESOPTS="auto lo
+iface lo inet loopback
+
+auto eth0
+iface eth0 inet dhcp
+    hostname {{.Hostname}}
+"
+
+TIMEZONEOPTS="-z UTC"
+
+PROXYOPTS=none
+
+APKREPOSOPTS="-f"
+
+SSHDOPTS="-c openssh"
+
+NTPOPTS="-c busybox"
+
+APKCACHEOPTS="none"
+
+LBUOPTS="none"

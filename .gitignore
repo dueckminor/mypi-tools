@@ -2,4 +2,5 @@ mypi.yml
 vendor
 main
 debug
+build
 tmp

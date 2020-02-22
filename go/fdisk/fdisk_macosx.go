@@ -147,7 +147,12 @@ type macosDisk struct {
 func newDiskMacos(deviceName string) (result macosDisk, err error) {
 	result.info, err = callDiskutil("info", "-plist", deviceName)
 	if err != nil {
-		return macosDisk{}, nil
+		return macosDisk{}, err
+	}
+
+	deviceName, err = result.info.getString("DeviceIdentifier")
+	if err != nil {
+		return macosDisk{}, err
 	}
 
 	partinfo, err := callDiskutil("list", "-plist", deviceName)
@@ -155,7 +160,7 @@ func newDiskMacos(deviceName string) (result macosDisk, err error) {
 	result.deviceName = deviceName
 	result.partitionNames, err = partinfo.GetPartitionNames(deviceName)
 	if err != nil {
-		return macosDisk{}, nil
+		return macosDisk{}, err
 	}
 	return result, err
 }
