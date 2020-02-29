@@ -1,5 +1,6 @@
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
 import '@mdi/font/css/materialdesignicons.css'
+import 'hack-font/build/web/hack.css'
 
 import Vue from 'vue';
 import vuetify from './plugins/vuetify';

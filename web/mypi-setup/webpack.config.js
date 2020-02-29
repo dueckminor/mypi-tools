@@ -1,5 +1,6 @@
 const VueLoaderPlugin = require('vue-loader/lib/plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   devtool: 'inline-source-map',
@@ -42,5 +43,21 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: './src/index.html'
     })
-  ]
+  ],
+  optimization: {
+    'minimize': true,
+    minimizer: [new TerserPlugin({
+        terserOptions: { 
+            compress: { 
+                pure_funcs: [
+                    'console.log', 
+                    'console.info', 
+                    'console.debug', 
+                    'console.warn'
+                ] 
+            } 
+         }
+    })],
+  },
 };
+

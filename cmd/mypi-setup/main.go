@@ -4,15 +4,17 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"net/http/httputil"
+	"net/url"
 	"os"
+	"runtime"
 
 	"github.com/dueckminor/mypi-tools/go/fdisk"
+	"github.com/dueckminor/mypi-tools/go/gotty/localcommand"
+	"github.com/dueckminor/mypi-tools/go/gotty/server/ginhandler"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
 	"github.com/gin-gonic/gin"
-
-	"github.com/dueckminor/mypi-tools/go/gotty/localcommand"
-	"github.com/dueckminor/mypi-tools/go/gotty/server/ginhandler"
 
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	_ "github.com/dueckminor/mypi-tools/go/cmd/cmdmakesd"
@@ -83,10 +85,26 @@ func main() {
 
 	})
 
+	targetURI, _ := url.ParseRequestURI("http://rpi2:8080")
+	proxy := httputil.NewSingleHostReverseProxy(targetURI)
+
 	r.GET("/ws", func(c *gin.Context) {
-		factory, err := localcommand.NewFactory(os.Args[0], []string{"makesd"}, &localcommand.Options{})
+		//proxy.ServeHTTP(c.Writer, c.Request)
+		//factory, err := localcommand.NewFactory(os.Args[0], []string{"makesd"}, &localcommand.Options{})
+		factory, err := localcommand.NewFactory("zsh", []string{"-l"}, &localcommand.Options{})
 		if err == nil {
 			ginhandler.Handler(c, factory)
+		}
+	})
+
+	r.GET("/ws/terminal", func(c *gin.Context) {
+		if runtime.GOOS == "linux" && runtime.GOARCH == "arm64" {
+			factory, err := localcommand.NewFactory("ash", []string{"-l"}, &localcommand.Options{})
+			if err == nil {
+				ginhandler.Handler(c, factory)
+			}
+		} else {
+			proxy.ServeHTTP(c.Writer, c.Request)
 		}
 	})
 
