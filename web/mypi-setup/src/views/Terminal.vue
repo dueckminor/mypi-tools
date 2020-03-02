@@ -1,6 +1,6 @@
 <template>
   <v-container style="height:90%" fluid>
-    <GoTTY style="height:100%" path="/ws/terminal"></GoTTY>
+    <GoTTY style="height:100%" :path="'/api/mypi/'+$route.params.host+'/terminal'"></GoTTY>
   </v-container>
 </template>
 <!-- ----------------------------------------------------------------------- -->
@@ -8,7 +8,7 @@
 import GoTTY from "../components/GoTTY";
 
 export default {
-  name: "initialize_sd",
+  name: "terminal",
   components: {
     GoTTY
   },

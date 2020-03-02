@@ -85,9 +85,6 @@ func main() {
 
 	})
 
-	targetURI, _ := url.ParseRequestURI("http://rpi2:8080")
-	proxy := httputil.NewSingleHostReverseProxy(targetURI)
-
 	r.GET("/ws", func(c *gin.Context) {
 		//proxy.ServeHTTP(c.Writer, c.Request)
 		//factory, err := localcommand.NewFactory(os.Args[0], []string{"makesd"}, &localcommand.Options{})
@@ -103,9 +100,16 @@ func main() {
 			if err == nil {
 				ginhandler.Handler(c, factory)
 			}
-		} else {
-			proxy.ServeHTTP(c.Writer, c.Request)
 		}
+	})
+
+	r.GET("/api/mypi/:host/terminal", func(c *gin.Context) {
+		req := c.Request
+		req.URL.Path = "/ws/terminal"
+		host := c.Params.ByName("host")
+		targetURI, _ := url.ParseRequestURI("http://" + host + ":8080")
+		proxy := httputil.NewSingleHostReverseProxy(targetURI)
+		proxy.ServeHTTP(c.Writer, req)
 	})
 
 	if err != nil {

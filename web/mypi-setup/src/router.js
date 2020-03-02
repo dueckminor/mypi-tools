@@ -27,7 +27,7 @@ const router = new Router({
       component: InitializedSD
     },
     {
-      path: "/terminal",
+      path: "/mypi/:host/terminal",
       name: "terminal",
       component: Terminal
     },

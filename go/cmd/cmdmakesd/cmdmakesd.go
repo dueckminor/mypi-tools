@@ -13,6 +13,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
 	"github.com/fatih/color"
@@ -24,6 +26,7 @@ type settings struct {
 	Hostname string
 	DirSetup string
 	DirDist  string
+	MypiUUID string
 
 	BootDevice   string
 	RootDevice   string
@@ -209,6 +212,7 @@ func (cmd cmdMakeSD) Execute(args []string) error {
 		Hostname: args[0],
 		DirSetup: args[1],
 		DirDist:  args[2],
+		MypiUUID: uuid.New().String(),
 	}
 
 	fmt.Println("")
@@ -265,6 +269,7 @@ func (cmd cmdMakeSD) Execute(args []string) error {
 	//extractTarGz(path.Join(os.Getenv("HOME"), "Downloads", "alpine-rpi-3.11.3-aarch64.tar.gz"), mountPoint)
 
 	createAPKOVL(path.Join(mountPoint, settings.Hostname+".apkovl.tar.gz"), settings)
+	ioutil.WriteFile(path.Join(mountPoint, "mypiuuid.txt"), []byte(settings.MypiUUID+"\n"), os.ModePerm)
 
 	return nil
 }

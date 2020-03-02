@@ -13,17 +13,39 @@ fi
 # shellcheck source=/dev/null
 . /mypi-setup/config
 
-# ensure that the time is not to far in the past
-date -s "@$(date -r /mypi-setup/config "+%s")"
+if [ "$(hostname)" = "localhost" ]; then
+    # shellcheck disable=SC2086
+    /sbin/setup-hostname ${HOSTNAMEOPTS}
+    /etc/init.d/hostname --quiet restart
+fi
 
 if [ -z "$(ifconfig)" ]; then
+    # there is no network configured yet... lets do it
     echo "${INTERFACESOPTS}" | /sbin/setup-interfaces -i
+    # start networking...
     /etc/init.d/networking --quiet start >/dev/null
+
+    # ensure that the time is not to far in the past
+    date -s "@$(date -r /mypi-setup/config "+%s")"
+
+    # but lets try to use NTP to get the correct time
+    # shellcheck disable=SC2086
+    /sbin/setup-ntp ${NTPOPTS}
 fi
 
 if [ -f /mypi-setup/bin/mypi-setup ]; then
     /mypi-setup/bin/mypi-setup &
 fi
+
+# if [ ! -f /tmp/setup-alpine.txt ]; then
+#     (
+#         echo ---- starting setup-alpine ----
+#         echo
+#         NOCOMMIT=1 setup-alpine -f /mypi-setup/answer.txt
+#         echo
+#         echo ---- finished setup-alpine ----
+#     ) > /tmp/setup-alpine.txt 2>&1
+# fi
 
 exit 0
 
