@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -204,16 +205,29 @@ func createAPKOVL(tarfile string, settings settings) error {
 	return err
 }
 
-func (cmd cmdMakeSD) Execute(args []string) error {
-
-	c := color.New(color.BgBlue).Add(color.FgHiYellow)
-
+func (cmd cmdMakeSD) ParseArgs(args []string) (parsedArgs interface{}, err error) {
 	settings := settings{
 		Hostname: args[0],
 		DirSetup: args[1],
 		DirDist:  args[2],
 		MypiUUID: uuid.New().String(),
 	}
+	return settings, nil
+}
+
+func (cmd cmdMakeSD) UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}, err error) {
+	settings := settings{}
+	err = json.Unmarshal(marshaledArgs, &settings)
+	return settings, err
+}
+
+func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
+	settings, ok := parsedArgs.(settings)
+	if !ok {
+		return os.ErrInvalid
+	}
+
+	c := color.New(color.BgBlue).Add(color.FgHiYellow)
 
 	fmt.Println("")
 	c.Print("                           ")

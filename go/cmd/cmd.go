@@ -3,7 +3,9 @@ package cmd
 import "os"
 
 type Cmd interface {
-	Execute(args []string) error
+	ParseArgs(args []string) (parsedArgs interface{}, err error)
+	UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}, err error)
+	Execute(parsedArgs interface{}) error
 }
 
 var (
@@ -19,10 +21,38 @@ func IsAvailable(name string) bool {
 	return ok
 }
 
-func Execute(name string, args ...string) error {
+func GetCommand(name string) (command Cmd, err error) {
+	cmd, ok := _cmd[name]
+	if !ok {
+		return nil, os.ErrNotExist
+	}
+	return cmd, nil
+}
+
+func ExecuteCmdline(name string, args ...string) error {
 	cmd, ok := _cmd[name]
 	if !ok {
 		return os.ErrNotExist
 	}
-	return cmd.Execute(args)
+
+	parsedArgs, err := cmd.ParseArgs(args)
+	if err != nil {
+		return err
+	}
+
+	return cmd.Execute(parsedArgs)
+}
+
+func Execute(name string, args []byte) error {
+	cmd, ok := _cmd[name]
+	if !ok {
+		return os.ErrNotExist
+	}
+
+	parsedArgs, err := cmd.UnmarshalArgs(args)
+	if err != nil {
+		return err
+	}
+
+	return cmd.Execute(parsedArgs)
 }

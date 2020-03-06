@@ -82,7 +82,7 @@ export default {
     };
   },
   mounted() {
-    axios({ method: "GET", url: "/api/disks" }).then(
+    axios({ method: "GET", url: "/api/hosts/localhost/disks" }).then(
       result => {
         var sd_cards = [];
         var selectionOK = false;

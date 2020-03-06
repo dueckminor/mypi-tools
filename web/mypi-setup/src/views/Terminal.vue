@@ -1,6 +1,6 @@
 <template>
   <v-container style="height:90%" fluid>
-    <GoTTY style="height:100%" :path="'/api/mypi/'+$route.params.host+'/terminal'"></GoTTY>
+    <GoTTY style="height:100%" :path="'/api/hosts/'+$route.params.host+'/terminal/webtty'"></GoTTY>
   </v-container>
 </template>
 <!-- ----------------------------------------------------------------------- -->
