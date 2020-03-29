@@ -15,11 +15,15 @@ jobs:
 
     - name: Check out code into the Go module directory
       uses: actions/checkout@v1
+      with:
+        path: src/github.com/dueckminor/mypi-tools
 
     - name: Get dependencies
       run: |
         mkdir -p "$(go env GOPATH)/bin"
         export PATH="$(go env GOPATH)/bin:${PATH}"
+        export GOPATH="$(pwd)"
+        cd src/github.com/dueckminor/mypi-tools
         if [ -f Gopkg.toml ]; then
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
@@ -28,4 +32,6 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v cmd/mypi-admin/main.go
+      run: |
+        cd src/github.com/dueckminor/mypi-tools
+        go build -v cmd/mypi-admin/main.go
