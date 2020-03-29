@@ -5,3 +5,5 @@ debug
 build
 tmp
 __debug_bin
+.DS_Store
+._.*

@@ -126,6 +126,8 @@
             "args": [
                 "--port=9500",
                 "--webpack-debug=http://localhost:9501",
+                "--dir-setup=${workspaceFolder}/setup",
+                "--dir-dist=${workspaceFolder}/build/mypi-setup"
                 //"--exec=${workspaceFolder}/scripts/mypi-setup/start_local_js.sh",
                 //"--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
             ]

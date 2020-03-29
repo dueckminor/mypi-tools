@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -21,18 +22,31 @@ import (
 	"github.com/fatih/color"
 )
 
+var (
+	dirSetup = flag.String("dir-setup", "", "the directory containing the setup files")
+	dirDist  = flag.String("dir-dist", "", "the directory containing the dist files")
+)
+
 type cmdMakeSD struct{}
 
+type settingsSSH struct {
+	AuthorizedKeys string
+}
+
 type settings struct {
-	Hostname string
-	DirSetup string
-	DirDist  string
-	MypiUUID string
+	Disk          string
+	Hostname      string
+	AlpineVersion string
+	AlpineArch    string
+	DirSetup      string
+	DirDist       string
+	MypiUUID      string
 
 	BootDevice   string
 	RootDevice   string
 	WlanSSID     string
 	WlanPassword string
+	SSH          settingsSSH
 }
 
 func extractTarGz(tarFile, destDir string) error {
@@ -113,7 +127,7 @@ func tarAddLink(tw *tar.Writer, filename, linkname string, mode int64) error {
 	return tw.WriteHeader(header)
 }
 
-func createAPKOVL(tarfile string, settings settings) error {
+func createAPKOVL(tarfile string, settings *settings) error {
 	file, err := os.Create(tarfile)
 	if err != nil {
 		return err
@@ -190,6 +204,7 @@ func createAPKOVL(tarfile string, settings settings) error {
 	})
 
 	mypiSetup := path.Join(settings.DirDist, "mypi-setup-linux-arm64")
+	fmt.Println("checking for mypi-setup:", mypiSetup)
 	stat, err := os.Stat(mypiSetup)
 	if err != nil {
 		return err
@@ -206,29 +221,50 @@ func createAPKOVL(tarfile string, settings settings) error {
 }
 
 func (cmd cmdMakeSD) ParseArgs(args []string) (parsedArgs interface{}, err error) {
-	settings := settings{
+	settings := &settings{
 		Hostname: args[0],
 		DirSetup: args[1],
 		DirDist:  args[2],
 		MypiUUID: uuid.New().String(),
 	}
+	if len(settings.DirSetup) == 0 {
+		settings.DirSetup = *dirSetup
+	}
+	if len(settings.DirDist) == 0 {
+		settings.DirDist = *dirDist
+	}
 	return settings, nil
 }
 
 func (cmd cmdMakeSD) UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}, err error) {
-	settings := settings{}
+	settings := &settings{}
 	err = json.Unmarshal(marshaledArgs, &settings)
+	if len(settings.DirSetup) == 0 {
+		settings.DirSetup = *dirSetup
+	}
+	if len(settings.DirDist) == 0 {
+		settings.DirDist = *dirDist
+	}
 	return settings, err
 }
 
+func createSSHKeys(settings *settings) error {
+	// ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key -N ""
+	// ssh-keygen -t rsa -b 3072 -f ssh_host_rsa_key -N ""
+	// ssh-keygen -t ecdsa -f ssh_host_ecdsa_key -N ""
+	// ssh-keygen -t ed25519 -f ssh_host_ed25519_key -N ""
+	return nil
+}
+
 func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
-	settings, ok := parsedArgs.(settings)
+	settings, ok := parsedArgs.(*settings)
 	if !ok {
 		return os.ErrInvalid
 	}
 
 	c := color.New(color.BgBlue).Add(color.FgHiYellow)
 
+	time.Sleep(time.Second)
 	fmt.Println("")
 	c.Print("                           ")
 	fmt.Println("")
@@ -238,7 +274,10 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	fmt.Println("")
 	fmt.Println("")
 
-	disk, err := fdisk.GetDisk("/dev/disk2")
+	fmt.Println("dir-dist", settings.DirDist)
+	fmt.Println("dir-setup", settings.DirSetup)
+
+	disk, err := fdisk.GetDisk(settings.Disk)
 	if err != nil {
 		panic(err)
 	}
@@ -247,12 +286,12 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 		return nil
 	}
 
-	// disk.InitializePartitions("MBR", fdisk.PartitionInfo{
-	// 	Size:   256 * 1024 * 1024,
-	// 	Format: "FAT32",
-	// 	Type:   7,
-	// 	Name:   "RPI-BOOT",
-	// })
+	disk.InitializePartitions("MBR", fdisk.PartitionInfo{
+		Size:   256 * 1024 * 1024,
+		Format: "FAT32",
+		Type:   7,
+		Name:   "RPI-BOOT",
+	})
 
 	fmt.Println("")
 	c.Print("                      ")
@@ -263,7 +302,7 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	fmt.Println("")
 	fmt.Println("")
 
-	disk, err = fdisk.GetDisk("/dev/disk2")
+	disk, err = fdisk.GetDisk(settings.Disk)
 	if err != nil {
 		panic(err)
 	}
@@ -280,10 +319,19 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 
 	fmt.Println(mountPoint)
 
-	//extractTarGz(path.Join(os.Getenv("HOME"), "Downloads", "alpine-rpi-3.11.3-aarch64.tar.gz"), mountPoint)
+	extractTarGz(path.Join(os.Getenv("HOME"), "Downloads", "alpine-rpi-3.11.3-aarch64.tar.gz"), mountPoint)
 
 	createAPKOVL(path.Join(mountPoint, settings.Hostname+".apkovl.tar.gz"), settings)
 	ioutil.WriteFile(path.Join(mountPoint, "mypiuuid.txt"), []byte(settings.MypiUUID+"\n"), os.ModePerm)
+
+	fmt.Println("")
+	c.Print("                   ")
+	fmt.Println("")
+	c.Print(" --- Succeeded --- ")
+	fmt.Println("")
+	c.Print("                   ")
+	fmt.Println("")
+	fmt.Println("")
 
 	return nil
 }

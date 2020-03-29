@@ -1,0 +1,52 @@
+#!/bin/sh
+
+set -e
+
+# shellcheck source=/dev/null
+. /mypi-setup/lib/mypi-lib
+
+echo ---- starting setup-alpine ----
+echo
+NOCOMMIT=1 setup-alpine -q -f /mypi-setup/answer.txt
+echo
+echo ---- finished setup-alpine ----
+
+apk add sfdisk jq e2fsprogs
+
+echo
+echo ---- checking boot-disk partitions ----
+
+BOOT_DISK="$(find_boot_disk)"
+BOOT_PARTITION="$(find_boot_partition)"
+
+echo "boot-disk: ${BOOT_DISK}"
+echo "boot-partition: ${BOOT_PARTITION}"
+
+read_partition_table "/dev/${BOOT_DISK}"
+
+if [ "${PARTITION_COUNT}" = "1" ]; then
+    # create a 4 GB SWAP Partition
+    echo "size=8388608, type=82" | sfdisk --append "/dev/${BOOT_DISK}" --force
+    echo "type=83" | sfdisk --append "/dev/${BOOT_DISK}" --force
+    reboot
+    exit 0
+fi
+
+if [ "${PARTITION_COUNT}" = "3" ]; then
+    ROOT_DEVICE="$(df / | tail -n 1 | cut -f 1 "-d ")"
+    if [ "${ROOT_DEVICE}" = "tmpfs" ]; then
+        yes | mkfs.ext4 "${PARTITION_ROOT_DEVICE}"
+        /mypi-setup/setup-disk
+
+        # setup-disk -m sys /mnt
+
+        # mount -o remount,rw /media/${BOOT_PARTITION}
+
+        # rm -f /media/${BOOT_PARTITION}/boot/*  
+        # cd /mnt       # We are in the second partition 
+        # rm boot/boot  # Drop the unused symbolink link
+
+        # mv boot/* /media/${BOOT_PARTITION}/boot/
+        # rm -Rf boot
+    fi
+fi

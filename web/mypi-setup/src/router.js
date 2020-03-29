@@ -3,6 +3,7 @@ import Router from "vue-router";
 import WizardSD from "./views/WizardSD.vue";
 import InitializedSD from "./views/InitializeSD.vue";
 import Terminal from "./views/Terminal.vue";
+import Setup from "./views/Setup.vue";
 import About from "./views/About.vue";
 
 Vue.use(Router);
@@ -30,6 +31,11 @@ const router = new Router({
       path: "/mypi/:host/terminal",
       name: "terminal",
       component: Terminal
+    },
+    {
+      path: "/mypi/:host/setup",
+      name: "setup",
+      component: Setup,
     },
     {
       path: "/about",

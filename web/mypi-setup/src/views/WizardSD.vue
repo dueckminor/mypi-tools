@@ -29,7 +29,7 @@
             name="hostname"
             label="Hostname"
             id="hostname"
-            :value="hostname"
+            v-model="hostname"
           ></v-text-field>
           <!--
             <v-text-field prepend-icon="lock" name="password" label="root-Password" id="root_password" type="password" :value="root_password"></v-text-field>
@@ -49,7 +49,12 @@
             label="SD-Card"
             :value="sd_card"
           ></v-select>
-          <v-btn color="primary" to="/initializesd">Continue</v-btn>
+          <v-btn color="primary" :to="{name:'initializesd', params:{
+            AlpineVersion: alpine_version,
+            AlpineArch: alpine_arch,
+            Hostname: hostname,
+            Disk: sd_card
+          }}">Continue</v-btn>
           <v-btn @click="step = 2">Back</v-btn>
         </v-stepper-content>
       </v-stepper>

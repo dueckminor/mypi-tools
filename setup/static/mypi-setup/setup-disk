@@ -3,15 +3,79 @@
 set -e
 
 # shellcheck source=/dev/null
-. /mypi-setup/config
+. /mypi-setup/lib/mypi-lib
 
-setup-disk -m sys /mnt
+BOOT_DISK="$(find_boot_disk)"
+read_partition_table "/dev/${BOOT_DISK}"
 
-mount -o remount,rw /media/${BOOT_DEVICE_NAME}
+mount -o remount,rw "/media/${PARTITION_BOOT_DEVICE_NAME}"
+mkdir -p /mnt
 
-rm -f /media/${BOOT_DEVICE_NAME}/boot/*  
-cd /mnt       # We are in the second partition 
-rm boot/boot  # Drop the unused symbolink link
+if [ "$(get_device_from_dir /mnt)" != "${PARTITION_ROOT_DEVICE}" ]; then
+    # root device not yet mounted
+    mount "${PARTITION_ROOT_DEVICE}" /mnt
+fi
 
-mv boot/* /media/${BOOT_DEVICE_NAME}/boot/
-rm -Rf boot
+################################################################################
+#
+# This is what I would like to do:
+#
+################################################################################
+#
+# setup-disk -m sys /mnt
+# 
+# rm -f /media/${PARTITION_BOOT_DEVICE}/boot/*  
+# cd /mnt       # We are in the second partition 
+# rm boot/boot  # Drop the unused symbolink link
+# 
+# mv boot/* /media/${PARTITION_BOOT_DEVICE}/boot/
+# rm -Rf boot
+#
+################################################################################
+#
+# But it doesn't work... now lets do it manually
+#
+################################################################################
+
+cd /mnt
+
+cp -a /bin /etc /home /lib /root /run /sbin /srv /usr /var .
+mkdir -p .modloop
+mkdir -p dev
+mkdir -p media
+mkdir -p proc
+mkdir -p sys
+mkdir -p tmp
+
+#cp "/media/${PARTITION_BOOT_DEVICE_NAME}/boot/"* boot/
+
+# Patch /etc/init.d/modloop to allow mounting modloop on /
+# shellcheck disable=SC2016
+sed -i etc/init.d/modloop 's|set --|[ "$dir" = "\/" ] \&\& dir=""; set --|'
+# shellcheck disable=SC2016
+sed -i etc/init.d/modloop 's| && $2 != "/"||'
+sed -i etc/init.d/modloop "/start()/s/$/\n\tmount \/media\/${PARTITION_BOOT_DEVICE_NAME}\n\tmount -o remount,rw \//"
+
+mkdir -p "media/${PARTITION_BOOT_DEVICE_NAME}" # It's the mount point for the first partition on the next reboot
+
+ln -s "media/${PARTITION_BOOT_DEVICE_NAME}/boot" boot
+
+echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0" >> etc/fstab
+if [ -n "${PARTITION_SWAP_DEVICE}" ]; then
+    echo "${PARTITION_SWAP_DEVICE} none swap sw 0 0" >> etc/fstab
+    rc-service swap start
+fi
+
+sed -i '/cdrom/d' etc/fstab   # Of course, you don't have any cdrom or floppy on the Raspberry Pi
+sed -i '/floppy/d' etc/fstab
+
+echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0" >> etc/fstab
+
+sed -i '/[0-9]\/community/s/^#//' etc/apk/repositories   # But enable the repository for community if you want vim, mc, php, apache, nginx, etc.
+
+cp -a /mypi-setup /mnt
+cp -a /etc/init.d/mypi-setup /mnt/etc/init.d/
+cp -a /etc/runlevels/default/mypi-setup /mnt//etc/runlevels/default
+
+# switch to new root filesystem
+sed -i "s|^|root=${PARTITION_ROOT_DEVICE} |" "/media/${PARTITION_BOOT_DEVICE_NAME}/cmdline.txt"

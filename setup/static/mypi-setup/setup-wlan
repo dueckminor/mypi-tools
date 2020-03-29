@@ -3,7 +3,8 @@
 set -x
 set -e
 
-source /mypi-setup/config
+# shellcheck source=/dev/null
+. /mypi-setup/config
 
 apk add wireless-tools wpa_supplicant
 ip link | grep wlan0

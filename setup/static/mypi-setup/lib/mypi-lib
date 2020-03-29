@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# shellcheck source=/dev/null
+. /mypi-setup/config
+
+find_boot_partition() {
+    for CANDIDATE in /media/*/mypiuuid.txt
+    do
+        CANDIDATE_UUID="$(cat "${CANDIDATE}")"
+        if [ "${CANDIDATE_UUID}" = "${MYPI_UUID}" ]
+        then
+            basename "$(dirname "${CANDIDATE}")"
+            return 0
+        fi
+    done
+    return 1
+}
+
+find_boot_disk() {
+    basename "$(readlink -f "/sys/class/block/$(find_boot_partition)/..")"
+}
+
+get_device_name() {
+    echo "${1}" | sed 's,^/dev/,,'
+}
+
+get_device_from_dir() {
+    df "${1}" | tail -n 1 | cut -d" " -f 1
+}
+
+read_partition_table() {
+    PARTITION_TABLE="$(sfdisk --json "/dev/${BOOT_DISK}")"
+    PARTITION_NAMES="$(echo "${PARTITION_TABLE}" | jq -r .partitiontable.partitions[].node)"
+    PARTITION_COUNT="$(echo "${PARTITION_NAMES}" | wc -l)"
+    PARTITION_BOOT_DEVICE="$(echo "${PARTITION_TABLE}" | jq -r '.partitiontable.partitions[] | select(.type=="b" ) | .node')"
+    PARTITION_SWAP_DEVICE="$(echo "${PARTITION_TABLE}" | jq -r '.partitiontable.partitions[] | select(.type=="82") | .node')"
+    PARTITION_ROOT_DEVICE="$(echo "${PARTITION_TABLE}" | jq -r '.partitiontable.partitions[] | select(.type=="83") | .node')"
+
+    PARTITION_BOOT_DEVICE_NAME="$(get_device_name "${PARTITION_BOOT_DEVICE}")"
+    PARTITION_SWAP_DEVICE_NAME="$(get_device_name "${PARTITION_SWAP_DEVICE}")"
+    PARTITION_ROOT_DEVICE_NAME="$(get_device_name "${PARTITION_ROOT_DEVICE}")"
+
+    export PARTITION_TABLE
+    export PARTITION_NAMES
+    export PARTITION_COUNT
+    export PARTITION_BOOT_DEVICE
+    export PARTITION_SWAP_DEVICE
+    export PARTITION_ROOT_DEVICE
+    export PARTITION_BOOT_DEVICE_NAME
+    export PARTITION_SWAP_DEVICE_NAME
+    export PARTITION_ROOT_DEVICE_NAME
+}

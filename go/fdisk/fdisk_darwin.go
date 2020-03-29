@@ -229,6 +229,10 @@ func (dev macosDisk) InitializePartitions(Type string, partitionInfos ...Partiti
 	return nil
 }
 
+func (dev macosDisk) CreatePartitions(partitionInfos ...PartitionInfo) error {
+	return os.ErrInvalid
+}
+
 func getPartitionNames(diskDevice string, disksAndPartitions []string) (result []string) {
 	for _, diskOrPartition := range disksAndPartitions {
 		if (len(diskOrPartition) > len(diskDevice)) &&

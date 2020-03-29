@@ -27,4 +27,5 @@ type Disk interface {
 	IsRemovable() bool
 	GetPartitions() ([]Partition, error)
 	InitializePartitions(Type string, partitionInfos ...PartitionInfo) error
+	CreatePartitions(partitionInfos ...PartitionInfo) error
 }

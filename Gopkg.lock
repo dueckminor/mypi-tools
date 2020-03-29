@@ -250,14 +250,6 @@
   version = "1.0.0"
 
 [[projects]]
-  digest = "1:3e2fbf3f6d30c4c009be006f9d2a9eaefc804d8f6b991e88cb793b87318cc5bc"
-  name = "github.com/kr/pty"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "24b51915630e1d9d3c6adf15a3a96796bbc3cd43"
-  version = "v1.1.8"
-
-[[projects]]
   digest = "1:4a29eeb25603debe8f2098a9902c4d3851034cf70d33be428826e86e8c30a1b0"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
@@ -405,6 +397,7 @@
   input-imports = [
     "docker.io/go-docker",
     "docker.io/go-docker/api/types",
+    "github.com/creack/pty",
     "github.com/dgrijalva/jwt-go",
     "github.com/docker/docker/api/types",
     "github.com/docker/docker/api/types/container",
@@ -421,7 +414,6 @@
     "github.com/gin-gonic/gin",
     "github.com/google/uuid",
     "github.com/gorilla/websocket",
-    "github.com/kr/pty",
     "github.com/pkg/errors",
     "github.com/pquerna/otp",
     "github.com/pquerna/otp/totp",

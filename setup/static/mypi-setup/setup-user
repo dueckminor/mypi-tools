@@ -6,7 +6,7 @@ set -e
 # shellcheck source=/dev/null
 . /mypi-setup/config
 
-USERNAME="pi2"
+USERNAME="pi"
 
 apk add sudo bash
 

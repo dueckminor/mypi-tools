@@ -1,5 +1,4 @@
-BOOT_DEVICE_NAME="{{.BootDevice}}"
-ROOT_DEVICE_NAME="{{.RootDevice}}"
 WLAN_SSID="{{.WlanSSID}}"
 WLAN_PASSWORD="{{.WlanPassword}}"
 MYPI_UUID="{{.MypiUUID}}"
+SSH_AUTHORIZED_KEYS="{{.SSH.AuthorizedKeys}}"

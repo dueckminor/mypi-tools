@@ -7,6 +7,11 @@ if [ ! -f /mypi-setup/config ]; then
     exit 0
 fi
 
+if [ -n "$(pgrep /mypi-setup/bin/mypi-setup 2>/dev/null)" ]; then
+    echo "mypi-setup is already running..."
+    exit 0
+fi
+
 # shellcheck source=/dev/null
 . /mypi-setup/answer.txt
 
