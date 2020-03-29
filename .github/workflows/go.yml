@@ -20,6 +20,7 @@ jobs:
 
     - name: Get dependencies
       run: |
+        tree .
         mkdir -p "$(go env GOPATH)/bin"
         export PATH="$(go env GOPATH)/bin:${PATH}"
         export GOPATH="$(pwd)"
