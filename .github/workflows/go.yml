@@ -20,16 +20,9 @@ jobs:
 
     - name: Get dependencies
       run: |
-        echo "env:"
-        env
-        echo "dir:"
-        pwd
-        echo "files:"
-        find .
         mkdir -p "$(go env GOPATH)/bin"
         export PATH="$(go env GOPATH)/bin:${PATH}"
-        export GOPATH="$(pwd)"
-        cd src/github.com/dueckminor/mypi-tools
+        export GOPATH="${RUNNER_WORKSPACE}"
         if [ -f Gopkg.toml ]; then
             curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
             dep ensure
@@ -39,5 +32,4 @@ jobs:
 
     - name: Build
       run: |
-        cd src/github.com/dueckminor/mypi-tools
         go build -v cmd/mypi-admin/main.go
