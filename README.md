@@ -1,5 +1,8 @@
 # MyPi-Tools
 
+![JS](https://github.com/dueckminor/mypi-tools/workflows/JS/badge.svg)
+![Go](https://github.com/dueckminor/mypi-tools/workflows/Go/badge.svg)
+
 ## Tools
 
 ### mypi-setup
