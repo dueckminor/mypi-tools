@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
+
+test_web() {
+  pushd "${DIR_ROOT}/web/${1}" > /dev/null
+    npm install
+    npm run build
+  popd > /dev/null
+}
+
+test_web mypi-admin
+test_web mypi-auth
+test_web mypi-pwa
+test_web mypi-setup
+test_web mypi-videostream
