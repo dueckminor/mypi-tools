@@ -21,4 +21,4 @@ jobs:
     - name: Build
       run: |
         export GOPATH="${RUNNER_WORKSPACE}"
-        ./scripts/test-web
+        ./scripts/test-golang
