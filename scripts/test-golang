@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
+
+pushd "${GOPATH}/src/github.com/dueckminor/mypi-tools" > /dev/null
+  if [[ "$(pwd)" != "${DIR_ROOT}" ]]; then
+    echo "Please checkout your sources here:"
+    echo "  $(pwd)"
+    exit 1
+  fi
+popd > /dev/null
+
+mkdir -p "${GOPATH}/bin"
+export PATH="${GOPATH}/bin:${PATH}"
+
+if [[ ! -f "${GOPATH}/bin/dep" ]]; then
+    echo "installing dep..."
+    curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+fi
+
+echo "getting dependencies..."
+
+cd "${DIR_ROOT}"
+dep ensure
+
+echo "compiling mypi-setup..."
+mkdir -p "${DIR_ROOT}/build/mypi-setup"
+GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-setup/mypi-setup-linux-arm64" cmd/mypi-setup/*.go
+GOOS=linux GOARCH=arm go build -o "${DIR_ROOT}/build/mypi-setup/mypi-setup-linux-arm" cmd/mypi-setup/*.go
+GOOS=darwin GOARCH=amd64 go build -o "${DIR_ROOT}/build/mypi-setup/mypi-setup-darwin-amd64" cmd/mypi-setup/*.go
+
+echo "compiling mypi-admin..."
+mkdir -p "${DIR_ROOT}/build/mypi-admin"
+GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-admin/mypi-admin-linux-arm64" cmd/mypi-admin/*.go
+GOOS=linux GOARCH=arm go build -o "${DIR_ROOT}/build/mypi-admin/mypi-admin-linux-arm" cmd/mypi-admin/*.go
+
+echo "compiling mypi-videostream..."
+mkdir -p "${DIR_ROOT}/build/mypi-videostream"
+GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-videostream/mypi-videostream-linux-arm64" cmd/mypi-admin/*.go
+GOOS=linux GOARCH=arm go build -o "${DIR_ROOT}/build/mypi-videostream/mypi-videostream-linux-arm" cmd/mypi-admin/*.go
+
+echo "compiling mypi-owntracks..."
+mkdir -p "${DIR_ROOT}/build/mypi-owntracks"
+GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-owntracks/mypi-owntracks-linux-arm64" cmd/mypi-admin/*.go
+GOOS=linux GOARCH=arm go build -o "${DIR_ROOT}/build/mypi-owntracks/mypi-owntracks-linux-arm" cmd/mypi-admin/*.go

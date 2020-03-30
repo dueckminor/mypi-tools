@@ -18,19 +18,7 @@ jobs:
       with:
         path: src/github.com/dueckminor/mypi-tools
 
-    - name: Get dependencies
-      run: |
-        export GOPATH="${RUNNER_WORKSPACE}"
-        mkdir -p "${GOPATH}/bin"
-        export PATH="${GOPATH}/bin:${PATH}"
-        if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
-        else
-            go get -v -t -d ./...
-        fi
-
     - name: Build
       run: |
         export GOPATH="${RUNNER_WORKSPACE}"
-        go build -v cmd/mypi-admin/main.go
+        ./scripts/test-web
