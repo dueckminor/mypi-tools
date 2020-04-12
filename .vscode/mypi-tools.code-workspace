@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "/opt/mypi"
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"MYPI",
+			"bcrypt",
+			"devtool",
+			"dueckminor",
+			"gonic",
+			"mqtt",
+			"mypi",
+			"oauth",
+			"woff"
+		],
+		"git.ignoreLimitWarning": true
+	}
+}
