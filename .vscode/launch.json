@@ -42,7 +42,7 @@
                 "--port=9000",
                 "--webpack-debug=http://localhost:9001",
                 "--exec=${workspaceFolder}/scripts/mypi-admin/start_local_js.sh",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+                "--mypi-root=${workspaceFolder}/.mypi"
             ]
         },
         {
@@ -56,7 +56,7 @@
                 "--port=9100",
                 "--webpack-debug=http://localhost:9101",
                 "--exec=${workspaceFolder}/scripts/mypi-auth/start_local_js.sh",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+                "--mypi-root=${workspaceFolder}/.mypi"
             ]
         },
         {
@@ -72,7 +72,7 @@
                 //"--target=http://rpi.fritz.box:1880",
                 "--port=9200",
                 "--client-id=sample",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+                "--mypi-root=${workspaceFolder}/.mypi"
              ]
         },
         {
@@ -86,8 +86,8 @@
                 "--auth=http://localhost:9100",
                 "--port=9200",
                 "--client-id=sample",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi",
-                "${workspaceFolder}/../mypi-workspace/.mypi/router.yml"
+                "--mypi-root=${workspaceFolder}/.mypi",
+                "${workspaceFolder}/.mypi/router.yml"
              ]
         },
         {
@@ -101,7 +101,7 @@
                 "--port=9300",
                 "--webpack-debug=http://localhost:9301",
                 "--exec=${workspaceFolder}/scripts/mypi-videostream/start_local_js.sh",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+                "--mypi-root=${workspaceFolder}/.mypi"
             ]
         },
         {
@@ -113,7 +113,7 @@
             "env": {},
             "args": [
                 "--port=9400",
-                "--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+                "--mypi-root=${workspaceFolder}/.mypi"
             ]
         },
         {
@@ -129,7 +129,7 @@
                 "--dir-setup=${workspaceFolder}/setup",
                 "--dir-dist=${workspaceFolder}/build/mypi-setup"
                 //"--exec=${workspaceFolder}/scripts/mypi-setup/start_local_js.sh",
-                //"--mypi-root=${workspaceFolder}/../mypi-workspace/.mypi"
+                //"--mypi-root=${workspaceFolder}/.mypi"
             ]
         },
         {
