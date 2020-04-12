@@ -47,6 +47,7 @@ Reacts on owntracks events. It opens my gate when I come home.
 | videostream | 9300 | 9301         |
 | owntracks   | 9400 | N/A          |
 | setup       | 9500 | 9501         |
+| control     | 9600 | 9601         |
 
 ## Dev-Environment
 

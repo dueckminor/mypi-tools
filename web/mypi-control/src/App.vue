@@ -1,31 +1,60 @@
 <template>
-  <iframe ref="iframe" width="100%" height="100%"></iframe>
+  <v-app>
+    <v-app-bar
+      app
+      color="primary"
+      dark
+    >
+      <div class="d-flex align-center">
+        <v-img
+          alt="Vuetify Logo"
+          class="shrink mr-2"
+          contain
+          src="https://cdn.vuetifyjs.com/images/logos/vuetify-logo-dark.png"
+          transition="scale-transition"
+          width="40"
+        />
+
+        <v-img
+          alt="Vuetify Name"
+          class="shrink mt-1 hidden-sm-and-down"
+          contain
+          min-width="100"
+          src="https://cdn.vuetifyjs.com/images/logos/vuetify-name-dark.png"
+          width="100"
+        />
+      </div>
+
+      <v-spacer></v-spacer>
+
+      <v-btn
+        href="https://github.com/vuetifyjs/vuetify/releases/latest"
+        target="_blank"
+        text
+      >
+        <span class="mr-2">Latest Release</span>
+        <v-icon>mdi-open-in-new</v-icon>
+      </v-btn>
+    </v-app-bar>
+
+    <v-content>
+      <HelloWorld/>
+    </v-content>
+  </v-app>
 </template>
 
-<style>
-body, html
-{
-    margin: 0; padding: 0; height: 100%; overflow: hidden;
-}
-#content
-{
-    position:absolute; left: 0; right: 0; bottom: 0; top: 0px; 
-}
-</style>
-
-
 <script>
+//import HelloWorld from './components/HelloWorld';
+
 export default {
-  name: 'app',
-  data: function () {
-    return {
-    }
+  name: 'App',
+
+  components: {
+    //HelloWorld,
   },
-  methods: {
-  },
-  mounted: function() {
-    var rnd = Math.floor(Math.random()*100000) + 1
-    this.$refs.iframe.src = "https://nodered.rh94.dueckminor.de/nodered/ui?time="+rnd;
-  }
-}
+
+  data: () => ({
+    //
+  }),
+};
 </script>
