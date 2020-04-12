@@ -143,5 +143,21 @@
                 "makesd","rpi2","${workspaceFolder}/setup"
             ]
         },
+        {
+            "name": "Launch - Control",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-control/main.go",
+            "env": {},
+            "args": [
+                "--port=9600",
+                "--webpack-debug=http://localhost:9601",
+                //"--dir-setup=${workspaceFolder}/setup",
+                //"--dir-dist=${workspaceFolder}/build/mypi-setup"
+                //"--exec=${workspaceFolder}/scripts/mypi-control/start_local_js.sh",
+                //"--mypi-root=${workspaceFolder}/.mypi"
+            ]
+        },
     ]
 }
