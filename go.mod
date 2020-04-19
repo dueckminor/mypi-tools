@@ -22,6 +22,7 @@ require (
 	github.com/gin-gonic/gin v1.6.2
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/google/uuid v1.1.1
+	github.com/googollee/go-socket.io v1.4.3
 	github.com/gorilla/websocket v1.4.2
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect
