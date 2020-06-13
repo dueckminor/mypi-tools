@@ -5,19 +5,11 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/dueckminor/mypi-tools/go/gotty/webtty"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
 	"github.com/gin-gonic/gin"
 	socketio "github.com/googollee/go-socket.io"
-	"github.com/gorilla/websocket"
 )
-
-var wsupgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	Subprotocols:    webtty.Protocols,
-}
 
 func main() {
 	flag.Parse()
