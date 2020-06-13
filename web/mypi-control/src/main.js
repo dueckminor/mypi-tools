@@ -3,13 +3,15 @@ import VueSocketIO from 'vue-socket.io';
 //import VueSocketIOExt from 'vue-socket.io-extended';
 //import * as io from 'socket.io-client'
 import App from './App.vue'
+import vuetify from './plugins/vuetify';
 import Vuetify from './plugins/vuetify';
+import VueGraph from 'vue-graph'
 import router from './router'
 import store from './store'
 
 Vue.config.productionTip = false
 Vue.use(Vuetify)
-
+Vue.use(VueGraph)
 
 Vue.use(new VueSocketIO({
   debug: true,
@@ -25,6 +27,7 @@ Vue.use(new VueSocketIO({
 
 new Vue({
   router,
+  vuetify,
   store,
   render: h => h(App)
 }).$mount('#app')
