@@ -9,4 +9,5 @@ import (
 func TestStringsContains(t *testing.T) {
 	g := NewGomegaWithT(t)
 	g.Expect(StringsContains([]string{"foo", "bar"}, "foo")).To(BeTrue())
+	g.Expect(StringsContains([]string{"foo", "bar"}, "foobar")).To(BeFalse())
 }
