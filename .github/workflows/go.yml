@@ -22,3 +22,8 @@ jobs:
       run: |
         export GOPATH="${RUNNER_WORKSPACE}"
         ./scripts/test-golang
+
+    - name: Upload coverage results
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

@@ -47,13 +47,13 @@ var wsupgrader = websocket.Upgrader{
 func Handler(ctx context.Context, w http.ResponseWriter, r *http.Request, f Factory) {
 	conn, err := wsupgrader.Upgrade(w, r, nil)
 	if err != nil {
-		fmt.Println("Failed to set websocket upgrade: %+v", err)
+		fmt.Println("Failed to set websocket upgrade: %V", err)
 		return
 	}
 
 	srv, err := NewServer(f)
 	if err != nil {
-		fmt.Println("Failed to set websocket upgrade: %+v", err)
+		fmt.Println("Failed to set websocket upgrade: %V", err)
 		return
 	}
 	srv.ProcessWSConn(ctx, conn)

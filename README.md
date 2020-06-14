@@ -2,6 +2,7 @@
 
 ![JS](https://github.com/dueckminor/mypi-tools/workflows/JS/badge.svg)
 ![Go](https://github.com/dueckminor/mypi-tools/workflows/Go/badge.svg)
+[![Codecov](https://codecov.io/gh/dueckminor/mypi-tools/branch/master/graph/badge.svg)](https://codecov.io/gh/dueckminor/mypi-tools)
 [![Go Report Card](https://goreportcard.com/badge/github.com/dueckminor/mypi-tools)](https://goreportcard.com/report/github.com/dueckminor/mypi-tools)
 
 ## Tools

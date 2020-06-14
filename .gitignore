@@ -8,3 +8,4 @@ __debug_bin
 .DS_Store
 ._.*
 .mypi
+coverage.txt
