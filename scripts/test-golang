@@ -4,17 +4,6 @@ set -e
 
 DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
 
-pushd "${GOPATH}/src/github.com/dueckminor/mypi-tools" > /dev/null
-  if [[ "$(pwd)" != "${DIR_ROOT}" ]]; then
-    echo "Please checkout your sources here:"
-    echo "  $(pwd)"
-    exit 1
-  fi
-popd > /dev/null
-
-mkdir -p "${GOPATH}/bin"
-export PATH="${GOPATH}/bin:${PATH}"
-
 echo "compiling mypi-setup..."
 mkdir -p "${DIR_ROOT}/build/mypi-setup"
 GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-setup/mypi-setup-linux-arm64" cmd/mypi-setup/*.go
