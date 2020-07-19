@@ -1,6 +1,7 @@
 package ginutil
 
 import (
+	"crypto/tls"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -9,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SingleHostReverseProxy(target string) gin.HandlerFunc {
+func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 	url, _ := url.Parse(target)
 	proxy := httputil.NewSingleHostReverseProxy(url)
 
@@ -20,6 +21,14 @@ func SingleHostReverseProxy(target string) gin.HandlerFunc {
 			resp.Header.Set("Location", newLocation)
 		}
 		return nil
+	}
+
+	for _, option := range options {
+		if option == "insecure" {
+			proxy.Transport = &http.Transport{
+				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			}
+		}
 	}
 
 	return func(c *gin.Context) {

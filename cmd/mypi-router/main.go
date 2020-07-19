@@ -18,6 +18,7 @@ import (
 type RouteConfig struct {
 	Hostname string `yaml: "hostname"`
 	Target   string `yaml: "target"`
+	Insecure bool   `yaml: "insecure"`
 }
 type RedirectConfig struct {
 	Source string `yaml: "source"`
@@ -118,7 +119,12 @@ func main() {
 			targetURI = route.Target
 			continue
 		}
-		r.Use(ginutil.OnHostname(route.Hostname, ginutil.SingleHostReverseProxy(route.Target)))
+		if route.Insecure {
+			r.Use(ginutil.OnHostname(route.Hostname, ginutil.SingleHostReverseProxy(route.Target, "insecure")))
+		} else {
+			r.Use(ginutil.OnHostname(route.Hostname, ginutil.SingleHostReverseProxy(route.Target)))
+		}
+
 	}
 
 	if len(targetURI) > 0 {
