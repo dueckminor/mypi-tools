@@ -16,18 +16,18 @@ import (
 )
 
 type RouteConfig struct {
-	Hostname string `yaml: "hostname"`
-	Target   string `yaml: "target"`
-	Insecure bool   `yaml: "insecure"`
+	Hostname string `yaml:"hostname"`
+	Target   string `yaml:"target"`
+	Insecure bool   `yaml:"insecure"`
 }
 type RedirectConfig struct {
-	Source string `yaml: "source"`
-	Target string `yaml: "target"`
+	Source string `yaml:"source"`
+	Target string `yaml:"target"`
 }
 
 type RouterConfig struct {
-	Routes    []RouteConfig    `yaml: "routes,omitempty"`
-	Redirects []RedirectConfig `yaml: "redirects,omitempty"`
+	Routes    []RouteConfig    `yaml:"routes,omitempty"`
+	Redirects []RedirectConfig `yaml:"redirects,omitempty"`
 }
 
 var (

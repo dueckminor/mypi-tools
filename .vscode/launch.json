@@ -76,6 +76,18 @@
              ]
         },
         {
+            "name": "Launch - Gateway",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${workspaceFolder}/cmd/mypi-gateway/mypi-gateway.go",
+            "env": {},
+            "args": [ 
+                "--port=8443",
+                "${workspaceFolder}/tmp/gateway.yml"
+             ]
+        },
+        {
             "name": "Launch - Router with config",
             "type": "go",
             "request": "launch",
