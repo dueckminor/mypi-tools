@@ -5,29 +5,36 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/util/network"
 )
 
 var (
-	target       string
-	port         int
-	identityCert string
-	identityKey  string
+	target              string
+	portHTTP            int
+	portHTTPS           int
+	identityCert        string
+	identityKey         string
+	gatewayInternalName string
 )
 
 func init() {
 	flag.StringVar(&target, "target", "", "the target (<host>:<port>)")
-	flag.IntVar(&port, "port", 7757, "the tunnelthing port")
+	flag.IntVar(&portHTTPS, "https-port", 8443, "the listening port for https")
+	flag.IntVar(&portHTTP, "http-port", -1, "the listening port for http")
 	flag.StringVar(&identityCert, "identity-cert", "", "the tls server certificate")
 	flag.StringVar(&identityKey, "identity-key", "", "the tls server certificate")
+	flag.StringVar(&gatewayInternalName, "router-name", "", "the (internal) name of the router (fritz.box, 192.168.0.1, ...)")
 }
 
 type CertConfig struct {
@@ -161,6 +168,15 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 func main() {
 	flag.Parse()
 
+	if len(gatewayInternalName) > 0 {
+		network.SetRouterInternalName(gatewayInternalName)
+	}
+
+	ip, _ := network.GetRouterInternalIP()
+	fmt.Println("Router internal IP:", ip)
+	ip, _ = network.GetRouterExternalIP()
+	fmt.Println("Router external IP:", ip)
+
 	var gatewayConfig *GatewayConfig
 
 	nArgs := flag.CommandLine.NArg()
@@ -180,8 +196,10 @@ func main() {
 		})
 	}
 
+	fmt.Println("Checking certificates...")
 	var err error
 	for _, certConfig := range gatewayConfig.Certs {
+		fmt.Println(certConfig.CertFile)
 		certConfig.cert, err = tls.LoadX509KeyPair(certConfig.CertFile, certConfig.KeyFile)
 		if err != nil {
 			panic(err)
@@ -191,6 +209,7 @@ func main() {
 			panic(err)
 		}
 		for _, dnsName := range x509Cert.DNSNames {
+			fmt.Println("  ", dnsName)
 			if strings.HasPrefix(dnsName, "*.") {
 				certConfig.domainNames = append(certConfig.domainNames, dnsName[2:])
 				for _, hostConfig := range gatewayConfig.Hosts {
@@ -225,11 +244,27 @@ func main() {
 		}
 	}()
 
-	incoming, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		log.Fatalf("could not start server on %d: %v", port, err)
+	if portHTTP > 0 {
+		http.HandleFunc("/.well-known/acme-challenge", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, "ACME-CHALLENGE: %q", html.EscapeString(r.Host))
+		})
+		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			target := "https://" + r.Host + r.URL.Path
+			if len(r.URL.RawQuery) > 0 {
+				target += "?" + r.URL.RawQuery
+			}
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
+		})
+		go func() {
+			http.ListenAndServe(fmt.Sprintf(":%d", portHTTP), nil)
+		}()
 	}
-	fmt.Printf("server running on %d\n", port)
+
+	incoming, err := net.Listen("tcp", fmt.Sprintf(":%d", portHTTPS))
+	if err != nil {
+		log.Fatalf("could not start server on %d: %v", portHTTPS, err)
+	}
+	fmt.Printf("server running on %d\n", portHTTPS)
 
 	go func() {
 		for {
