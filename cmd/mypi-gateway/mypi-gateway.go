@@ -109,6 +109,19 @@ func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
 			return hostConfig
 		}
 	}
+	if strings.HasPrefix(serverName, "*.") {
+		return nil
+	}
+	serverNameParts := strings.SplitN(serverName, ".", 2)
+	if len(serverNameParts) != 2 {
+		return nil
+	}
+	serverName = "*." + serverNameParts[1]
+	for _, hostConfig := range gateway.Hosts {
+		if hostConfig.Name == serverName {
+			return hostConfig
+		}
+	}
 	return nil
 }
 
@@ -128,6 +141,9 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 		fmt.Println("ServerName:", serverName)
 
 		hostConfig = gateway.getHostConfig(serverName)
+		if nil == hostConfig {
+			return nil, os.ErrInvalid
+		}
 		return &tls.Config{
 			Certificates: []tls.Certificate{hostConfig.certConfig.cert},
 		}, nil
@@ -151,6 +167,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 	if hostConfig.TLS {
 		conf := &tls.Config{
 			InsecureSkipVerify: true,
+			ServerName:         serverName, // Is this rockstor compatible??
 		}
 		targetConn, err = tls.Dial("tcp", hostConfig.Target, conf)
 	} else {
