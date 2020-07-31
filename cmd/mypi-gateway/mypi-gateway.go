@@ -142,8 +142,10 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 
 		hostConfig = gateway.getHostConfig(serverName)
 		if nil == hostConfig {
+			fmt.Println("-> dropped")
 			return nil, os.ErrInvalid
 		}
+		fmt.Println("->", hostConfig.Target)
 		return &tls.Config{
 			Certificates: []tls.Certificate{hostConfig.certConfig.cert},
 		}, nil
