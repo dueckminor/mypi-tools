@@ -46,16 +46,16 @@ type CertConfig struct {
 }
 
 type HostConfig struct {
-	Name       string `yaml:"name"`
-	Target     string `yaml:"target"`
-	TLS        bool   `yaml:"tls"`
-	certConfig *CertConfig
+	Name   string `yaml:"name"`
+	Target string `yaml:"target"`
+	Mode   string `yaml:"mode"`
 }
 
 type GatewayConfig struct {
 	Certs      []*CertConfig `yaml:"certs"`
 	Hosts      []*HostConfig `yaml:"hosts"`
 	certByName map[string]*CertConfig
+	hostByName map[string]*HostConfig
 }
 
 type connWrapper struct {
@@ -64,32 +64,56 @@ type connWrapper struct {
 	buff      []byte
 }
 
-func (w connWrapper) Read(b []byte) (n int, err error) {
+func (w *connWrapper) Read(b []byte) (n int, err error) {
+	if w.conn == nil {
+		return 0, nil
+	}
 	n, err = w.conn.Read(b)
 	if w.cacheRead && n > 0 {
 		w.buff = append(w.buff, b[0:n]...)
 	}
 	return
 }
-func (w connWrapper) Write(b []byte) (n int, err error) {
+func (w *connWrapper) Write(b []byte) (n int, err error) {
+	if w.conn == nil {
+		return len(b), nil
+	}
 	return w.conn.Write(b)
 }
-func (w connWrapper) Close() error {
+func (w *connWrapper) Close() error {
+	if w.conn == nil {
+		return nil
+	}
 	return w.conn.Close()
 }
-func (w connWrapper) LocalAddr() net.Addr {
+func (w *connWrapper) LocalAddr() net.Addr {
+	if w.conn == nil {
+		return nil
+	}
 	return w.conn.LocalAddr()
 }
-func (w connWrapper) RemoteAddr() net.Addr {
+func (w *connWrapper) RemoteAddr() net.Addr {
+	if w.conn == nil {
+		return nil
+	}
 	return w.conn.RemoteAddr()
 }
-func (w connWrapper) SetDeadline(t time.Time) error {
+func (w *connWrapper) SetDeadline(t time.Time) error {
+	if w.conn == nil {
+		return nil
+	}
 	return w.conn.SetDeadline(t)
 }
-func (w connWrapper) SetReadDeadline(t time.Time) error {
+func (w *connWrapper) SetReadDeadline(t time.Time) error {
+	if w.conn == nil {
+		return nil
+	}
 	return w.conn.SetReadDeadline(t)
 }
-func (w connWrapper) SetWriteDeadline(t time.Time) error {
+func (w *connWrapper) SetWriteDeadline(t time.Time) error {
+	if w.conn == nil {
+		return nil
+	}
 	return w.conn.SetWriteDeadline(t)
 }
 
@@ -103,11 +127,46 @@ func forwardConnect(a, b net.Conn) {
 	<-done
 }
 
-func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
+func (gateway *GatewayConfig) createHostMap() map[string]*HostConfig {
+	hostByName := make(map[string]*HostConfig)
 	for _, hostConfig := range gateway.Hosts {
-		if hostConfig.Name == serverName {
-			return hostConfig
+		hostByName[hostConfig.Name] = hostConfig
+	}
+	return hostByName
+}
+
+func (gatewayConfig *GatewayConfig) createCertMap() map[string]*CertConfig {
+	fmt.Println("Checking certificates...")
+
+	certByName := make(map[string]*CertConfig)
+
+	var err error
+	for _, certConfig := range gatewayConfig.Certs {
+		fmt.Println(certConfig.CertFile)
+		certConfig.cert, err = tls.LoadX509KeyPair(certConfig.CertFile, certConfig.KeyFile)
+		if err != nil {
+			panic(err)
 		}
+		x509Cert, err := x509.ParseCertificate(certConfig.cert.Certificate[0])
+		if err != nil {
+			panic(err)
+		}
+		for _, dnsName := range x509Cert.DNSNames {
+			certByName[dnsName] = certConfig
+			fmt.Println("  ", dnsName)
+		}
+	}
+	return certByName
+}
+
+func (gateway *GatewayConfig) updateMaps() {
+	gateway.certByName = gateway.createCertMap()
+	gateway.hostByName = gateway.createHostMap()
+}
+
+func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
+	if hostConfig, ok := gateway.hostByName[serverName]; ok {
+		return hostConfig
 	}
 	if strings.HasPrefix(serverName, "*.") {
 		return nil
@@ -116,11 +175,25 @@ func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
 	if len(serverNameParts) != 2 {
 		return nil
 	}
-	serverName = "*." + serverNameParts[1]
-	for _, hostConfig := range gateway.Hosts {
-		if hostConfig.Name == serverName {
-			return hostConfig
-		}
+	if hostConfig, ok := gateway.hostByName["*."+serverNameParts[1]]; ok {
+		return hostConfig
+	}
+	return nil
+}
+
+func (gateway *GatewayConfig) getCertConfig(serverName string) *CertConfig {
+	if certConfig, ok := gateway.certByName[serverName]; ok {
+		return certConfig
+	}
+	if strings.HasPrefix(serverName, "*.") {
+		return nil
+	}
+	serverNameParts := strings.SplitN(serverName, ".", 2)
+	if len(serverNameParts) != 2 {
+		return nil
+	}
+	if certConfig, ok := gateway.certByName["*."+serverNameParts[1]]; ok {
+		return certConfig
 	}
 	return nil
 }
@@ -130,10 +203,11 @@ func (gateway *GatewayConfig) getCertificate(serverName string) (cert tls.Certif
 }
 
 func (gateway *GatewayConfig) handleConnection(client net.Conn) {
-	clientWrapper := connWrapper{conn: client}
+	clientWrapper := &connWrapper{conn: client, cacheRead: true}
 
 	var serverName string
 	var hostConfig *HostConfig
+	ignoreHandshakeError := false
 
 	tlsConn := tls.Server(clientWrapper, &tls.Config{GetConfigForClient: func(clientHelloInfo *tls.ClientHelloInfo) (*tls.Config, error) {
 		clientWrapper.cacheRead = false
@@ -145,34 +219,56 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 			fmt.Println("-> dropped")
 			return nil, os.ErrInvalid
 		}
+		if hostConfig.Mode == "socket" {
+			clientWrapper.conn = nil
+			ignoreHandshakeError = true
+			return nil, os.ErrInvalid
+		}
+
+		certConfig := gateway.getCertConfig(serverName)
+		if nil == certConfig {
+			fmt.Println("-> dropped (have no cert")
+			return nil, os.ErrInvalid
+		}
+
 		fmt.Println("->", hostConfig.Target)
 		return &tls.Config{
-			Certificates: []tls.Certificate{hostConfig.certConfig.cert},
+			Certificates: []tls.Certificate{certConfig.cert},
 		}, nil
 		// return nil, os.ErrInvalid
 	}})
 
 	err := tlsConn.Handshake()
-	if err != nil {
-		fmt.Println("Handshake Err:", err)
-		return
-	}
-	fmt.Println("ServerName:", serverName)
-
-	var targetConn net.Conn
 
 	if nil == hostConfig {
 		fmt.Println("ServerName:", serverName, "rejected")
 		return
 	}
 
-	if hostConfig.TLS {
+	if err != nil && !ignoreHandshakeError {
+		fmt.Println("Handshake Err:", err)
+		return
+	}
+
+	fmt.Println("ServerName:", serverName)
+
+	var targetConn net.Conn
+	var sourceConn net.Conn = tlsConn
+
+	switch hostConfig.Mode {
+	case "socket":
+		targetConn, err = net.Dial("tcp", hostConfig.Target)
+		if err == nil {
+			_, err = targetConn.Write(clientWrapper.buff)
+		}
+		sourceConn = client
+	case "tls":
 		conf := &tls.Config{
 			InsecureSkipVerify: true,
-			ServerName:         serverName, // Is this rockstor compatible??
+			ServerName:         serverName,
 		}
 		targetConn, err = tls.Dial("tcp", hostConfig.Target, conf)
-	} else {
+	default:
 		targetConn, err = net.Dial("tcp", hostConfig.Target)
 	}
 
@@ -181,7 +277,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 		return
 	}
 
-	forwardConnect(targetConn, tlsConn)
+	forwardConnect(sourceConn, targetConn)
 }
 
 func main() {
@@ -215,43 +311,7 @@ func main() {
 		})
 	}
 
-	fmt.Println("Checking certificates...")
-	var err error
-	for _, certConfig := range gatewayConfig.Certs {
-		fmt.Println(certConfig.CertFile)
-		certConfig.cert, err = tls.LoadX509KeyPair(certConfig.CertFile, certConfig.KeyFile)
-		if err != nil {
-			panic(err)
-		}
-		x509Cert, err := x509.ParseCertificate(certConfig.cert.Certificate[0])
-		if err != nil {
-			panic(err)
-		}
-		for _, dnsName := range x509Cert.DNSNames {
-			fmt.Println("  ", dnsName)
-			if strings.HasPrefix(dnsName, "*.") {
-				certConfig.domainNames = append(certConfig.domainNames, dnsName[2:])
-				for _, hostConfig := range gatewayConfig.Hosts {
-					if hostConfig.certConfig == nil {
-						parts := strings.Split(hostConfig.Name, ".")
-						if len(parts) > 1 {
-							domain := strings.Join(parts[1:], ".")
-							if domain == dnsName[2:] {
-								hostConfig.certConfig = certConfig
-							}
-						}
-					}
-				}
-			} else {
-				certConfig.hostNames = append(certConfig.hostNames, dnsName)
-				for _, hostConfig := range gatewayConfig.Hosts {
-					if (hostConfig.certConfig != nil) && (hostConfig.Name == dnsName) {
-						hostConfig.certConfig = certConfig
-					}
-				}
-			}
-		}
-	}
+	gatewayConfig.updateMaps()
 
 	signals := make(chan os.Signal, 1)
 	stop := make(chan bool)
