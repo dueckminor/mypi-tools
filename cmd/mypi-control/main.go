@@ -27,7 +27,7 @@ func main() {
 	})
 	server.OnEvent("/", "notice", func(s socketio.Conn, msg string) {
 		fmt.Println("notice:", msg)
-		s.Emit("reply", "have "+msg)
+		s.Emit("stats/rpi/cpu", "have "+msg)
 	})
 	server.OnEvent("/chat", "msg", func(s socketio.Conn, msg string) string {
 		s.SetContext(msg)
@@ -35,7 +35,7 @@ func main() {
 	})
 	server.OnEvent("/", "bye", func(s socketio.Conn) string {
 		last := s.Context().(string)
-		s.Emit("bye", last)
+		s.Emit("stats", last)
 		s.Close()
 		return last
 	})

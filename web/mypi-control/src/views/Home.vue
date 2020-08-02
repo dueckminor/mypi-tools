@@ -2,14 +2,12 @@
   <v-container>
     <v-card>
       <v-card-title>
-          <v-btn color="secondary" fab x-small dark>
-            <v-icon>mdi-power</v-icon>
-          </v-btn>&nbsp;&nbsp;RPI
+        <v-btn color="secondary" fab x-small dark @click="powerClicked">
+          <v-icon>mdi-power</v-icon> </v-btn
+        >&nbsp;&nbsp;RPI
       </v-card-title>
       <v-row>
-        <v-col>
-
-        </v-col>
+        <v-col> </v-col>
         <v-col>
           <GChart
             :settings="{ packages: ['corechart', 'gauge'] }"
@@ -25,13 +23,14 @@
 
 <script>
 // @ is an alias to /src
+import Vue from 'vue'
 import { GChart } from "vue-google-charts";
 
 export default {
   name: "Home",
   data: () => ({
     gaugeData: [
-      ["Label", "Value"],
+      ["",""],
       ["CPU", 55],
       ["RAM", 95],
       ["SWAP", 5],
@@ -48,6 +47,17 @@ export default {
   }),
   components: {
     GChart,
+  },
+  mounted() {
+    this.sockets.subscribe("stats/rpi/cpu", (data) => {
+      this.msg = data.message;
+      Vue.set(this.gaugeData, 1, ["CPU", 60])
+    });
+  },
+  methods: {
+    powerClicked: function() {
+      this.$socket.emit("notice", "foo");
+    },
   },
 };
 </script>
