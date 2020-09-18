@@ -56,6 +56,9 @@ func New(name string) (c *CachedCommand, err error) {
 func (c *CachedCommand) createTty() (err error) {
 	if c.Pty == nil {
 		c.Pty, c.Tty, err = pty.Open()
+		if err != nil {
+			return err
+		}
 		if c.waitForRead {
 			c.waitForRead = false
 			c.waitForReadC <- true
@@ -81,7 +84,8 @@ func AttachProcess(name string, command *exec.Cmd) (err error) {
 	}
 	command.SysProcAttr.Setctty = true
 	command.SysProcAttr.Setsid = true
-	command.SysProcAttr.Ctty = int(cachedCommand.Tty.Fd())
+	command.SysProcAttr.Ctty = 3
+	command.ExtraFiles = []*os.File{cachedCommand.Tty}
 
 	return nil
 }
