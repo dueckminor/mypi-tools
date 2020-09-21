@@ -28,6 +28,7 @@ if [ "${PARTITION_COUNT}" = "1" ]; then
     # create a 4 GB SWAP Partition
     echo "size=8388608, type=82" | sfdisk --append "/dev/${BOOT_DISK}" --force
     echo "type=83" | sfdisk --append "/dev/${BOOT_DISK}" --force
+    echo "rebooting..."
     reboot
     exit 0
 fi
@@ -38,6 +39,9 @@ if [ "${PARTITION_COUNT}" = "3" ]; then
         yes | mkfs.ext4 "${PARTITION_ROOT_DEVICE}"
         /mypi-setup/setup-disk
 
+        echo "rebooting..."
+        reboot
+        exit 0
         # setup-disk -m sys /mnt
 
         # mount -o remount,rw /media/${BOOT_PARTITION}

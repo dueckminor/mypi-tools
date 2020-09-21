@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+# shellcheck source=/dev/null
+. /mypi-setup/config
+
+apk add openssh
+rc-update add sshd
+/etc/init.d/sshd start

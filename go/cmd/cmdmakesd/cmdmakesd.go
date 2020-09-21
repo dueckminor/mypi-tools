@@ -319,9 +319,15 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 
 	fmt.Println(mountPoint)
 
-	extractTarGz(path.Join(os.Getenv("HOME"), "Downloads", "alpine-rpi-3.11.3-aarch64.tar.gz"), mountPoint)
+	err = extractTarGz(path.Join(os.Getenv("HOME"), ".mypi", "downloads", "alpine-rpi-3.11.3-aarch64.tar.gz"), mountPoint)
+	if err != nil {
+		panic(err)
+	}
 
-	createAPKOVL(path.Join(mountPoint, settings.Hostname+".apkovl.tar.gz"), settings)
+	err = createAPKOVL(path.Join(mountPoint, settings.Hostname+".apkovl.tar.gz"), settings)
+	if err != nil {
+		panic(err)
+	}
 	ioutil.WriteFile(path.Join(mountPoint, "mypiuuid.txt"), []byte(settings.MypiUUID+"\n"), os.ModePerm)
 
 	fmt.Println("")

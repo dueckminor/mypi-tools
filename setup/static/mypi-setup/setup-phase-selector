@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+# shellcheck source=/dev/null
+. /mypi-setup/lib/mypi-lib
+
+if ! command -v jq &>/dev/null ; then
+    /mypi-setup/setup-phase-1
+elif ! command -v docker &>/dev/null ; then
+    /mypi-setup/setup-phase-2
+else
+    echo DONE...
+fi

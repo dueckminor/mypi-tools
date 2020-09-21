@@ -1,6 +1,5 @@
 #!/bin/sh
 
-set -x
 set -e
 
 # shellcheck source=/dev/null
@@ -10,13 +9,20 @@ USERNAME="pi"
 
 apk add sudo bash
 
-adduser -D -s "$(command -v bash)" "${USERNAME}"
+if ! id "${USERNAME}" &>/dev/null; then
+    adduser -D -s "$(command -v bash)" "${USERNAME}"
+fi
+
+SSH_DIR="/home/${USERNAME}/.ssh"
+SSH_AUTHORIZED_KEYS_FILE="${SSH_DIR}/authorized_keys"
 
 if [ -n "${SSH_AUTHORIZED_KEYS}" ]; then
-    mkdir -p /home/${USERNAME}/.ssh
-    echo "${SSH_AUTHORIZED_KEYS}" >> /home/${USERNAME}/.ssh/authorized_keys
-    chown -R "${USERNAME}:${USERNAME}" /home/${USERNAME}/.ssh
-    PASSWD=$(< /dev/urandom tr -dc A-Za-z0-9 | head -c"${1:-32}")
+    mkdir -p "/home/${USERNAME}/.ssh"
+    echo "${SSH_AUTHORIZED_KEYS}" >> "${SSH_AUTHORIZED_KEYS_FILE}"
+    awk '!a[$0]++' < "${SSH_AUTHORIZED_KEYS_FILE}" > "${SSH_AUTHORIZED_KEYS_FILE}.new"
+    mv "${SSH_AUTHORIZED_KEYS_FILE}.new" "${SSH_AUTHORIZED_KEYS_FILE}"
+    chown -R "${USERNAME}:${USERNAME}" "${SSH_DIR}"
+    PASSWD="$(< /dev/urandom tr -dc A-Za-z0-9 | head -c"${1:-32}")"
     printf "%s\n%s\n" "${PASSWD}" "${PASSWD}" | passwd "${USERNAME}"
 fi
 

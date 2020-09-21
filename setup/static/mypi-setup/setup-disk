@@ -51,10 +51,10 @@ mkdir -p tmp
 
 # Patch /etc/init.d/modloop to allow mounting modloop on /
 # shellcheck disable=SC2016
-sed -i etc/init.d/modloop 's|set --|[ "$dir" = "\/" ] \&\& dir=""; set --|'
+sed 's|set --|[ "$dir" = "\/" ] \&\& dir=""; set --|' -i etc/init.d/modloop
 # shellcheck disable=SC2016
-sed -i etc/init.d/modloop 's| && $2 != "/"||'
-sed -i etc/init.d/modloop "/start()/s/$/\n\tmount \/media\/${PARTITION_BOOT_DEVICE_NAME}\n\tmount -o remount,rw \//"
+sed 's| && $2 != "/"||' -i etc/init.d/modloop 
+sed '/start()/s/$/\n\tmount \/media\/'"${PARTITION_BOOT_DEVICE_NAME}"'\n\tmount -o remount,rw \//' -i etc/init.d/modloop 
 
 mkdir -p "media/${PARTITION_BOOT_DEVICE_NAME}" # It's the mount point for the first partition on the next reboot
 
@@ -66,16 +66,16 @@ if [ -n "${PARTITION_SWAP_DEVICE}" ]; then
     rc-service swap start
 fi
 
-sed -i '/cdrom/d' etc/fstab   # Of course, you don't have any cdrom or floppy on the Raspberry Pi
-sed -i '/floppy/d' etc/fstab
+sed '/cdrom/d' -i etc/fstab   # Of course, you don't have any cdrom or floppy on the Raspberry Pi
+sed '/floppy/d' -i etc/fstab
 
 echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0" >> etc/fstab
 
-sed -i '/[0-9]\/community/s/^#//' etc/apk/repositories   # But enable the repository for community if you want vim, mc, php, apache, nginx, etc.
+sed '/[0-9]\/community/s/^#//' -i etc/apk/repositories   # But enable the repository for community if you want vim, mc, php, apache, nginx, etc.
 
 cp -a /mypi-setup /mnt
 cp -a /etc/init.d/mypi-setup /mnt/etc/init.d/
 cp -a /etc/runlevels/default/mypi-setup /mnt//etc/runlevels/default
 
 # switch to new root filesystem
-sed -i "s|^|root=${PARTITION_ROOT_DEVICE} |" "/media/${PARTITION_BOOT_DEVICE_NAME}/cmdline.txt"
+sed 's|^|root='"${PARTITION_ROOT_DEVICE}"' |' -i "/media/${PARTITION_BOOT_DEVICE_NAME}/cmdline.txt"

@@ -18,6 +18,4 @@ if [ -n "${WLAN_SSID}" ] && [ -n "${WLAN_PASSWORD}" ]; then
     /mypi-setup/setup-wlan
 fi
 
-rm /mypi-setup/setup
-
 reboot
