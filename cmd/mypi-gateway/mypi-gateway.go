@@ -5,17 +5,18 @@ import (
 	"crypto/x509"
 	"flag"
 	"fmt"
-	"html"
 	"io"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"strings"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/dueckminor/mypi-tools/go/util/network"
 )
 
@@ -324,8 +325,14 @@ func main() {
 	}()
 
 	if portHTTP > 0 {
-		http.HandleFunc("/.well-known/acme-challenge", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "ACME-CHALLENGE: %q", html.EscapeString(r.Host))
+		http.HandleFunc("/.well-known/acme-challenge/", func(w http.ResponseWriter, r *http.Request) {
+			_, token := path.Split(r.URL.Path)
+			acmeChallenge := path.Join("/etc/letsencrypt/acme-challenge", r.Host, token)
+			if util.FileExists(acmeChallenge) {
+				if stream, err := os.Open(acmeChallenge); err == nil {
+					io.Copy(w, stream)
+				}
+			}
 		})
 		http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 			target := "https://" + r.Host + r.URL.Path
