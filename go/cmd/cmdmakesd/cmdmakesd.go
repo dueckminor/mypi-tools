@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -71,7 +72,9 @@ func extractTarGz(tarFile, destDir string) error {
 		if header.Typeflag != tar.TypeReg {
 			continue
 		}
-
+		if strings.Contains(header.Name, "..") {
+			continue
+		}
 		dir, file := path.Split(header.Name)
 		toDir := path.Join(destDir, dir)
 		toFile := path.Join(toDir, file)
