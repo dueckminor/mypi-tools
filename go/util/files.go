@@ -1,6 +1,9 @@
 package util
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 func FileExists(filename string) bool {
 	info, err := os.Stat(filename)
@@ -8,4 +11,21 @@ func FileExists(filename string) bool {
 		return false
 	}
 	return !info.IsDir()
+}
+
+func FileIsSafe(filename string) bool {
+	if strings.Contains(filename, "..") {
+		return false
+	}
+	if strings.Contains(filename, "/") {
+		return false
+	}
+	return true
+}
+
+func FileIsSafePath(filename string) bool {
+	if strings.Contains(filename, "..") {
+		return false
+	}
+	return true
 }

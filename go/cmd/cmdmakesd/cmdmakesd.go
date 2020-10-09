@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
+	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/fatih/color"
 )
 
@@ -72,7 +72,7 @@ func extractTarGz(tarFile, destDir string) error {
 		if header.Typeflag != tar.TypeReg {
 			continue
 		}
-		if strings.Contains(header.Name, "..") {
+		if !util.FileIsSafePath(header.Name) {
 			continue
 		}
 		dir, file := path.Split(header.Name)

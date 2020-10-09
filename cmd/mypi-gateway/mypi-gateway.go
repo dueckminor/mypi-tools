@@ -327,6 +327,9 @@ func main() {
 	if portHTTP > 0 {
 		http.HandleFunc("/.well-known/acme-challenge/", func(w http.ResponseWriter, r *http.Request) {
 			_, token := path.Split(r.URL.Path)
+			if !util.FileIsSafe(r.Host) || !util.FileIsSafe(token) {
+				return
+			}
 			acmeChallenge := path.Join("/etc/letsencrypt/acme-challenge", r.Host, token)
 			if util.FileExists(acmeChallenge) {
 				if stream, err := os.Open(acmeChallenge); err == nil {
