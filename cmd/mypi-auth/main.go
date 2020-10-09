@@ -88,7 +88,6 @@ func login(c *gin.Context) {
 		}
 
 		fmt.Println("Host:", host)
-		fmt.Println("Header:", c.Request.Header)
 		if addr == nil {
 			hostParts := strings.Split(host, ".")
 			if len(hostParts) > 1 {

@@ -69,7 +69,6 @@ func (ac *AuthClient) handleAuth(c *gin.Context) {
 
 	fmt.Println(c.Request.URL.String())
 	fmt.Println(redirectToAuthURI.String())
-	fmt.Println("Header:", c.Request.Header)
 
 	c.Header("Location", redirectToAuthURI.String())
 	c.AbortWithStatus(http.StatusFound)
