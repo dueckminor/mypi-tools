@@ -120,6 +120,14 @@ func main() {
 	wh := &webhandler.WebHandler{}
 	err := wh.SetupEndpoints(r)
 
+	r.GET("/api/certificates", func(c *gin.Context) {
+
+	})
+
+	r.GET("/api/hosts", func(c *gin.Context) {
+
+	})
+
 	r.GET("/api/hosts/:host/terminal/webtty", makeForwardToMypiHost(func(c *gin.Context) {
 		sh := "zsh"
 		if runtime.GOOS == "linux" && runtime.GOARCH == "arm64" {

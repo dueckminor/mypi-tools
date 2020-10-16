@@ -47,9 +47,10 @@ type CertConfig struct {
 }
 
 type HostConfig struct {
-	Name   string `yaml:"name"`
-	Target string `yaml:"target"`
-	Mode   string `yaml:"mode"`
+	Name     string `yaml:"name"`
+	Target   string `yaml:"target"`
+	Mode     string `yaml:"mode"`
+	Insecure bool   `yaml:"insecure"`
 }
 
 type GatewayConfig struct {
@@ -265,7 +266,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 		sourceConn = client
 	case "tls":
 		conf := &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: hostConfig.Insecure,
 			ServerName:         serverName,
 		}
 		targetConn, err = tls.Dial("tcp", hostConfig.Target, conf)
