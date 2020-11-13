@@ -21,6 +21,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/static"
@@ -221,7 +222,7 @@ func handleLogout(c *gin.Context) {
 }
 
 type status struct {
-	Username string
+	Username string `json:"username"`
 }
 
 func handleStatus(c *gin.Context) {
@@ -247,6 +248,8 @@ func main() {
 
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("MYPI_AUTH_SESSION", store))
+
+	r.Use(cors.Default())
 
 	r.POST("/login", login)
 	r.POST("/logout", handleLogout)

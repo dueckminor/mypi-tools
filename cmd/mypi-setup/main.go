@@ -22,6 +22,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	"github.com/dueckminor/mypi-tools/go/cmd"
@@ -116,12 +117,12 @@ func main() {
 	flag.Parse()
 
 	r := gin.Default()
+	r.Use(cors.Default())
 
 	wh := &webhandler.WebHandler{}
 	err := wh.SetupEndpoints(r)
 
 	r.GET("/api/certificates", func(c *gin.Context) {
-
 	})
 
 	r.GET("/api/hosts", func(c *gin.Context) {

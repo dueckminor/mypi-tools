@@ -17,6 +17,7 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.2.0
 	github.com/fatih/color v1.9.0
 	github.com/fatih/structs v1.1.0
+	github.com/gin-contrib/cors v1.3.1 // indirect
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-contrib/static v0.0.0-20191128031702-f81c604d8ac2
 	github.com/gin-gonic/gin v1.6.3
