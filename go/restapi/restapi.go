@@ -31,6 +31,9 @@ func Run(r *gin.Engine) {
 		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
 	} else {
 		r.Use(static.ServeRoot("/", "./dist"))
+		r.NoRoute(func(c *gin.Context) {
+			c.File("./dist/index.html")
+		})
 	}
 
 	panic(r.Run(":" + strconv.Itoa(*port)))

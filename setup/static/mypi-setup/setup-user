@@ -28,3 +28,6 @@ fi
 
 mkdir -p /opt/mypi
 chown "${USERNAME}:${USERNAME}" /opt/mypi
+chmod 755 /opt
+
+addgroup pi docker

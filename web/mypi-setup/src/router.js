@@ -1,6 +1,8 @@
 import Vue from "vue";
 import Router from "vue-router";
+import Hosts from "./views/Hosts.vue";
 import WizardSD from "./views/WizardSD.vue";
+import Certificates from "./views/Certificates.vue";
 import InitializedSD from "./views/InitializeSD.vue";
 import Terminal from "./views/Terminal.vue";
 import Setup from "./views/Setup.vue";
@@ -15,22 +17,27 @@ const router = new Router({
     {
       path: "/",
       name: "home",
-      component: WizardSD
+      component: Hosts,
+    },
+    {
+      path: "/certificates",
+      name: "certificates",
+      component: Certificates,
     },
     {
       path: "/wizardsd",
       name: "wizardsd",
-      component: WizardSD
+      component: WizardSD,
     },
     {
       path: "/initializesd",
       name: "initializesd",
-      component: InitializedSD
+      component: InitializedSD,
     },
     {
-      path: "/mypi/:host/terminal",
+      path: "/hosts/:host/terminal",
       name: "terminal",
-      component: Terminal
+      component: Terminal,
     },
     {
       path: "/mypi/:host/setup",
@@ -40,9 +47,9 @@ const router = new Router({
     {
       path: "/about",
       name: "about",
-      component: About
+      component: About,
     },
-  ]
+  ],
 });
 
 router.beforeEach((to, from, next) => {

@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -e
+
+DIR_MYPI_TOOLS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.."; pwd)"
+
+mkdir -p "${DIR_MYPI_TOOLS}/build/mypi-setup"
+
+pushd "${DIR_MYPI_TOOLS}/flutter/mypi-setup" >/dev/null
+    flutter build web
+popd >/dev/null
+
+mkdir -p "${DIR_MYPI_TOOLS}/build/mypi-setup/dist"
+cp -a "${DIR_MYPI_TOOLS}/flutter/mypi-setup/build/web/" "${DIR_MYPI_TOOLS}/build/mypi-setup/dist"
+
+GOOS=linux GOARCH=arm64 go build -o "${DIR_MYPI_TOOLS}/build/mypi-setup/mypi-setup-linux-arm64" cmd/mypi-setup/*.go
+GOOS=linux GOARCH=arm go build -o "${DIR_MYPI_TOOLS}/build/mypi-setup/mypi-setup-linux-arm" cmd/mypi-setup/*.go
+GOOS=darwin GOARCH=amd64 go build -o "${DIR_MYPI_TOOLS}/build/mypi-setup/mypi-setup-darwin-amd64" cmd/mypi-setup/*.go
+#GOOS=windows GOARCH=amd64 go build -o "${DIR_MYPI_TOOLS}/build/mypi-setup/mypi-setup-windows-amd64" cmd/mypi-setup/*.go
