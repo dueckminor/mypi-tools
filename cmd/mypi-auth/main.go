@@ -162,6 +162,9 @@ func basicAuth(c *gin.Context) string {
 	if len(clientID) == 0 {
 		return ""
 	}
+	if strings.Contains(clientID, "..") || strings.ContainsAny(clientID, "/\\") {
+		return ""
+	}
 
 	clientConfig, err := config.ReadConfigFile(path.Join("etc/auth/clients", clientID+".yml"))
 	if err != nil {
