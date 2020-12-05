@@ -1,6 +1,11 @@
 <template>
   <v-container style="height:90%" fluid>
-    <GoTTY style="height:100%" :path="'/api/hosts/'+$route.params.host+'/terminal/webtty'"></GoTTY>
+    <keep-alive>
+      <GoTTY
+        style="height:100%"
+        :path="'/api/hosts/' + $route.params.host + '/terminal/webtty'"
+      ></GoTTY>
+    </keep-alive>
   </v-container>
 </template>
 <!-- ----------------------------------------------------------------------- -->
@@ -10,11 +15,18 @@ import GoTTY from "../components/GoTTY";
 export default {
   name: "terminal",
   components: {
-    GoTTY
+    GoTTY,
   },
   computed: {},
-  mounted() {},
-  methods: {}
+  created() {
+    // eslint-disable-next-line no-console
+    console.log("terminal-created");
+  },
+  mounted() {
+    // eslint-disable-next-line no-console
+    console.log("terminal-mounted");
+  },
+  methods: {},
 };
 </script>
 <!-- ----------------------------------------------------------------------- -->

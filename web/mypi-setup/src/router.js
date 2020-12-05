@@ -20,6 +20,11 @@ const router = new Router({
       component: Hosts,
     },
     {
+      path: "/hosts",
+      name: "hosts",
+      component: Hosts,
+    },
+    {
       path: "/certificates",
       name: "certificates",
       component: Certificates,
@@ -40,7 +45,7 @@ const router = new Router({
       component: Terminal,
     },
     {
-      path: "/mypi/:host/setup",
+      path: "/hosts/:host/setup",
       name: "setup",
       component: Setup,
     },

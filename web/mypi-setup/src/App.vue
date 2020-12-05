@@ -15,11 +15,21 @@
 
 <script>
 import AppNavigation from "@/components/AppNavigation";
+import Vue from "vue";
 
 export default {
   name: "app",
   components: {
     AppNavigation,
+  },
+  created() {
+    // eslint-disable-next-line no-console
+    console.log("app-created");
+    Vue.prototype.$app = this;
+  },
+  mounted() {
+    // eslint-disable-next-line no-console
+    console.log("app-mounted");
   },
   data: function() {
     return {

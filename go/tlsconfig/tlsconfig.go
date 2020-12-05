@@ -1,9 +1,10 @@
 package tlsconfig
 
-import "io/ioutil"
-
-import "crypto/tls"
-import "crypto/x509"
+import (
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
+)
 
 func NewTLSConfig() *tls.Config {
 	// Import trusted certificates from CAfile.pem.
@@ -36,7 +37,7 @@ func NewTLSConfig() *tls.Config {
 		ClientCAs: nil,
 		// InsecureSkipVerify = verify that cert contents
 		// match server. IP matches what is in cert etc.
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: false,
 		// Certificates = list of certs client sends to server.
 		Certificates: []tls.Certificate{cert},
 	}
