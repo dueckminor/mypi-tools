@@ -5,7 +5,7 @@ import WizardSD from "./views/WizardSD.vue";
 import Certificates from "./views/Certificates.vue";
 import InitializedSD from "./views/InitializeSD.vue";
 import Terminal from "./views/Terminal.vue";
-import Setup from "./views/Setup.vue";
+import Action from "./views/Action.vue";
 import About from "./views/About.vue";
 
 Vue.use(Router);
@@ -45,9 +45,9 @@ const router = new Router({
       component: Terminal,
     },
     {
-      path: "/hosts/:host/setup",
+      path: "/hosts/:host/actions/:action",
       name: "setup",
-      component: Setup,
+      component: Action,
     },
     {
       path: "/about",

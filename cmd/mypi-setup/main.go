@@ -87,6 +87,7 @@ func main() {
 	r.GET("/api/hosts/:host/terminal/webtty", impl.MakeForwardToHost(impl.GetWebTTY))
 	r.GET("/api/hosts/:host/disks", impl.MakeForwardToHost(impl.GetDisks))
 
+	r.GET("/api/hosts/:host/actions", impl.MakeForwardToHost(impl.GetActions))
 	r.GET("/api/hosts/:host/actions/:action/webtty", impl.MakeForwardToHost(impl.GetActionWebTTY))
 
 	r.POST("/api/hosts/:host/actions/:action", impl.MakeForwardToHost(impl.GetAction))

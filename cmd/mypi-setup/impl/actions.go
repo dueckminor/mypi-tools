@@ -14,7 +14,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetActionWebTTY return list of hosts
+func GetActions(c *gin.Context) {
+	actions, err := cmd.GetCommands()
+	if err != nil {
+		c.AbortWithError(http.StatusBadRequest, err)
+	}
+	c.JSON(http.StatusOK, actions)
+}
+
 func GetActionWebTTY(c *gin.Context) {
 	action := c.Params.ByName("action")
 	if _, err := cmd.GetCommand(action); err == nil {

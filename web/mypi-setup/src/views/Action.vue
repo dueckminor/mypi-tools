@@ -1,6 +1,9 @@
 <template>
   <v-container style="height:90%" fluid>
-    <GoTTY style="height:100%" path="/api/hosts/mypi/actions/setup/webtty"></GoTTY>
+    <GoTTY
+      style="height:100%"
+      :path="'/api/hosts/' + $route.params.host + '/actions/' + $route.params.action + '/webtty'"
+    ></GoTTY>
   </v-container>
 </template>
 <!-- ----------------------------------------------------------------------- -->
@@ -9,7 +12,7 @@ import GoTTY from "../components/GoTTY";
 //import axios from "axios";
 
 export default {
-  name: "setup",
+  name: "action",
   components: {
     GoTTY
   },

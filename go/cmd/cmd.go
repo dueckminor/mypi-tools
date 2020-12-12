@@ -21,6 +21,16 @@ func IsAvailable(name string) bool {
 	return ok
 }
 
+func GetCommands() (commands []string, err error) {
+	commands = make([]string, len(_cmd))
+	i := 0
+	for k := range _cmd {
+		commands[i] = k
+		i++
+	}
+	return commands, nil
+}
+
 func GetCommand(name string) (command Cmd, err error) {
 	cmd, ok := _cmd[name]
 	if !ok {
