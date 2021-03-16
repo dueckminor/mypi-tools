@@ -1,9 +1,0 @@
-#!/sbin/openrc-run
-
-start()
-{
-    if [ -f /mypi-setup/setup ]
-    then
-        /mypi-setup/setup
-    fi
-}

@@ -5,10 +5,34 @@ import (
 	"crypto/x509/pkix"
 	"fmt"
 	"net"
+	"path"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
 )
+
+type PkiGenerator struct {
+	PkiDir string
+	CA     *CA
+}
+
+func (p *PkiGenerator) GenerateRoot() (err error) {
+	dir := path.Join(p.PkiDir, "root_ca")
+	p.CA, err = LoadCA(dir)
+	if err == nil {
+		return nil
+	}
+
+	p.CA, err = CreateRootCA("MyPi-ROOT-CA")
+	if err != nil {
+		return err
+	}
+	err = p.CA.Save(dir)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
 func Setup() {
 	mypiRoot := config.GetRoot()
@@ -22,16 +46,11 @@ func Setup() {
 		panic("hostname not configured")
 	}
 
-	ca, err := LoadCA(mypiRoot + "/config/pki/root_ca")
+	p := &PkiGenerator{}
+	p.PkiDir = path.Join(mypiRoot, "/config/pki")
+	err := p.GenerateRoot()
 	if err != nil {
-		ca, err = CreateRootCA("MyPi-ROOT-CA")
-		if err != nil {
-			panic(err)
-		}
-		err = ca.Save(mypiRoot + "/config/pki/root_ca")
-		if err != nil {
-			panic(err)
-		}
+		panic(err)
 	}
 
 	dNSNames := []string{hostname}
@@ -50,7 +69,7 @@ func Setup() {
 		}
 		id = &Identity{}
 		id.CreateKeyPair()
-		id.certificate, err = ca.IssueCertificate(id, template)
+		id.certificate, err = p.CA.IssueCertificate(id, template)
 		if err != nil {
 			panic(err)
 		}

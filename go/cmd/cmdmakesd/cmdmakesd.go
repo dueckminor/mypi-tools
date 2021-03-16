@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/dueckminor/mypi-tools/go/cmd"
+	"github.com/dueckminor/mypi-tools/go/downloads"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/fatih/color"
@@ -196,6 +197,7 @@ func createAPKOVL(tarfile string, settings *settings) error {
 			return err
 		}
 
+		fmt.Println(relativePath)
 		tarCreateFile(tw, relativePath, int64(info.Mode()), int64(buf.Len()))
 
 		_, err = buf.WriteTo(tw)
@@ -206,14 +208,14 @@ func createAPKOVL(tarfile string, settings *settings) error {
 		return nil
 	})
 
-	mypiSetup := path.Join(settings.DirDist, "mypi-setup-linux-arm64")
-	fmt.Println("checking for mypi-setup:", mypiSetup)
-	stat, err := os.Stat(mypiSetup)
+	mypiControl := path.Join(settings.DirDist, "mypi-control", "mypi-control-linux-arm64")
+	fmt.Println("checking for mypi-control:", mypiControl)
+	stat, err := os.Stat(mypiControl)
 	if err != nil {
 		return err
 	}
-	tarCreateFile(tw, "mypi-setup/bin/mypi-setup", 0755, stat.Size())
-	f, err := os.Open(mypiSetup)
+	tarCreateFile(tw, "mypi-control/bin/mypi-control", 0755, stat.Size())
+	f, err := os.Open(mypiControl)
 	if err != nil {
 		return err
 	}
@@ -267,7 +269,30 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 
 	c := color.New(color.BgBlue).Add(color.FgHiYellow)
 
-	time.Sleep(time.Second)
+	alpineDownloader := downloads.NewAlpineDownloader()
+	alpineFileDownloader := alpineDownloader.GetDownloaderForVersion(settings.AlpineVersion, settings.AlpineArch)
+
+	alpineFileDownloader.StartDownload()
+	if !alpineFileDownloader.DownloadCompleted() {
+		fmt.Println("")
+		c.Print("                                  ")
+		fmt.Println("")
+		c.Print(" --- Downloading Alpine Linux --- ")
+		fmt.Println("")
+		c.Print("                                  ")
+		fmt.Println("")
+		fmt.Println("")
+
+		for !alpineFileDownloader.DownloadCompleted() {
+			fmt.Print(".")
+			time.Sleep(5 * time.Second)
+		}
+		fmt.Println("")
+		fmt.Println("completed")
+	}
+
+	fmt.Println("FileName:", alpineFileDownloader.MetaData.Name)
+
 	fmt.Println("")
 	c.Print("                           ")
 	fmt.Println("")
@@ -322,7 +347,7 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 
 	fmt.Println(mountPoint)
 
-	err = extractTarGz(path.Join(os.Getenv("HOME"), ".mypi", "downloads", "alpine-rpi-3.11.3-aarch64.tar.gz"), mountPoint)
+	err = extractTarGz(alpineFileDownloader.GetTargetFile(), mountPoint)
 	if err != nil {
 		panic(err)
 	}

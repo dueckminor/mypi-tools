@@ -14,6 +14,16 @@
               Terminal
             </v-btn>
           </router-link>
+          <router-link :to="'/hosts/' + item + '/wizardsd'">
+            <v-btn color="deep-purple lighten-2" text>
+              Create SD-Card
+            </v-btn>
+          </router-link>
+          <router-link :to="'/hosts/' + item + '/actions/setup'">
+            <v-btn color="deep-purple lighten-2" text>
+              Connect to setup
+            </v-btn>
+          </router-link>
         </v-card-actions>
       </v-card>
       <v-btn dark absolute bottom right>

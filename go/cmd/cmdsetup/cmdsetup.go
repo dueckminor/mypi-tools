@@ -48,7 +48,7 @@ func (cmd cmdSetup) Execute(parsedArgs interface{}) error {
 	fmt.Println("")
 	fmt.Println("")
 
-	cmdSetup := exec.Command("/mypi-setup/setup-phase-selector")
+	cmdSetup := exec.Command("/mypi-control/setup-phase-selector")
 	cmdSetup.Stdin = os.Stdin
 	cmdSetup.Stdout = os.Stdout
 	cmdSetup.Stderr = os.Stderr

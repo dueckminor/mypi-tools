@@ -33,7 +33,7 @@ export default {
       ["",""],
       ["CPU", 55],
       ["RAM", 95],
-      ["SWAP", 5],
+      //["SWAP", 5],
     ],
     gaugeOptions: {
       width: 400,
@@ -50,8 +50,13 @@ export default {
   },
   mounted() {
     this.sockets.subscribe("stats/rpi/cpu", (data) => {
-      this.msg = data.message;
-      Vue.set(this.gaugeData, 1, ["CPU", 60])
+      Vue.set(this.gaugeData, 1, ["CPU", parseFloat(data)])
+    });
+    this.sockets.subscribe("stats/rpi/mem", (data) => {
+      Vue.set(this.gaugeData, 2, ["RAM", parseFloat(data)])
+    });
+    this.sockets.subscribe("stats/rpi/swap", (data) => {
+      Vue.set(this.gaugeData, 3, ["SWAP", parseFloat(data)])
     });
   },
   methods: {

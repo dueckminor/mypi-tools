@@ -3,7 +3,7 @@
 set -e
 
 # shellcheck source=/dev/null
-. /mypi-setup/config
+. /mypi-control/config
 
 pushd /opt/mypi
     git clone https://github.com/dueckminor/mypi.git . 

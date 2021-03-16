@@ -1,0 +1,9 @@
+#!/sbin/openrc-run
+
+start()
+{
+    if [ -f /mypi-control/setup ]
+    then
+        /mypi-control/start-mypi-control
+    fi
+}

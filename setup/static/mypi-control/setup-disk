@@ -3,7 +3,7 @@
 set -e
 
 # shellcheck source=/dev/null
-. /mypi-setup/lib/mypi-lib
+. /mypi-control/lib/mypi-lib
 
 BOOT_DISK="$(find_boot_disk)"
 read_partition_table "/dev/${BOOT_DISK}"
@@ -73,9 +73,9 @@ echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat default
 
 sed '/[0-9]\/community/s/^#//' -i etc/apk/repositories   # But enable the repository for community if you want vim, mc, php, apache, nginx, etc.
 
-cp -a /mypi-setup /mnt
-cp -a /etc/init.d/mypi-setup /mnt/etc/init.d/
-cp -a /etc/runlevels/default/mypi-setup /mnt//etc/runlevels/default
+cp -a /mypi-control /mnt
+cp -a /etc/init.d/mypi-control /mnt/etc/init.d/
+cp -a /etc/runlevels/default/mypi-control /mnt//etc/runlevels/default
 
 # switch to new root filesystem
 sed 's|^|root='"${PARTITION_ROOT_DEVICE}"' |' -i "/media/${PARTITION_BOOT_DEVICE_NAME}/cmdline.txt"

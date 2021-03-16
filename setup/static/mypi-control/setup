@@ -1,0 +1,45 @@
+#!/bin/sh
+
+set -e
+
+if [ ! -f /mypi-control/config ]; then
+    echo "mypi-control is not configured... skipping"
+    exit 0
+fi
+
+if [ -n "$(pgrep /mypi-control/bin/mypi-control 2>/dev/null)" ]; then
+    echo "mypi-control is already running..."
+    exit 0
+fi
+
+# shellcheck source=/dev/null
+. /mypi-control/answer.txt
+
+# shellcheck source=/dev/null
+. /mypi-control/config
+
+if [ "$(hostname)" = "localhost" ]; then
+    # shellcheck disable=SC2086
+    /sbin/setup-hostname ${HOSTNAMEOPTS}
+    /etc/init.d/hostname --quiet restart
+fi
+
+if [ -z "$(ifconfig)" ]; then
+    # there is no network configured yet... lets do it
+    echo "${INTERFACESOPTS}" | /sbin/setup-interfaces -i
+    # start networking...
+    /etc/init.d/networking --quiet start >/dev/null
+
+    # ensure that the time is not to far in the past
+    date -s "@$(date -r /mypi-control/config "+%s")"
+
+    # but lets try to use NTP to get the correct time
+    # shellcheck disable=SC2086
+    /sbin/setup-ntp ${NTPOPTS}
+fi
+
+if [ -f /mypi-control/bin/mypi-control ]; then
+    /mypi-control/bin/mypi-control &
+fi
+
+exit 0

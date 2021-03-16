@@ -13,11 +13,13 @@ import (
 	"os/signal"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/dueckminor/mypi-tools/go/util/network"
+	"github.com/fsnotify/fsnotify"
 )
 
 var (
@@ -58,6 +60,7 @@ type GatewayConfig struct {
 	Hosts      []*HostConfig `yaml:"hosts"`
 	certByName map[string]*CertConfig
 	hostByName map[string]*HostConfig
+	mutex      sync.RWMutex
 }
 
 type connWrapper struct {
@@ -162,11 +165,59 @@ func (gatewayConfig *GatewayConfig) createCertMap() map[string]*CertConfig {
 }
 
 func (gateway *GatewayConfig) updateMaps() {
-	gateway.certByName = gateway.createCertMap()
-	gateway.hostByName = gateway.createHostMap()
+	gateway.setCertMap(gateway.createCertMap())
+	gateway.setHostMap(gateway.createHostMap())
+}
+
+func (gateway *GatewayConfig) setCertMap(certByName map[string]*CertConfig) {
+	gateway.mutex.Lock()
+	defer gateway.mutex.Unlock()
+	gateway.certByName = certByName
+}
+
+func (gateway *GatewayConfig) setHostMap(hostByName map[string]*HostConfig) {
+	gateway.mutex.Lock()
+	defer gateway.mutex.Unlock()
+	gateway.hostByName = hostByName
+}
+
+func (gateway *GatewayConfig) startWatcher() (err error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				log.Println("event:", event)
+				if event.Op&fsnotify.Write == fsnotify.Write {
+					gateway.setCertMap(gateway.createCertMap())
+				}
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				log.Println("error:", err)
+			}
+		}
+	}()
+
+	for _, certConfig := range gateway.Certs {
+		watcher.Add(certConfig.CertFile)
+	}
+
+	return nil
 }
 
 func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
+	gateway.mutex.RLock()
+	defer gateway.mutex.RUnlock()
+
 	if hostConfig, ok := gateway.hostByName[serverName]; ok {
 		return hostConfig
 	}
@@ -184,6 +235,9 @@ func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
 }
 
 func (gateway *GatewayConfig) getCertConfig(serverName string) *CertConfig {
+	gateway.mutex.RLock()
+	defer gateway.mutex.RUnlock()
+
 	if certConfig, ok := gateway.certByName[serverName]; ok {
 		return certConfig
 	}

@@ -3,11 +3,11 @@
 set -e
 
 # shellcheck source=/dev/null
-. /mypi-setup/lib/mypi-lib
+. /mypi-control/lib/mypi-lib
 
 echo ---- starting setup-alpine ----
 echo
-NOCOMMIT=1 setup-alpine -q -f /mypi-setup/answer.txt
+NOCOMMIT=1 setup-alpine -q -f /mypi-control/answer.txt
 echo
 echo ---- finished setup-alpine ----
 
@@ -37,7 +37,7 @@ if [ "${PARTITION_COUNT}" = "3" ]; then
     ROOT_DEVICE="$(df / | tail -n 1 | cut -f 1 "-d ")"
     if [ "${ROOT_DEVICE}" = "tmpfs" ]; then
         yes | mkfs.ext4 "${PARTITION_ROOT_DEVICE}"
-        /mypi-setup/setup-disk
+        /mypi-control/setup-disk
 
         echo "rebooting..."
         reboot

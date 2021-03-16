@@ -30,7 +30,7 @@ const router = new Router({
       component: Certificates,
     },
     {
-      path: "/wizardsd",
+      path: "/hosts/:host/wizardsd",
       name: "wizardsd",
       component: WizardSD,
     },
