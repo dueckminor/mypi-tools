@@ -5,27 +5,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Flutter - auth",
-      "type": "dart",
-      "request": "launch",
-      "cwd": "${workspaceFolder}/flutter/mypi-auth",
-      "program": "lib/main.dart",
-      "args": [ "--dart-define" ,"backend=http://localhost:9100", "--web-port", "9101" ]
-    },
-    {
-      "name": "Flutter - setup",
-      "type": "dart",
-      "request": "launch",
-      "cwd": "${workspaceFolder}/flutter/mypi-setup",
-      "program": "lib/main.dart",
-      "args": [
-        "--dart-define",
-        "backend=http://localhost:9500",
-        "--web-port",
-        "9101"
-      ]
-    },
-    {
       "name": "Launch - adduser",
       "type": "go",
       "request": "launch",

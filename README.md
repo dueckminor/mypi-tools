@@ -19,9 +19,17 @@ instructions and you will get a SD-Card ready for your Raspberry-PI. After
 you have inserted this SD-Card to your Raspberry-PI, `mypi-setup` will connect
 to it and completes the installation.
 
-### mypi-admin
+### mypi-control
 
-The admin UI running on your Raspberry-PI.
+Runs on your Raspberry-PI and
+
+- completes the installation
+  - makes the image bootable from disk (this requires less memory)
+  - install basic packages like
+    - `docker`
+    - `bash`
+    - `jq`
+- provides a managment Web-UI
 
 ### mypi-auth
 
