@@ -5,7 +5,7 @@ set -e
 # shellcheck source=/dev/null
 . /mypi-control/config
 
-pushd /opt/mypi
-    git clone https://github.com/dueckminor/mypi.git . 
-    
-popd
+mkdir -p /opt/mypi
+
+cd /opt/mypi
+git clone https://github.com/dueckminor/mypi.git . 

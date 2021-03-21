@@ -36,7 +36,7 @@ func (d *AlpineDownloader) getAlpineVersions() {
 	flavor := "alpine-rpi"
 	arch := "aarch64"
 	major := 3
-	for minor := 13; ; minor++ {
+	for minor := 12; ; minor++ {
 		for patch := 0; ; patch++ {
 			fm, err := getAlpineMetaData(flavor, arch, major, minor, patch)
 			if err != nil {

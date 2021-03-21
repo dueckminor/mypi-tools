@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ -L /lib/modules ]; then
+    rm /lib/modules
+    if [ -d /.modloop ]; then
+        cp -a /.modloop/modules /lib/
+    fi
+fi
+
+KERNEL_VARIANT="$(uname -r | sed 's/.*-//')"
+apk add "linux-${KERNEL_VARIANT}"
+
+if rc-update | grep modloop >/dev/null; then
+    /etc/init.d/modloop stop
+    rc-update del modloop sysinit
+fi
+
+if [ -d /.modloop ]; then
+    rmdir /.modloop
+fi

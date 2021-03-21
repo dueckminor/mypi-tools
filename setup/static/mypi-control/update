@@ -1,0 +1,28 @@
+#!/bin/sh
+
+apk add busybox-static apk-tools-static
+
+#sed -i -e 's/v3\.13/v3.14/g' /etc/apk/repositories
+
+if ! apk.static upgrade --no-self-upgrade --available --simulate; then
+    echo "upgrade simulation failed"
+    exit 1
+fi
+
+apk.static upgrade --no-self-upgrade --available
+
+# /etc/alpine-release: 3.13.0
+# Linux mypi 5.10.7-0-rpi4 #1-Alpine SMP PREEMPT Thu Jan 14 07:55:06 UTC 2021 aarch64 Linux
+
+ALPINE_RELEASE="$(cat /etc/alpine-release)"
+KERNEL_VARIANT="$(uname -r | sed 's/.*-//')"
+
+CMD="$(cat <<__EOF__
+apk add linux-${KERNEL_VARIANT} linux-${KERNEL_VARIANT}-dev alpine-sdk
+cd /opt
+git clone https://github.com/alexreinert/piVCCU.git
+cd piVCCU/kernel
+__EOF__
+)"
+
+docker run -v /tmp:/opt "alpine:${ALPINE_RELEASE}" sh -c "${CMD}"
