@@ -63,19 +63,28 @@ ln -s "media/${PARTITION_BOOT_DEVICE_NAME}/boot" boot
 echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0" >> etc/fstab
 if [ -n "${PARTITION_SWAP_DEVICE}" ]; then
     echo "${PARTITION_SWAP_DEVICE} none swap sw 0 0" >> etc/fstab
+    mkswap "${PARTITION_SWAP_DEVICE}"
     rc-service swap start
 fi
 
 sed '/cdrom/d' -i etc/fstab   # Of course, you don't have any cdrom or floppy on the Raspberry Pi
 sed '/floppy/d' -i etc/fstab
 
-echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0" >> etc/fstab
+{
+    echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0"
+    echo "tmpfs /var/log tmpfs defaults 0 0"
+    echo "tmpfs /tmp tmpfs defaults 0 0"
+} >> etc/fstab
 
 sed '/[0-9]\/community/s/^#//' -i etc/apk/repositories   # But enable the repository for community if you want vim, mc, php, apache, nginx, etc.
 
 cp -a /mypi-control /mnt
 cp -a /etc/init.d/mypi-control /mnt/etc/init.d/
-cp -a /etc/runlevels/default/mypi-control /mnt//etc/runlevels/default
+rm -f /mnt/etc/runlevels/default/mypi-control
+ln -s /etc/init.d/mypi-control /mnt/etc/runlevels/default
+if [ -n "${PARTITION_SWAP_DEVICE}" ]; then
+    ln -s /etc/init.d/swap /mnt/etc/runlevels/boot
+fi
 
 # switch to new root filesystem
 sed 's|^|root='"${PARTITION_ROOT_DEVICE}"' |' -i "/media/${PARTITION_BOOT_DEVICE_NAME}/cmdline.txt"

@@ -18,4 +18,4 @@ if [ -n "${WLAN_SSID}" ] && [ -n "${WLAN_PASSWORD}" ]; then
     /mypi-control/setup-wlan
 fi
 
-reboot
+/mypi-control/setup-ssh

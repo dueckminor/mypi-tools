@@ -2,24 +2,25 @@
   <span>
     <v-container fluid>
       <div v-if="!haveData">
-        <div class="text-center">
-          <v-progress-circular indeterminate />
-        </div>
+        <v-overlay>
+          <v-progress-circular
+            indeterminate
+            size="64"
+          ></v-progress-circular>
+        </v-overlay>
       </div>
       <div v-else-if="certificates.length > 0">
-        <v-list>
-          <v-subheader>Certificates</v-subheader>
-          <v-list-item-group v-model="certificates" color="primary">
-            <v-list-item v-for="(item, i) in certificates" :key="i">
-              <v-list-item-icon>
-                <v-icon v-text="item.icon"></v-icon>
-              </v-list-item-icon>
-              <v-list-item-content>
-                <v-list-item-title v-text="item.text"></v-list-item-title>
-              </v-list-item-content>
-            </v-list-item>
-          </v-list-item-group>
-        </v-list>
+        <v-card elevation="2" outlined v-for="(item, i) in certificates" :key="i">
+          <v-card-title>
+            <v-icon v-text="item.icon"></v-icon>
+            <v-text v-text="item.text"/>
+          </v-card-title>
+          <v-card-text class="text--primary">
+            <div>Subject:</div>
+            <div>Valid-From:</div>
+            <div>Valid-Until:</div>
+          </v-card-text>
+        </v-card>
       </div>
       <div v-else>
         <v-row align="center" justify="space-around">
@@ -50,6 +51,7 @@ export default {
         var certificates = result.data;
         for (var i = 0; i < certificates.length; i++) {
           certificates[i].uri = "/users/" + certificates[i].text;
+          certificates[i].icon = "mdi-certificate";
         }
         this.certificates = certificates;
         this.haveData = true;

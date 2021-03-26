@@ -24,33 +24,70 @@ echo "boot-partition: ${BOOT_PARTITION}"
 
 read_partition_table "/dev/${BOOT_DISK}"
 
+have_all_partions() {
+    [ -e "${PARTITION_BOOT_DEVICE}" ] && [ -e "${PARTITION_ROOT_DEVICE}" ] && [ -e "${PARTITION_SWAP_DEVICE}" ]
+}
+
 if [ "${PARTITION_COUNT}" = "1" ]; then
+    if [ -L /lib/modules ]; then
+        rm /lib/modules
+    fi
+    if [ -d /.modloop ]; then
+        cp -a /.modloop/modules /lib/
+        umount /.modloop
+    fi
+
+    umount "/dev/${BOOT_PARTITION}"
+
     # create a 4 GB SWAP Partition
     echo "size=8388608, type=82" | sfdisk --append "/dev/${BOOT_DISK}" --force
     echo "type=83" | sfdisk --append "/dev/${BOOT_DISK}" --force
-    echo "rebooting..."
-    reboot
-    exit 0
+
+    printf "Waiting for all partion device files "
+
+    c=1
+    while [ $c -le 30 ]; do
+        printf "."
+        if ! partprobe "/dev/${BOOT_DISK}"; then
+            echo
+            echo partprobe failed
+            echo "rebooting..."
+            reboot
+        fi
+        read_partition_table "/dev/${BOOT_DISK}"
+        if have_all_partions; then
+            echo "done"
+            break
+        fi
+        c=$((c+1))
+        sleep 1
+    done
+    
+
+
+    if ! mount "/dev/${BOOT_PARTITION}" "/media/${BOOT_PARTITION}"; then
+        if ! partprobe "/dev/${BOOT_DISK}"; then
+            echo partprobe failed
+            echo "rebooting..."
+            reboot
+        fi
+        if ! mount "/dev/${BOOT_PARTITION}" "/media/${BOOT_PARTITION}"; then
+            echo partprobe failed
+            echo "rebooting..."
+            reboot
+        fi
+    fi
 fi
 
 if [ "${PARTITION_COUNT}" = "3" ]; then
     ROOT_DEVICE="$(df / | tail -n 1 | cut -f 1 "-d ")"
     if [ "${ROOT_DEVICE}" = "tmpfs" ]; then
         yes | mkfs.ext4 "${PARTITION_ROOT_DEVICE}"
+        /mypi-control/setup-kernel
         /mypi-control/setup-disk
-
+        
         echo "rebooting..."
         reboot
         exit 0
-        # setup-disk -m sys /mnt
-
-        # mount -o remount,rw /media/${BOOT_PARTITION}
-
-        # rm -f /media/${BOOT_PARTITION}/boot/*  
-        # cd /mnt       # We are in the second partition 
-        # rm boot/boot  # Drop the unused symbolink link
-
-        # mv boot/* /media/${BOOT_PARTITION}/boot/
-        # rm -Rf boot
     fi
 fi
