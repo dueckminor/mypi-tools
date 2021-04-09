@@ -79,10 +79,10 @@ export default {
     }
     fetch("/status").then(res => res.json())
     .then(response => {
-      if (response.Username === "") {
+      if (response.username === "") {
         this.showLogin = true
       } else {
-        this.username = response.Username
+        this.username = response.username
       }
     })
   }
