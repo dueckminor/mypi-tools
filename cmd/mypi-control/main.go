@@ -137,5 +137,5 @@ func main() {
 	r.GET("/api/hosts/:host/actions/:action/webtty", webhandler.MakeForwardToHost(webhandler.GetActionWebTTY))
 	r.POST("/api/hosts/:host/actions/:action", webhandler.MakeForwardToHost(webhandler.GetAction))
 
-	restapi.Run(r)
+	restapi.RunTLS(r, "priv.pem", "cert.pem")
 }

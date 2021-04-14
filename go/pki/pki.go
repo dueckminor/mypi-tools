@@ -9,22 +9,36 @@ import (
 	"errors"
 	"io/ioutil"
 	"math/big"
+	"path/filepath"
 	"time"
 )
 
 // CA can be used to issue other certs
-type Identity struct {
+type Identity interface {
+	Label() string
+	X509Cert() *x509.Certificate
+	PublicKey() *rsa.PublicKey
+	PrivateKey() *rsa.PrivateKey
+	Save(filename string) error
+}
+type CA interface {
+	Identity
+	IssueCertificate(pub interface{}, template *x509.Certificate) (*x509.Certificate, error)
+}
+
+type IdentityImpl struct {
+	label       string
 	privateKey  *rsa.PrivateKey
 	publicKey   *rsa.PublicKey
 	certificate *x509.Certificate
 }
 
-type CA struct {
-	Identity
+type CAImpl struct {
+	IdentityImpl
 }
 
-func LoadIdentity(filename string) (id *Identity, err error) {
-	id = &Identity{}
+func LoadIdentity(filename string) (id_ Identity, err error) {
+	id := &IdentityImpl{}
 	err = id.Load(filename)
 	if err != nil {
 		return nil, err
@@ -32,8 +46,8 @@ func LoadIdentity(filename string) (id *Identity, err error) {
 	return id, nil
 }
 
-func LoadCA(filename string) (ca *CA, err error) {
-	ca = &CA{}
+func LoadCA(filename string) (ca_ CA, err error) {
+	ca := &CAImpl{}
 	err = ca.Load(filename)
 	if err != nil {
 		return nil, err
@@ -41,7 +55,21 @@ func LoadCA(filename string) (ca *CA, err error) {
 	return ca, nil
 }
 
-func (id *Identity) Load(filename string) error {
+func (id *IdentityImpl) Label() string {
+	return id.label
+}
+func (id *IdentityImpl) X509Cert() *x509.Certificate {
+	return id.certificate
+}
+func (id *IdentityImpl) PublicKey() *rsa.PublicKey {
+	return id.publicKey
+}
+func (id *IdentityImpl) PrivateKey() *rsa.PrivateKey {
+	return id.privateKey
+}
+
+func (id *IdentityImpl) Load(filename string) error {
+	id.label = filepath.Base(filename)
 	pem, err := ioutil.ReadFile(filename + "_priv.pem")
 	if err != nil {
 		return err
@@ -62,7 +90,7 @@ func (id *Identity) Load(filename string) error {
 	return nil
 }
 
-func (id *Identity) Save(filename string) error {
+func (id *IdentityImpl) Save(filename string) error {
 	if id.privateKey != nil {
 		binary := x509.MarshalPKCS1PrivateKey(id.privateKey)
 		err := ioutil.WriteFile(filename+"_priv.pem", pem.EncodeToMemory(&pem.Block{
@@ -118,19 +146,19 @@ func ParseCertificateFromPem(privPEM []byte) (*x509.Certificate, error) {
 	return cert, nil
 }
 
-func (id *Identity) CreateKeyPair() {
+func (id *IdentityImpl) CreateKeyPair() {
 	id.privateKey, id.publicKey = GenerateRsaKeyPair()
 }
 
-func CreateIdentity() (id *Identity, err error) {
-	res := &Identity{}
+func CreateIdentity() (id Identity, err error) {
+	res := &IdentityImpl{}
 	res.CreateKeyPair()
 	return res, nil
 }
 
 // CreateRootCA creates a root ca
-func CreateRootCA(cn string) (ca *CA, err error) {
-	res := &CA{}
+func CreateRootCA(cn string) (ca CA, err error) {
+	res := &CAImpl{}
 	res.CreateKeyPair()
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
@@ -160,8 +188,8 @@ func CreateRootCA(cn string) (ca *CA, err error) {
 	return res, nil
 }
 
-func (ca *CA) IssueCertificate(pub interface{}, template *x509.Certificate) (*x509.Certificate, error) {
-	id, ok := pub.(*Identity)
+func (ca *CAImpl) IssueCertificate(pub interface{}, template *x509.Certificate) (*x509.Certificate, error) {
+	id, ok := pub.(*IdentityImpl)
 	if ok {
 		pub = id.publicKey
 	}
@@ -179,7 +207,8 @@ func (ca *CA) IssueCertificate(pub interface{}, template *x509.Certificate) (*x5
 	if err != nil {
 		return nil, err
 	}
-	return x509.ParseCertificate(certBuffer)
+	id.certificate, err = x509.ParseCertificate(certBuffer)
+	return id.certificate, err
 }
 
 // // IssueCertificate issues a certificate

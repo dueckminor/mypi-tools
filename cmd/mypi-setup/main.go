@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 
+	"github.com/dueckminor/mypi-tools/go/mypi/setup"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
 	"github.com/gin-contrib/cors"
@@ -39,7 +41,11 @@ func main() {
 	err := wh.SetupEndpoints(r)
 	whDownloads.SetupEndpoints(&r.RouterGroup)
 
-	r.GET("/api/certificates", webhandler.GetCertificates)
+	certificates := setup.NewCertificates()
+	certificates.CreatePKI()
+
+	webhandler.NewCertHandler(certificates).RegisterEndpoints(r)
+
 	r.GET("/api/hosts", webhandler.GetHosts)
 
 	r.GET("/api/hosts/:host/terminal/webtty", webhandler.MakeForwardToHost(webhandler.GetWebTTY))
@@ -54,5 +60,8 @@ func main() {
 		panic(err)
 	}
 
-	restapi.Run(r)
+	keyFile := path.Join(os.Getenv("HOME"), ".mypi", "pki", "localhost_tls_priv.pem")
+	certFile := path.Join(os.Getenv("HOME"), ".mypi", "pki", "localhost_tls_cert.pem")
+
+	restapi.RunBoth(r, keyFile, certFile)
 }

@@ -5,7 +5,9 @@ import (
 	"crypto/x509/pkix"
 	"fmt"
 	"net"
+	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
@@ -13,25 +15,62 @@ import (
 
 type PkiGenerator struct {
 	PkiDir string
-	CA     *CA
+	CA     CA
+}
+
+func (p *PkiGenerator) getFileName(name, certType string) string {
+	name = strings.ReplaceAll(name, ".", "_")
+	return path.Join(p.PkiDir, name+"_"+certType)
+}
+
+func (p *PkiGenerator) loadCa(name string) (ca CA, err error) {
+	name = p.getFileName(name, "ca")
+	return LoadCA(name)
 }
 
 func (p *PkiGenerator) GenerateRoot() (err error) {
-	dir := path.Join(p.PkiDir, "root_ca")
-	p.CA, err = LoadCA(dir)
+	if p.CA != nil {
+		return nil
+	}
+	p.CA, err = p.loadCa("root")
 	if err == nil {
 		return nil
+	}
+
+	err = os.MkdirAll(p.PkiDir, os.ModePerm)
+	if err != nil {
+		return err
 	}
 
 	p.CA, err = CreateRootCA("MyPi-ROOT-CA")
 	if err != nil {
 		return err
 	}
-	err = p.CA.Save(dir)
+	err = p.CA.Save(p.getFileName("root", "ca"))
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func (p *PkiGenerator) GenerateServerCert(name string, dns ...string) (err error) {
+	p.GenerateRoot()
+
+	id, err := CreateIdentity()
+	if err != nil {
+		return err
+	}
+
+	template := &x509.Certificate{
+		Subject:   pkix.Name{CommonName: name},
+		DNSNames:  dns,
+		NotBefore: time.Now(),
+		NotAfter:  time.Now().AddDate(1, 0, 0),
+	}
+
+	p.CA.IssueCertificate(id, template)
+
+	return id.Save(p.getFileName(name, "tls"))
 }
 
 func Setup() {
@@ -58,7 +97,7 @@ func Setup() {
 		dNSNames = append(dNSNames, hostname.GetString())
 	}
 
-	id, err := LoadIdentity(mypiRoot + "/config/pki/tls")
+	_, err = LoadIdentity(mypiRoot + "/config/pki/tls")
 	if err != nil {
 		template := &x509.Certificate{
 			Subject:     pkix.Name{CommonName: hostname},
@@ -67,7 +106,7 @@ func Setup() {
 			NotBefore:   time.Now(),
 			NotAfter:    time.Now().AddDate(20, 0, 0),
 		}
-		id = &Identity{}
+		id := &IdentityImpl{}
 		id.CreateKeyPair()
 		id.certificate, err = p.CA.IssueCertificate(id, template)
 		if err != nil {

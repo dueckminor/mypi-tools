@@ -15,10 +15,11 @@ var (
 	// authURI   string
 	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
 	port         = flag.Int("port", 8080, "The port")
+	tlsPort      = flag.Int("tlsport", 443, "The TLS port")
 	execDebug    = flag.String("exec", "", "start process")
 )
 
-func Run(r *gin.Engine) {
+func prepare(r *gin.Engine) {
 	if len(*execDebug) > 0 {
 		cmd := exec.Command(*execDebug)
 		cmd.Stdout = os.Stdout
@@ -35,6 +36,24 @@ func Run(r *gin.Engine) {
 			c.File("./dist/index.html")
 		})
 	}
+}
+
+func Run(r *gin.Engine) {
+	prepare(r)
+	panic(r.Run(":" + strconv.Itoa(*port)))
+}
+
+func RunTLS(r *gin.Engine, keyFile, certFile string) {
+	prepare(r)
+	panic(r.RunTLS(":"+strconv.Itoa(*tlsPort), certFile, keyFile))
+}
+
+func RunBoth(r *gin.Engine, keyFile, certFile string) {
+	prepare(r)
+
+	go func() {
+		r.RunTLS(":"+strconv.Itoa(*tlsPort), certFile, keyFile)
+	}()
 
 	panic(r.Run(":" + strconv.Itoa(*port)))
 }

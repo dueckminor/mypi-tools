@@ -99,7 +99,7 @@ func main() {
 
 	tlsconfig := tlsconfig.NewTLSConfig()
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker("ssl://rpi:8883")
+	opts.AddBroker("ssl://mqtt-int:8883")
 	opts.SetClientID(hostname).SetTLSConfig(tlsconfig)
 
 	// Start the connection
