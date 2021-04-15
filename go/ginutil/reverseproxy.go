@@ -13,6 +13,7 @@ import (
 func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 	url, _ := url.Parse(target)
 	proxy := httputil.NewSingleHostReverseProxy(url)
+	useExternalHostname := false
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
 		location := resp.Header.Get("Location")
@@ -24,10 +25,13 @@ func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 	}
 
 	for _, option := range options {
-		if option == "insecure" {
+		switch option {
+		case "insecure":
 			proxy.Transport = &http.Transport{
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			}
+		case "external-hostname":
+			useExternalHostname = true
 		}
 	}
 
@@ -36,7 +40,9 @@ func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 			return
 		}
 		req := c.Request
-		req.Host = url.Hostname()
+		if !useExternalHostname {
+			req.Host = url.Hostname()
+		}
 		proxy.ServeHTTP(c.Writer, req)
 	}
 }

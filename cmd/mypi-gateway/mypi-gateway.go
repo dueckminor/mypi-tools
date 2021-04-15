@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/rand"
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
@@ -16,27 +17,31 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/dueckminor/mypi-tools/go/util/network"
 	"github.com/fsnotify/fsnotify"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/memstore"
+	"github.com/gin-gonic/gin"
 )
 
 var (
 	target              string
 	portHTTP            int
 	portHTTPS           int
-	identityCert        string
-	identityKey         string
 	gatewayInternalName string
+	store               memstore.Store
+	authURI             string
+	authClientID        string
 )
 
 func init() {
 	flag.StringVar(&target, "target", "", "the target (<host>:<port>)")
 	flag.IntVar(&portHTTPS, "https-port", 8443, "the listening port for https")
 	flag.IntVar(&portHTTP, "http-port", -1, "the listening port for http")
-	flag.StringVar(&identityCert, "identity-cert", "", "the tls server certificate")
-	flag.StringVar(&identityKey, "identity-key", "", "the tls server certificate")
 	flag.StringVar(&gatewayInternalName, "router-name", "", "the (internal) name of the router (fritz.box, 192.168.0.1, ...)")
 }
 
@@ -49,17 +54,166 @@ type CertConfig struct {
 }
 
 type HostConfig struct {
-	Name     string `yaml:"name"`
-	Target   string `yaml:"target"`
-	Mode     string `yaml:"mode"`
-	Insecure bool   `yaml:"insecure"`
+	Name    string   `yaml:"name"`
+	Target  string   `yaml:"target"`
+	Mode    string   `yaml:"mode"`
+	Options []string `yaml:"options"`
 }
+
+func (h *HostConfig) hasOption(option string) bool {
+	for _, o := range h.Options {
+		if o == option {
+			return true
+		}
+	}
+	return false
+}
+
+////////////////////////////////////////////////////////////////////////////////
+type HostImpl interface {
+	String() string
+	HandleConnection(conn net.Conn)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+type HostImplBase struct {
+	HostConfig
+}
+
+func (h *HostImplBase) String() string {
+	return h.Target
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+type HostImplSocket struct {
+	HostImplBase
+}
+
+func (h *HostImplSocket) HandleConnection(conn net.Conn) {
+	panic("HandleConnectionSocket expected")
+}
+
+func (h *HostImplSocket) HandleConnectionSocket(conn net.Conn, buf []byte) {
+	defer conn.Close()
+	targetConn, err := net.Dial("tcp", h.Target)
+	if err == nil {
+		_, err = targetConn.Write(buf)
+	}
+	forwardConnect(conn, targetConn)
+}
+
+func NewHostImplSocket(hostConfig *HostConfig) *HostImplSocket {
+	h := new(HostImplSocket)
+	h.HostConfig = *hostConfig
+	return h
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+type HostImplTLS struct {
+	HostImplBase
+}
+
+func (h *HostImplTLS) HandleConnection(conn net.Conn) {
+	defer conn.Close()
+	conf := &tls.Config{
+		InsecureSkipVerify: h.hasOption("insecure"),
+		ServerName:         h.Target,
+	}
+	targetConn, err := tls.Dial("tcp", h.Target, conf)
+	if err != nil {
+		fmt.Println("Dial Err:", err)
+		return
+	}
+	forwardConnect(conn, targetConn)
+}
+
+func NewHostImplTLS(hostConfig *HostConfig) *HostImplTLS {
+	h := new(HostImplTLS)
+	h.HostConfig = *hostConfig
+	return h
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+type HostImplPort struct {
+	HostImplBase
+}
+
+func (h *HostImplPort) HandleConnection(conn net.Conn) {
+	defer conn.Close()
+	targetConn, err := net.Dial("tcp", h.Target)
+	if err != nil {
+		fmt.Println("Dial Err:", err)
+		return
+	}
+	forwardConnect(conn, targetConn)
+}
+
+func NewHostImplPort(hostConfig *HostConfig) *HostImplPort {
+	h := new(HostImplPort)
+	h.HostConfig = *hostConfig
+	return h
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+type HostImplReverseProxy struct {
+	HostImplBase
+	listener *Listener
+	r        *gin.Engine
+}
+
+func (h *HostImplReverseProxy) HandleConnection(conn net.Conn) {
+	// no need to do this here: defer conn.Close()
+	// the connection will be closed by the gin.Engine
+	h.listener.Connections <- conn
+}
+
+func NewHostImplReverseProxy(hostConfig *HostConfig, uri string, ac *auth.AuthClient) *HostImplReverseProxy {
+	h := new(HostImplReverseProxy)
+	h.HostConfig = *hostConfig
+	h.r = gin.Default()
+
+	if ac != nil {
+		h.r.Use(sessions.Sessions("MYPI_ROUTER_SESSION", store))
+		ac.RegisterHandler(h.r)
+	}
+
+	h.listener = MakeListener()
+	go h.r.RunListener(h.listener)
+	h.r.Use(ginutil.SingleHostReverseProxy(uri, h.Options...))
+	return h
+}
+
+func NewHostImplHTTP(hostConfig *HostConfig, ac *auth.AuthClient) *HostImplReverseProxy {
+	return NewHostImplReverseProxy(hostConfig, "http://"+hostConfig.Target, ac)
+}
+
+func NewHostImplHTTPS(hostConfig *HostConfig, ac *auth.AuthClient) *HostImplReverseProxy {
+	return NewHostImplReverseProxy(hostConfig, "https://"+hostConfig.Target, ac)
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+type AuthConfig struct {
+	URI          string `yaml:"uri"`
+	ClientID     string `yaml:"client_id"`
+	ClientSecret string `yaml:"client_secret"`
+	ServerKey    string `yaml:"server_key"`
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 type GatewayConfig struct {
 	Certs      []*CertConfig `yaml:"certs"`
 	Hosts      []*HostConfig `yaml:"hosts"`
+	Auth       AuthConfig    `yaml:"auth"`
 	certByName map[string]*CertConfig
-	hostByName map[string]*HostConfig
+	hostByName map[string]HostImpl
+	configFile string
 	mutex      sync.RWMutex
 }
 
@@ -132,10 +286,33 @@ func forwardConnect(a, b net.Conn) {
 	<-done
 }
 
-func (gateway *GatewayConfig) createHostMap() map[string]*HostConfig {
-	hostByName := make(map[string]*HostConfig)
+func (gateway *GatewayConfig) createHostMap() map[string]HostImpl {
+	ac := gateway.GetAuthClient()
+	hostByName := make(map[string]HostImpl)
 	for _, hostConfig := range gateway.Hosts {
-		hostByName[hostConfig.Name] = hostConfig
+		var impl HostImpl
+		switch hostConfig.Mode {
+		case "http":
+			if util.StringsContains(hostConfig.Options, "auth") {
+				impl = NewHostImplHTTP(hostConfig, ac)
+			} else {
+				impl = NewHostImplHTTP(hostConfig, nil)
+			}
+		case "https":
+			if util.StringsContains(hostConfig.Options, "auth") {
+				impl = NewHostImplHTTPS(hostConfig, ac)
+			} else {
+				impl = NewHostImplHTTPS(hostConfig, nil)
+			}
+		case "socket":
+			impl = NewHostImplSocket(hostConfig)
+		case "tls":
+			impl = NewHostImplTLS(hostConfig)
+		default:
+			impl = NewHostImplPort(hostConfig)
+		}
+
+		hostByName[hostConfig.Name] = impl
 	}
 	return hostByName
 }
@@ -175,7 +352,7 @@ func (gateway *GatewayConfig) setCertMap(certByName map[string]*CertConfig) {
 	gateway.certByName = certByName
 }
 
-func (gateway *GatewayConfig) setHostMap(hostByName map[string]*HostConfig) {
+func (gateway *GatewayConfig) setHostMap(hostByName map[string]HostImpl) {
 	gateway.mutex.Lock()
 	defer gateway.mutex.Unlock()
 	gateway.hostByName = hostByName
@@ -195,6 +372,9 @@ func (gateway *GatewayConfig) startWatcher() (err error) {
 					return
 				}
 				log.Println("event:", event)
+				if event.Name == gateway.configFile {
+					gateway.loadConfig()
+				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					gateway.setCertMap(gateway.createCertMap())
 				}
@@ -211,15 +391,31 @@ func (gateway *GatewayConfig) startWatcher() (err error) {
 		watcher.Add(certConfig.CertFile)
 	}
 
+	if len(gateway.configFile) > 0 {
+		watcher.Add(gateway.configFile)
+	}
+
 	return nil
 }
 
-func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
+func (gateway *GatewayConfig) loadConfig() {
+	if len(gateway.configFile) > 0 {
+		var newConfig *GatewayConfig
+		config.ReadYAML(gateway.configFile, &newConfig)
+		gateway.Certs = newConfig.Certs
+		gateway.Hosts = newConfig.Hosts
+		gateway.Auth = newConfig.Auth
+	}
+
+	gateway.updateMaps()
+}
+
+func (gateway *GatewayConfig) getHostImpl(serverName string) HostImpl {
 	gateway.mutex.RLock()
 	defer gateway.mutex.RUnlock()
 
-	if hostConfig, ok := gateway.hostByName[serverName]; ok {
-		return hostConfig
+	if hostImpl, ok := gateway.hostByName[serverName]; ok {
+		return hostImpl
 	}
 	if strings.HasPrefix(serverName, "*.") {
 		return nil
@@ -228,8 +424,8 @@ func (gateway *GatewayConfig) getHostConfig(serverName string) *HostConfig {
 	if len(serverNameParts) != 2 {
 		return nil
 	}
-	if hostConfig, ok := gateway.hostByName["*."+serverNameParts[1]]; ok {
-		return hostConfig
+	if hostImpl, ok := gateway.hostByName["*."+serverNameParts[1]]; ok {
+		return hostImpl
 	}
 	return nil
 }
@@ -258,26 +454,56 @@ func (gateway *GatewayConfig) getCertificate(serverName string) (cert tls.Certif
 	return tls.Certificate{}, nil
 }
 
+type Listener struct {
+	Connections chan net.Conn
+}
+
+func (l *Listener) Accept() (net.Conn, error) {
+	conn := <-l.Connections
+	return conn, nil
+}
+func (l *Listener) Close() error {
+	return nil
+}
+func (l *Listener) Addr() net.Addr {
+	return nil
+}
+
+func MakeListener() *Listener {
+	l := &Listener{}
+	l.Connections = make(chan net.Conn)
+	return l
+}
+
+var theListener *Listener
+
 func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 	clientWrapper := &connWrapper{conn: client, cacheRead: true}
 
+	closeConn := true
+	defer func() {
+		if closeConn {
+			client.Close()
+		}
+	}()
+
 	var serverName string
-	var hostConfig *HostConfig
-	ignoreHandshakeError := false
+	var hostImpl HostImpl
+	var hostImplSocket *HostImplSocket
 
 	tlsConn := tls.Server(clientWrapper, &tls.Config{GetConfigForClient: func(clientHelloInfo *tls.ClientHelloInfo) (*tls.Config, error) {
 		clientWrapper.cacheRead = false
 		serverName = clientHelloInfo.ServerName
 		fmt.Println("ServerName:", serverName)
 
-		hostConfig = gateway.getHostConfig(serverName)
-		if nil == hostConfig {
+		hostImpl = gateway.getHostImpl(serverName)
+		if nil == hostImpl {
 			fmt.Println("-> dropped")
 			return nil, os.ErrInvalid
 		}
-		if hostConfig.Mode == "socket" {
+		var ok bool
+		if hostImplSocket, ok = hostImpl.(*HostImplSocket); ok {
 			clientWrapper.conn = nil
-			ignoreHandshakeError = true
 			return nil, os.ErrInvalid
 		}
 
@@ -287,7 +513,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 			return nil, os.ErrInvalid
 		}
 
-		fmt.Println("->", hostConfig.Target)
+		fmt.Println("->", hostImpl.String())
 		return &tls.Config{
 			Certificates: []tls.Certificate{certConfig.cert},
 		}, nil
@@ -296,44 +522,61 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 
 	err := tlsConn.Handshake()
 
-	if nil == hostConfig {
+	if nil == hostImpl {
 		fmt.Println("ServerName:", serverName, "rejected")
 		return
 	}
 
-	if err != nil && !ignoreHandshakeError {
+	if err != nil && hostImplSocket == nil {
 		fmt.Println("Handshake Err:", err)
 		return
 	}
 
 	fmt.Println("ServerName:", serverName)
 
-	var targetConn net.Conn
-	var sourceConn net.Conn = tlsConn
+	// from now on hostImpl is responsible to close the connection
+	closeConn = false
 
-	switch hostConfig.Mode {
-	case "socket":
-		targetConn, err = net.Dial("tcp", hostConfig.Target)
-		if err == nil {
-			_, err = targetConn.Write(clientWrapper.buff)
-		}
-		sourceConn = client
-	case "tls":
-		conf := &tls.Config{
-			InsecureSkipVerify: hostConfig.Insecure,
-			ServerName:         serverName,
-		}
-		targetConn, err = tls.Dial("tcp", hostConfig.Target, conf)
-	default:
-		targetConn, err = net.Dial("tcp", hostConfig.Target)
+	if hostImplSocket != nil {
+		hostImplSocket.HandleConnectionSocket(client, clientWrapper.buff)
+	} else {
+		hostImpl.HandleConnection(tlsConn)
+	}
+}
+
+func (c *GatewayConfig) GetAuthClient() *auth.AuthClient {
+	if len(c.Auth.URI) == 0 {
+		return nil
 	}
 
+	ac := new(auth.AuthClient)
+	ac.AuthURI = c.Auth.URI
+	ac.ClientID = c.Auth.ClientID
+	ac.ClientSecret = c.Auth.ClientSecret
+
+	ServerKey := c.Auth.ServerKey
+
+	if len(ServerKey) == 0 || len(ac.ClientSecret) == 0 {
+		clientConfig, err := config.ReadConfigFile(path.Join("etc/auth/clients", ac.ClientID+".yml"))
+		if err != nil {
+			panic(err)
+		}
+		if len(ac.ClientSecret) == 0 {
+			ac.ClientSecret = clientConfig.GetString("client_secret")
+			if len(ac.ClientSecret) == 0 {
+				panic("No client secret specified")
+			}
+		}
+		ServerKey = clientConfig.GetString("server_key")
+	}
+
+	var err error
+	ac.ServerKey, err = config.StringToRSAPublicKey(ServerKey)
 	if err != nil {
-		fmt.Println("Dial Err:", err)
-		return
+		panic(err)
 	}
 
-	forwardConnect(sourceConn, targetConn)
+	return ac
 }
 
 func main() {
@@ -348,26 +591,22 @@ func main() {
 	ip, _ = network.GetRouterExternalIP()
 	fmt.Println("Router external IP:", ip)
 
+	key := make([]byte, 64)
+	rand.Read(key)
+	store = memstore.NewStore([]byte(key))
+
 	var gatewayConfig *GatewayConfig
 
 	nArgs := flag.CommandLine.NArg()
 	if nArgs > 1 {
 		panic("To many args specified")
 	}
-	if nArgs == 1 {
-		config.ReadYAML(flag.CommandLine.Arg(0), &gatewayConfig)
-	} else {
-		gatewayConfig = &GatewayConfig{}
-	}
+	gatewayConfig = &GatewayConfig{}
+	configFile := flag.CommandLine.Arg(0)
+	gatewayConfig.configFile = configFile
 
-	if len(identityCert) > 0 && len(identityKey) > 0 {
-		gatewayConfig.Certs = append(gatewayConfig.Certs, &CertConfig{
-			CertFile: identityCert,
-			KeyFile:  identityKey,
-		})
-	}
-
-	gatewayConfig.updateMaps()
+	gatewayConfig.loadConfig()
+	gatewayConfig.startWatcher()
 
 	signals := make(chan os.Signal, 1)
 	stop := make(chan bool)
@@ -417,10 +656,10 @@ func main() {
 				log.Fatal("could not accept client connection", err)
 			}
 			go func() {
-				defer client.Close()
-				fmt.Printf("client '%v' connected!\n", client.RemoteAddr())
+				remoteAddr := client.RemoteAddr()
+				fmt.Printf("client '%v' connected!\n", remoteAddr)
 				gatewayConfig.handleConnection(client)
-				fmt.Printf("client '%v' disconnected!\n", client.RemoteAddr())
+				fmt.Printf("client '%v' disconnected!\n", remoteAddr)
 			}()
 		}
 	}()
