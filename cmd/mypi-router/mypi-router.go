@@ -503,6 +503,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 		}
 		var ok bool
 		if hostImplSocket, ok = hostImpl.(*HostImplSocket); ok {
+			// from now on the connection is handled by hostImplSocket
 			clientWrapper.conn = nil
 			return nil, os.ErrInvalid
 		}

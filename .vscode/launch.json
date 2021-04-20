@@ -68,43 +68,12 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/cmd/mypi-router/main.go",
-      "env": {},
-      "args": [
-        "--auth=http://localhost:9100",
-        "--target=http://fritz.box",
-        //"--target=http://rpi.fritz.box:1880",
-        "--port=9200",
-        "--client-id=sample",
-        "--mypi-root=${workspaceFolder}/.mypi"
-      ]
-    },
-    {
-      "name": "Launch - Gateway",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "${workspaceFolder}/cmd/mypi-gateway/mypi-gateway.go",
+      "program": "${workspaceFolder}/cmd/mypi-router/mypi-router.go",
       "env": {},
       "args": [
         "--https-port=10443",
         "--http-port=10080",
         "${workspaceFolder}/tmp/gateway.yml"
-      ]
-    },
-    {
-      "name": "Launch - Router with config",
-      "type": "go",
-      "request": "launch",
-      "mode": "auto",
-      "program": "${workspaceFolder}/cmd/mypi-router/main.go",
-      "env": {},
-      "args": [
-        "--auth=http://localhost:9100",
-        "--port=9200",
-        "--client-id=sample",
-        "--mypi-root=${workspaceFolder}/.mypi",
-        "${workspaceFolder}/.mypi/router.yml"
       ]
     },
     {
