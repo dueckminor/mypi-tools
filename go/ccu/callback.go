@@ -55,5 +55,5 @@ func (ccuc *CcuClient) StartCallbackHandler() error {
 		return err
 	}
 	go http.Serve(ln, httpHandler)
-	return ccuc.Init("http://"+ccuc.GetOwnIP()+":2000", "TESTCLIENT")
+	return ccuc.Init("http://"+ccuc.GetOwnIP()+":2000", "TESTCLIENT-"+ccuc.GetOwnIP())
 }
