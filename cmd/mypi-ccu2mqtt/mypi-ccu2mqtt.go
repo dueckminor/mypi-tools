@@ -92,6 +92,8 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println("Listen on:", ccuc.GetOwnIP())
+
 	devices, _ := ccuc.GetDevices()
 	for _, device := range devices {
 		valueDescriptions, _ := device.GetMasterDescription()

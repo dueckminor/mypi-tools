@@ -10,6 +10,7 @@ import (
 type CcuCallback func(dev Device, valueKey string, value interface{})
 
 type CcuClient struct {
+	ownIP        string
 	xmlrpcClient *xmlrpc.Client
 	devices      map[string]deviceInt
 	callbacks    []CcuCallback

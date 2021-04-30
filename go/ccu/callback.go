@@ -40,8 +40,14 @@ func (h *HttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (ccuc *CcuClient) GetOwnIP() string {
+	if len(ccuc.ownIP) == 0 {
+		ccuc.ownIP = resolveHostIp()
+	}
+	return ccuc.ownIP
+}
+
 func (ccuc *CcuClient) StartCallbackHandler() error {
-	hostIP := resolveHostIp()
 	httpHandler := &HttpHandler{}
 	httpHandler.ccuc = ccuc
 	ln, err := net.Listen("tcp", ":2000")
@@ -49,5 +55,5 @@ func (ccuc *CcuClient) StartCallbackHandler() error {
 		return err
 	}
 	go http.Serve(ln, httpHandler)
-	return ccuc.Init("http://"+hostIP+":2000", "TESTCLIENT")
+	return ccuc.Init("http://"+ccuc.GetOwnIP()+":2000", "TESTCLIENT")
 }
