@@ -62,8 +62,6 @@ if [ "${PARTITION_COUNT}" = "1" ]; then
         c=$((c+1))
         sleep 1
     done
-    
-
 
     if ! mount "/dev/${BOOT_PARTITION}" "/media/${BOOT_PARTITION}"; then
         if ! partprobe "/dev/${BOOT_DISK}"; then
@@ -85,7 +83,7 @@ if [ "${PARTITION_COUNT}" = "3" ]; then
         yes | mkfs.ext4 "${PARTITION_ROOT_DEVICE}"
         /mypi-control/setup-kernel
         /mypi-control/setup-disk
-        
+
         echo "rebooting..."
         reboot
         exit 0

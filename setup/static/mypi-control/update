@@ -32,7 +32,7 @@ mkdir -p /build
 cd /build
 git clone https://github.com/alexreinert/piVCCU.git
 cd piVCCU/kernel
-make
+KERNELRELEASE="${NEW_KERNEL_RELEASE}" make
 mkdir "${CCU_MODULE_DIR}"
 cp *.ko "${CCU_MODULE_DIR}/"
 depmod "${NEW_KERNEL_RELEASE}"

@@ -37,6 +37,8 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200526175731-7ac0b40b2038
 	github.com/tklauser/go-sysconf v0.3.4 // indirect
 	golang.org/x/crypto v0.0.0-20200604202706-70a84ac30bf9
+	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
+	golang.org/x/text v0.3.2
 	gopkg.in/yaml.v2 v2.3.0
 	howett.net/plist v0.0.0-20200419221736-3b63eb3a43b5
 )

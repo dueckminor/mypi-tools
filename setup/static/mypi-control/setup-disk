@@ -88,3 +88,5 @@ fi
 
 # switch to new root filesystem
 sed 's|^|root='"${PARTITION_ROOT_DEVICE}"' |' -i "/media/${PARTITION_BOOT_DEVICE_NAME}/cmdline.txt"
+
+# todo: add 'cgroup_enable=memory' to cmdline.txt

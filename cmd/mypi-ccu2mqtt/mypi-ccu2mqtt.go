@@ -1,0 +1,107 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/url"
+	"os"
+	"strings"
+
+	"github.com/dueckminor/mypi-tools/go/ccu"
+	"github.com/dueckminor/mypi-tools/go/tlsconfig"
+	"github.com/dueckminor/mypi-tools/go/util"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"gopkg.in/yaml.v2"
+)
+
+type MQTTClientConfig struct {
+	URI      string `yaml:"uri"`
+	ClientID string `yaml:"client_id"`
+}
+
+type CCUClientConfig struct {
+	URI      string `yaml:"uri"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+}
+
+type Config struct {
+	MQTT MQTTClientConfig `yaml:"mqtt"`
+	CCU  CCUClientConfig  `yaml:"ccu"`
+}
+
+func main() {
+	var cfg Config
+
+	if (len(os.Args) == 2) && !strings.HasPrefix(os.Args[1], "-") && util.FileExists(os.Args[1]) {
+		data, err := ioutil.ReadFile(os.Args[1])
+		if err != nil {
+			panic(err)
+		}
+		err = yaml.Unmarshal(data, &cfg)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	tlsconfig := tlsconfig.NewTLSConfig()
+	opts := mqtt.NewClientOptions()
+	opts.AddBroker(cfg.MQTT.URI)
+	opts.SetClientID(cfg.MQTT.ClientID).SetTLSConfig(tlsconfig)
+	c := mqtt.NewClient(opts)
+	if token := c.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
+
+	// port 2001: HM
+	// port 2010: HM-IP
+
+	uri := cfg.CCU.URI
+	if len(cfg.CCU.Username) > 0 {
+		parsedURI, err := url.Parse(uri)
+		if err != nil {
+			panic(err)
+		}
+		parsedURI.User = url.UserPassword(cfg.CCU.Username, cfg.CCU.Password)
+		uri = parsedURI.String()
+	}
+
+	ccuc, err := ccu.NewCcuClient(uri)
+	if err != nil {
+		panic(err)
+	}
+
+	ccuc.SetCallback(func(dev ccu.Device, valueKey string, value interface{}) {
+		topic := "/homematic/" + dev.Type() + "/" + dev.Address() + "/" + valueKey
+
+		payload, _ := json.Marshal(value)
+
+		c.Publish(topic, 2, false, string(payload))
+		fmt.Println(topic, string(payload))
+	})
+
+	version, err := ccuc.GetVersion()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("version:", version)
+
+	err = ccuc.StartCallbackHandler()
+	if err != nil {
+		panic(err)
+	}
+
+	devices, _ := ccuc.GetDevices()
+	for _, device := range devices {
+		valueDescriptions, _ := device.GetMasterDescription()
+		for valueName, _ := range valueDescriptions {
+			device.GetValue(valueName)
+		}
+	}
+
+	done := make(chan bool)
+
+	<-done
+
+}
