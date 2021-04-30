@@ -92,10 +92,19 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Println("Listen on:", ccuc.GetOwnIP())
+	fmt.Println("listen:", ccuc.GetOwnIP())
 
 	devices, _ := ccuc.GetDevices()
+
+	if len(devices) == 0 {
+		fmt.Println("devices: []")
+	} else {
+		fmt.Println("devices:")
+	}
+
 	for _, device := range devices {
+		fmt.Println("  - address:", device.Address())
+		fmt.Println("  - type:", device.Type())
 		valueDescriptions, _ := device.GetMasterDescription()
 		for valueName, _ := range valueDescriptions {
 			device.GetValue(valueName)
