@@ -1,15 +1,19 @@
 package ccu
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/dueckminor/mypi-tools/go/xmlrpc"
 )
 
 type HttpHandler struct {
-	ccuc *CcuClient
+	ccuc *CcuClientImpl
 }
 
 func resolveHostIp() string {
@@ -40,20 +44,46 @@ func (h *HttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func (ccuc *CcuClient) GetOwnIP() string {
+func (ccuc *CcuClientImpl) GetOwnIP() string {
 	if len(ccuc.ownIP) == 0 {
 		ccuc.ownIP = resolveHostIp()
 	}
 	return ccuc.ownIP
 }
 
-func (ccuc *CcuClient) StartCallbackHandler() error {
+func (ccuc *CcuClientImpl) StartCallbackHandler() error {
 	httpHandler := &HttpHandler{}
 	httpHandler.ccuc = ccuc
-	ln, err := net.Listen("tcp", ":2000")
+
+	port := "0"
+	parsedURI, err := url.Parse(ccuc.uri)
+	if err == nil {
+		port = parsedURI.Port()
+	}
+
+	ln, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return err
 	}
+
+	port = strconv.FormatInt(int64(ln.Addr().(*net.TCPAddr).Port), 10)
+
+	ownURL := "http://" + ccuc.GetOwnIP() + ":" + port
+	ownID := "MYPI-" + ccuc.GetOwnIP() + "-" + port
+
 	go http.Serve(ln, httpHandler)
-	return ccuc.Init("http://"+ccuc.GetOwnIP()+":2000", "TESTCLIENT-"+ccuc.GetOwnIP())
+	err = ccuc.Init(ownURL, ownID)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			time.Sleep(15 * time.Minute)
+			fmt.Println("Init again...")
+			ccuc.Init(ownURL, ownID)
+		}
+	}()
+
+	return err
 }

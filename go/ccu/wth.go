@@ -8,7 +8,7 @@ type WTH struct {
 	deviceImpl
 }
 
-func newWTH(ccuc *CcuClient, deviceDesc DeviceDescription) (wth *WTH) {
+func newWTH(ccuc *CcuClientImpl, deviceDesc DeviceDescription) (wth *WTH) {
 	wth = new(WTH)
 	wth.ccuc = ccuc
 	wth.deviceDesc = deviceDesc

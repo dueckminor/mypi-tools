@@ -49,8 +49,8 @@ func main() {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(cfg.MQTT.URI)
 	opts.SetClientID(cfg.MQTT.ClientID).SetTLSConfig(tlsconfig)
-	c := mqtt.NewClient(opts)
-	if token := c.Connect(); token.Wait() && token.Error() != nil {
+	mqttClient := mqtt.NewClient(opts)
+	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
 		panic(token.Error())
 	}
 
@@ -73,12 +73,29 @@ func main() {
 	}
 
 	ccuc.SetCallback(func(dev ccu.Device, valueKey string, value interface{}) {
-		topic := "/homematic/" + dev.Type() + "/" + dev.Address() + "/" + valueKey
+		topic := "homematic/" + dev.Type() + "/" + dev.Address() + "/" + valueKey
 
 		payload, _ := json.Marshal(value)
 
-		c.Publish(topic, 2, false, string(payload))
-		fmt.Println(topic, string(payload))
+		mqttClient.Publish(topic, 2, false, string(payload))
+		fmt.Println("<-", topic, string(payload))
+	})
+
+	mqttClient.Subscribe("homematic/#", 2, func(client mqtt.Client, msg mqtt.Message) {
+		topic := msg.Topic()
+		topicParts := strings.Split(topic, "/")
+		addr := topicParts[2]
+		valueName := topicParts[3]
+		device, err := ccuc.GetDevice(addr)
+		if device != nil && err == nil {
+			var value interface{}
+			json.Unmarshal(msg.Payload(), &value)
+			changed, _ := device.SetValueIfChanged(valueName, value)
+			if changed {
+				fmt.Println("->", topic, value)
+			}
+
+		}
 	})
 
 	version, err := ccuc.GetVersion()
@@ -105,10 +122,16 @@ func main() {
 	for _, device := range devices {
 		fmt.Println("  - address:", device.Address())
 		fmt.Println("  - type:", device.Type())
-		valueDescriptions, _ := device.GetMasterDescription()
-		for valueName, _ := range valueDescriptions {
-			device.GetValue(valueName)
-		}
+		device.GetValues()
+		//valueDescriptions, err :=
+		// if err != nil {
+		// 	fmt.Println("  - values:", err)
+		// } else {
+		// 	fmt.Println("  - values:")
+		// 	for valueName, value := range valueDescriptions {
+		// 		fmt.Println("    - "+valueName+":", value)
+		// 	}
+		// }
 	}
 
 	done := make(chan bool)

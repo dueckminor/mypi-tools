@@ -232,3 +232,208 @@ func decode(charset string, input io.Reader) (io.Reader, error) {
 
 	return transform.NewReader(input, charmap.Windows1251.NewDecoder()), nil
 }
+
+type ParameterDescription struct {
+	Type string `xmlrpc:"TYPE"`
+}
+
+type ParamsetDescription map[string]*ParameterDescription
+
+func Test_decodeCCU(t *testing.T) {
+	data := []byte(`<?xml version="1.0" encoding="UTF-8"?>
+	<methodResponse>
+	   <params>
+		  <param>
+			 <value>
+				<struct>
+				   <member>
+					  <name>LEVEL</name>
+					  <value>
+						 <struct>
+							<member>
+							   <name>CONTROL</name>
+							   <value>NONE</value>
+							</member>
+							<member>
+							   <name>DEFAULT</name>
+							   <value>
+								  <double>0.000000</double>
+							   </value>
+							</member>
+							<member>
+							   <name>FLAGS</name>
+							   <value>
+								  <i4>1</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>ID</name>
+							   <value>LEVEL</value>
+							</member>
+							<member>
+							   <name>MAX</name>
+							   <value>
+								  <double>1.000000</double>
+							   </value>
+							</member>
+							<member>
+							   <name>MIN</name>
+							   <value>
+								  <double>0.000000</double>
+							   </value>
+							</member>
+							<member>
+							   <name>OPERATIONS</name>
+							   <value>
+								  <i4>2</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>TAB_ORDER</name>
+							   <value>
+								  <i4>2</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>TYPE</name>
+							   <value>FLOAT</value>
+							</member>
+							<member>
+							   <name>UNIT</name>
+							   <value>100%</value>
+							</member>
+						 </struct>
+					  </value>
+				   </member>
+				   <member>
+					  <name>PRESS_LONG</name>
+					  <value>
+						 <struct>
+							<member>
+							   <name>CONTROL</name>
+							   <value>BUTTON.LONG</value>
+							</member>
+							<member>
+							   <name>DEFAULT</name>
+							   <value>
+								  <boolean>0</boolean>
+							   </value>
+							</member>
+							<member>
+							   <name>FLAGS</name>
+							   <value>
+								  <i4>1</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>ID</name>
+							   <value>PRESS_LONG</value>
+							</member>
+							<member>
+							   <name>MAX</name>
+							   <value>
+								  <boolean>1</boolean>
+							   </value>
+							</member>
+							<member>
+							   <name>MIN</name>
+							   <value>
+								  <boolean>0</boolean>
+							   </value>
+							</member>
+							<member>
+							   <name>OPERATIONS</name>
+							   <value>
+								  <i4>6</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>TAB_ORDER</name>
+							   <value>
+								  <i4>0</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>TYPE</name>
+							   <value>ACTION</value>
+							</member>
+							<member>
+							   <name>UNIT</name>
+							   <value />
+							</member>
+						 </struct>
+					  </value>
+				   </member>
+				   <member>
+					  <name>PRESS_SHORT</name>
+					  <value>
+						 <struct>
+							<member>
+							   <name>CONTROL</name>
+							   <value>BUTTON.SHORT</value>
+							</member>
+							<member>
+							   <name>DEFAULT</name>
+							   <value>
+								  <boolean>0</boolean>
+							   </value>
+							</member>
+							<member>
+							   <name>FLAGS</name>
+							   <value>
+								  <i4>1</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>ID</name>
+							   <value>PRESS_SHORT</value>
+							</member>
+							<member>
+							   <name>MAX</name>
+							   <value>
+								  <boolean>1</boolean>
+							   </value>
+							</member>
+							<member>
+							   <name>MIN</name>
+							   <value>
+								  <boolean>0</boolean>
+							   </value>
+							</member>
+							<member>
+							   <name>OPERATIONS</name>
+							   <value>
+								  <i4>6</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>TAB_ORDER</name>
+							   <value>
+								  <i4>1</i4>
+							   </value>
+							</member>
+							<member>
+							   <name>TYPE</name>
+							   <value>ACTION</value>
+							</member>
+							<member>
+							   <name>UNIT</name>
+							   <value />
+							</member>
+						 </struct>
+					  </value>
+				   </member>
+				</struct>
+			 </value>
+		  </param>
+	   </params>
+	</methodResponse>`)
+
+	var s ParamsetDescription
+
+	if err := unmarshal(data, &s); err != nil {
+		fmt.Println(err)
+		t.Fatal("unmarshal error: cannot decode non utf-8 response")
+	}
+
+}

@@ -9,22 +9,31 @@ import (
 
 type CcuCallback func(dev Device, valueKey string, value interface{})
 
-type CcuClient struct {
+type CcuClient interface {
+	GetVersion() (version string, err error)
+	SetCallback(cb CcuCallback)
+	StartCallbackHandler() error
+	GetOwnIP() string
+	GetDevices() (devices []Device, err error)
+	GetDevice(addr string) (device Device, err error)
+}
+type CcuClientImpl struct {
+	uri          string
 	ownIP        string
 	xmlrpcClient *xmlrpc.Client
 	devices      map[string]deviceInt
 	callbacks    []CcuCallback
 }
 
-func NewCcuClient(uri string) (ccuc *CcuClient, err error) {
+func newCcuClient(uri string) (ccuc *CcuClientImpl, err error) {
 	xmlrpc.CharsetReader = charset.NewReaderLabel
-	ccuc = &CcuClient{}
-
+	ccuc = &CcuClientImpl{}
+	ccuc.uri = uri
 	ccuc.xmlrpcClient, err = xmlrpc.NewClient(uri, nil)
 	return ccuc, err
 }
 
-func (ccuc *CcuClient) ParseMethodCall(methodName string, cb xmlrpc.MethodCallParserCB) (err error) {
+func (ccuc *CcuClientImpl) ParseMethodCall(methodName string, cb xmlrpc.MethodCallParserCB) (err error) {
 	//fmt.Println(methodName)
 	switch methodName {
 	case "event":
@@ -65,72 +74,72 @@ func (ccuc *CcuClient) ParseMethodCall(methodName string, cb xmlrpc.MethodCallPa
 	}
 }
 
-func (ccuc *CcuClient) SetCallback(cb CcuCallback) {
+func (ccuc *CcuClientImpl) SetCallback(cb CcuCallback) {
 	ccuc.callbacks = append(ccuc.callbacks, cb)
 }
 
-func (ccuc *CcuClient) Init(url string, interfaceID string) (err error) {
+func (ccuc *CcuClientImpl) Init(url string, interfaceID string) (err error) {
 	return ccuc.xmlrpcClient.Call("init", []interface{}{url, interfaceID}, nil)
 }
 
-func (ccuc *CcuClient) GetVersion() (version string, err error) {
+func (ccuc *CcuClientImpl) GetVersion() (version string, err error) {
 	err = ccuc.xmlrpcClient.Call("getVersion", nil, &version)
 	return version, err
 }
-func (ccuc *CcuClient) ListMethods() (methods []string, err error) {
+func (ccuc *CcuClientImpl) ListMethods() (methods []string, err error) {
 	err = ccuc.xmlrpcClient.Call("system.listMethods", nil, &methods)
 	return methods, err
 }
 
-func (ccuc *CcuClient) ListDevices() (devices []DeviceDescription, err error) {
+func (ccuc *CcuClientImpl) ListDevices() (devices []DeviceDescription, err error) {
 	err = ccuc.xmlrpcClient.Call("listDevices", nil, &devices)
 	return devices, err
 }
 
-func (ccuc *CcuClient) GetDeviceDescription(address string) (device *DeviceDescription, err error) {
+func (ccuc *CcuClientImpl) GetDeviceDescription(address string) (device *DeviceDescription, err error) {
 	err = ccuc.xmlrpcClient.Call("getDeviceDescription", []interface{}{address}, &device)
 	return device, err
 }
 
-func (ccuc *CcuClient) GetParamsetDescription(address string, paramsetType string) (paramsetDescription ParamsetDescription, err error) {
+func (ccuc *CcuClientImpl) GetParamsetDescription(address string, paramsetType string) (paramsetDescription ParamsetDescription, err error) {
 	err = ccuc.xmlrpcClient.Call("getParamsetDescription", []interface{}{
 		address, paramsetType,
 	}, &paramsetDescription)
 	return paramsetDescription, err
 }
 
-func (ccuc *CcuClient) GetMasterDescription(address string) (paramsetDescription ParamsetDescription, err error) {
+func (ccuc *CcuClientImpl) GetMasterDescription(address string) (paramsetDescription ParamsetDescription, err error) {
 	return ccuc.GetParamsetDescription(address, "MASTER")
 }
 
-func (ccuc *CcuClient) GetValueDescription(address string) (paramsetDescription ParamsetDescription, err error) {
+func (ccuc *CcuClientImpl) GetValueDescription(address string) (paramsetDescription ParamsetDescription, err error) {
 	return ccuc.GetParamsetDescription(address, "VALUES")
 }
 
-func (ccuc *CcuClient) GetLinkDescription(address string) (paramsetDescription ParamsetDescription, err error) {
+func (ccuc *CcuClientImpl) GetLinkDescription(address string) (paramsetDescription ParamsetDescription, err error) {
 	return ccuc.GetParamsetDescription(address, "LINK")
 }
 
-func (ccuc *CcuClient) GetValue(address, valueKey string) (value interface{}, err error) {
+func (ccuc *CcuClientImpl) GetValue(address, valueKey string) (value interface{}, err error) {
 	err = ccuc.xmlrpcClient.Call("getValue", []interface{}{address, valueKey}, &value)
 	return value, err
 }
 
-func (ccuc *CcuClient) GetParamsetID(address, paramsetType string) (value string, err error) {
+func (ccuc *CcuClientImpl) GetParamsetID(address, paramsetType string) (value string, err error) {
 	err = ccuc.xmlrpcClient.Call("getParamsetId", []interface{}{address, paramsetType}, &value)
 	return value, err
 }
 
-func (ccuc *CcuClient) GetParamset(address, paramsetKey string) (value map[string]interface{}, err error) {
+func (ccuc *CcuClientImpl) GetParamset(address, paramsetKey string) (value map[string]interface{}, err error) {
 	err = ccuc.xmlrpcClient.Call("getParamset", []interface{}{address, paramsetKey}, &value)
 	return value, err
 }
 
-func (ccuc *CcuClient) SetValue(address, valueKey string, value interface{}) (err error) {
+func (ccuc *CcuClientImpl) SetValue(address, valueKey string, value interface{}) (err error) {
 	return ccuc.xmlrpcClient.Call("setValue", []interface{}{address, valueKey, value}, nil)
 }
 
-func (ccuc *CcuClient) getDevices() (err error) {
+func (ccuc *CcuClientImpl) getDevices() (err error) {
 	devs, err := ccuc.ListDevices()
 	if err != nil {
 		return
@@ -166,7 +175,7 @@ func (ccuc *CcuClient) getDevices() (err error) {
 	return nil
 }
 
-func (ccuc *CcuClient) GetDevices() (devices []Device, err error) {
+func (ccuc *CcuClientImpl) GetDevices() (devices []Device, err error) {
 	err = ccuc.getDevices()
 	if err != nil {
 		return nil, err
@@ -177,7 +186,14 @@ func (ccuc *CcuClient) GetDevices() (devices []Device, err error) {
 	return devices, nil
 }
 
-func (ccuc *CcuClient) GetWTHs() (wths []*WTH, err error) {
+func (ccuc *CcuClientImpl) GetDevice(addr string) (device Device, err error) {
+	if dev, ok := ccuc.devices[addr]; ok {
+		return dev, nil
+	}
+	return nil, nil
+}
+
+func (ccuc *CcuClientImpl) GetWTHs() (wths []*WTH, err error) {
 	err = ccuc.getDevices()
 	if err != nil {
 		return nil, err

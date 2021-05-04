@@ -56,6 +56,7 @@ func unmarshal(data []byte, v interface{}) (err error) {
 					return errors.New("non-pointer value passed to unmarshal")
 				}
 				if err = dec.decodeValue(val.Elem()); err != nil {
+					fmt.Println(string(data))
 					return err
 				}
 

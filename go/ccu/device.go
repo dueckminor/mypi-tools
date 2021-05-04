@@ -1,16 +1,22 @@
 package ccu
 
-import "sync"
+import (
+	"bytes"
+	"encoding/json"
+	"sync"
+)
 
 type Device interface {
 	Address() string
 	Type() string
 	GetValue(valueName string) (result interface{}, err error)
 	SetValue(valueName string, value interface{}) (err error)
+	SetValueIfChanged(valueName string, value interface{}) (changed bool, err error)
 	SubDevices() []Device
 	GetSubDevice(subdeviceType string) (subdevice Device, err error)
 	GetMasterDescription() (paramsetDescription ParamsetDescription, err error)
 	GetValueDescription() (paramsetDescription ParamsetDescription, err error)
+	GetValues() (value map[string]interface{}, err error)
 }
 
 type deviceInt interface {
@@ -20,14 +26,14 @@ type deviceInt interface {
 }
 
 type deviceImpl struct {
-	ccuc       *CcuClient
+	ccuc       *CcuClientImpl
 	deviceDesc DeviceDescription
 	mutex      sync.RWMutex
 	subdevices map[string]Device
 	values     map[string]interface{}
 }
 
-func newDevice(ccuc *CcuClient, deviceDesc DeviceDescription) (dev *deviceImpl) {
+func newDevice(ccuc *CcuClientImpl, deviceDesc DeviceDescription) (dev *deviceImpl) {
 	dev = new(deviceImpl)
 	dev.ccuc = ccuc
 	dev.deviceDesc = deviceDesc
@@ -106,10 +112,9 @@ func (dev *deviceImpl) putValueToCache(valueName string, value interface{}) (cha
 }
 
 func (dev *deviceImpl) putValue(valueName string, value interface{}) {
-	if dev.putValueToCache(valueName, value) {
-		for _, callback := range dev.ccuc.callbacks {
-			callback(dev, valueName, value)
-		}
+	dev.putValueToCache(valueName, value)
+	for _, callback := range dev.ccuc.callbacks {
+		callback(dev, valueName, value)
 	}
 }
 
@@ -121,10 +126,46 @@ func (dev *deviceImpl) SetValue(valueName string, value interface{}) (err error)
 	return err
 }
 
+func equals(a, b interface{}) bool {
+	da, err := json.Marshal(a)
+	if err != nil {
+		return false
+	}
+	db, err := json.Marshal(b)
+	if err != nil {
+		return false
+	}
+	return bytes.Compare(da, db) == 0
+}
+
+func (dev *deviceImpl) SetValueIfChanged(valueName string, value interface{}) (changed bool, err error) {
+	if oldValue, ok := dev.values[valueName]; !ok || !equals(oldValue, value) {
+		if valueName == "WINDOW_STATE" {
+			valueName = "WINDOW_STATE"
+		}
+		err = dev.ccuc.SetValue(dev.deviceDesc.Address, valueName, value)
+		if err == nil {
+			dev.putValueToCache(valueName, value)
+		}
+		return true, err
+	}
+	return false, nil
+}
+
 func (dev deviceImpl) GetMasterDescription() (paramsetDescription ParamsetDescription, err error) {
 	return dev.ccuc.GetMasterDescription(dev.deviceDesc.Address)
 }
 
 func (dev deviceImpl) GetValueDescription() (paramsetDescription ParamsetDescription, err error) {
 	return dev.ccuc.GetValueDescription(dev.deviceDesc.Address)
+}
+
+func (dev deviceImpl) GetValues() (values map[string]interface{}, err error) {
+	values, err = dev.ccuc.GetParamset(dev.deviceDesc.Address, "VALUES")
+	if err == nil {
+		for valueName, value := range values {
+			dev.putValue(valueName, value)
+		}
+	}
+	return values, err
 }
