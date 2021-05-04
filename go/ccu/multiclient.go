@@ -11,9 +11,13 @@ func NewCcuClient(uri string) (ccuc CcuClient, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// port 2001: HM
+	// port 2010: HM-IP
+
 	port := parsedURI.Port()
 	if len(port) > 0 {
-		return NewCcuClient(uri)
+		return newCcuClient(uri)
 	}
 
 	host := parsedURI.Host

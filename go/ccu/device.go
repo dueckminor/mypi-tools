@@ -139,10 +139,7 @@ func equals(a, b interface{}) bool {
 }
 
 func (dev *deviceImpl) SetValueIfChanged(valueName string, value interface{}) (changed bool, err error) {
-	if oldValue, ok := dev.values[valueName]; !ok || !equals(oldValue, value) {
-		if valueName == "WINDOW_STATE" {
-			valueName = "WINDOW_STATE"
-		}
+	if oldValue, ok := dev.getValueFromCache(valueName); !ok || !equals(oldValue, value) {
 		err = dev.ccuc.SetValue(dev.deviceDesc.Address, valueName, value)
 		if err == nil {
 			dev.putValueToCache(valueName, value)

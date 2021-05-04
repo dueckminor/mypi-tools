@@ -54,9 +54,6 @@ func main() {
 		panic(token.Error())
 	}
 
-	// port 2001: HM
-	// port 2010: HM-IP
-
 	uri := cfg.CCU.URI
 	if len(cfg.CCU.Username) > 0 {
 		parsedURI, err := url.Parse(uri)
@@ -73,7 +70,7 @@ func main() {
 	}
 
 	ccuc.SetCallback(func(dev ccu.Device, valueKey string, value interface{}) {
-		topic := "homematic/" + dev.Type() + "/" + dev.Address() + "/" + valueKey
+		topic := "hm/" + dev.Address() + "/" + valueKey
 
 		payload, _ := json.Marshal(value)
 
@@ -81,11 +78,15 @@ func main() {
 		fmt.Println("<-", topic, string(payload))
 	})
 
-	mqttClient.Subscribe("homematic/#", 2, func(client mqtt.Client, msg mqtt.Message) {
+	mqttClient.Subscribe("hm/#", 2, func(client mqtt.Client, msg mqtt.Message) {
 		topic := msg.Topic()
 		topicParts := strings.Split(topic, "/")
-		addr := topicParts[2]
-		valueName := topicParts[3]
+		addr := topicParts[1]
+		valueName := topicParts[2]
+		if len(valueName) == 0 || valueName[0] == '@' {
+			return
+		}
+
 		device, err := ccuc.GetDevice(addr)
 		if device != nil && err == nil {
 			var value interface{}
@@ -94,44 +95,22 @@ func main() {
 			if changed {
 				fmt.Println("->", topic, value)
 			}
-
 		}
 	})
-
-	version, err := ccuc.GetVersion()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("version:", version)
 
 	err = ccuc.StartCallbackHandler()
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println("listen:", ccuc.GetOwnIP())
-
 	devices, _ := ccuc.GetDevices()
 
-	if len(devices) == 0 {
-		fmt.Println("devices: []")
-	} else {
-		fmt.Println("devices:")
-	}
-
 	for _, device := range devices {
-		fmt.Println("  - address:", device.Address())
-		fmt.Println("  - type:", device.Type())
 		device.GetValues()
-		//valueDescriptions, err :=
-		// if err != nil {
-		// 	fmt.Println("  - values:", err)
-		// } else {
-		// 	fmt.Println("  - values:")
-		// 	for valueName, value := range valueDescriptions {
-		// 		fmt.Println("    - "+valueName+":", value)
-		// 	}
-		// }
+		topic := "hm/" + device.Address() + "/@TYPE"
+		payload := device.Type()
+		mqttClient.Publish(topic, 2, true, payload)
+		fmt.Println("<-", topic, payload)
 	}
 
 	done := make(chan bool)
