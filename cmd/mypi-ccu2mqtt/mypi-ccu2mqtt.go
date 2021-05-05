@@ -78,16 +78,32 @@ func main() {
 		fmt.Println("<-", topic, string(payload))
 	})
 
+	devices, _ := ccuc.GetDevices()
+
+	for _, device := range devices {
+		device.GetValues()
+		topic := "hm/" + device.Address() + "/@TYPE"
+		payload := device.Type()
+		mqttClient.Publish(topic, 2, true, payload)
+		fmt.Println("<-", topic, payload)
+	}
+
 	mqttClient.Subscribe("hm/#", 2, func(client mqtt.Client, msg mqtt.Message) {
 		topic := msg.Topic()
 		topicParts := strings.Split(topic, "/")
 		addr := topicParts[1]
 		valueName := topicParts[2]
+
+		device, err := ccuc.GetDevice(addr)
+
+		if valueName == "_TYPE_" || (nil == device && msg.Retained()) {
+			mqttClient.Publish(topic, 2, true, "")
+			return
+		}
 		if len(valueName) == 0 || valueName[0] == '@' {
 			return
 		}
 
-		device, err := ccuc.GetDevice(addr)
 		if device != nil && err == nil {
 			var value interface{}
 			json.Unmarshal(msg.Payload(), &value)
@@ -101,16 +117,6 @@ func main() {
 	err = ccuc.StartCallbackHandler()
 	if err != nil {
 		panic(err)
-	}
-
-	devices, _ := ccuc.GetDevices()
-
-	for _, device := range devices {
-		device.GetValues()
-		topic := "hm/" + device.Address() + "/@TYPE"
-		payload := device.Type()
-		mqttClient.Publish(topic, 2, true, payload)
-		fmt.Println("<-", topic, payload)
 	}
 
 	done := make(chan bool)
