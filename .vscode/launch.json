@@ -111,6 +111,15 @@
       "args": ["--port=9400", "--mypi-root=${workspaceFolder}/.mypi"]
     },
     {
+      "name": "Launch - SmartHome",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/mypi-smarthome/mypi-smarthome.go",
+      "env": {},
+      "args": ["--mypi-root=${workspaceFolder}/.mypi", "--mqtt=mypi.fritz.box", "${workspaceFolder}/.mypi/smarthome.yml" ]
+    },
+    {
       "name": "Launch - Setup",
       "type": "go",
       "request": "launch",
