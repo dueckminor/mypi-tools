@@ -19,7 +19,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/rand"
 	"github.com/dueckminor/mypi-tools/go/users"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
