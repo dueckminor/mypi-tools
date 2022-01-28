@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@mdi/font": "^4.9.95",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "core-js": "^3.6.5",
     "hack-font": "^3.3.0",
     "material-design-icons-iconfont": "^5.0.1",
