@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/exec"
 	"strconv"
@@ -72,10 +71,7 @@ func main() {
 
 	r := gin.Default()
 
-	server, err := socketio.NewServer(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	server := socketio.NewServer(nil)
 	server.OnConnect("/", func(s socketio.Conn) error {
 		s.SetContext("")
 		fmt.Println("connected:", s.ID())
@@ -123,7 +119,7 @@ func main() {
 	defer server.Close()
 
 	wh := &webhandler.WebHandler{}
-	err = wh.SetupEndpoints(r)
+	err := wh.SetupEndpoints(r)
 
 	if err != nil {
 		panic(err)
