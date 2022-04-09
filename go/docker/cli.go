@@ -29,18 +29,18 @@ func StartAction(ctx context.Context, service, action string, args ...string) (a
 		Tty:   true,
 	}, &container.HostConfig{
 		Mounts: []mount.Mount{
-			mount.Mount{
+			{
 				Type:   mount.TypeBind,
 				Source: "/opt/mypi",
 				Target: "/opt/mypi",
 			},
-			mount.Mount{
+			{
 				Type:   mount.TypeBind,
 				Source: "/var/run/docker.sock",
 				Target: "/var/run/docker.sock",
 			},
 		},
-	}, nil, "")
+	}, nil, nil, "")
 	if err != nil {
 		return "", err
 	}
