@@ -15,7 +15,6 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
@@ -101,7 +100,7 @@ func (h *HostImplSocket) HandleConnectionSocket(conn net.Conn, buf []byte) {
 	if err == nil {
 		_, err = targetConn.Write(buf)
 	}
-	forwardConnect(conn, targetConn)
+	network.ForwardConn(conn, targetConn)
 }
 
 func NewHostImplSocket(hostConfig *HostConfig) *HostImplSocket {
@@ -127,7 +126,7 @@ func (h *HostImplTLS) HandleConnection(conn net.Conn) {
 		fmt.Println("Dial Err:", err)
 		return
 	}
-	forwardConnect(conn, targetConn)
+	network.ForwardConn(conn, targetConn)
 }
 
 func NewHostImplTLS(hostConfig *HostConfig) *HostImplTLS {
@@ -149,7 +148,7 @@ func (h *HostImplPort) HandleConnection(conn net.Conn) {
 		fmt.Println("Dial Err:", err)
 		return
 	}
-	forwardConnect(conn, targetConn)
+	network.ForwardConn(conn, targetConn)
 }
 
 func NewHostImplPort(hostConfig *HostConfig) *HostImplPort {
@@ -215,75 +214,6 @@ type GatewayConfig struct {
 	hostByName map[string]HostImpl
 	configFile string
 	mutex      sync.RWMutex
-}
-
-type connWrapper struct {
-	conn      net.Conn
-	cacheRead bool
-	buff      []byte
-}
-
-func (w *connWrapper) Read(b []byte) (n int, err error) {
-	if w.conn == nil {
-		return 0, nil
-	}
-	n, err = w.conn.Read(b)
-	if w.cacheRead && n > 0 {
-		w.buff = append(w.buff, b[0:n]...)
-	}
-	return
-}
-func (w *connWrapper) Write(b []byte) (n int, err error) {
-	if w.conn == nil {
-		return len(b), nil
-	}
-	return w.conn.Write(b)
-}
-func (w *connWrapper) Close() error {
-	if w.conn == nil {
-		return nil
-	}
-	return w.conn.Close()
-}
-func (w *connWrapper) LocalAddr() net.Addr {
-	if w.conn == nil {
-		return nil
-	}
-	return w.conn.LocalAddr()
-}
-func (w *connWrapper) RemoteAddr() net.Addr {
-	if w.conn == nil {
-		return nil
-	}
-	return w.conn.RemoteAddr()
-}
-func (w *connWrapper) SetDeadline(t time.Time) error {
-	if w.conn == nil {
-		return nil
-	}
-	return w.conn.SetDeadline(t)
-}
-func (w *connWrapper) SetReadDeadline(t time.Time) error {
-	if w.conn == nil {
-		return nil
-	}
-	return w.conn.SetReadDeadline(t)
-}
-func (w *connWrapper) SetWriteDeadline(t time.Time) error {
-	if w.conn == nil {
-		return nil
-	}
-	return w.conn.SetWriteDeadline(t)
-}
-
-func forwardConnect(a, b net.Conn) {
-	done := make(chan bool, 2)
-
-	go func() { io.Copy(a, b); done <- true }()
-	go func() { io.Copy(b, a); done <- true }()
-
-	<-done
-	<-done
 }
 
 func (gateway *GatewayConfig) createHostMap() map[string]HostImpl {
@@ -475,10 +405,15 @@ func MakeListener() *Listener {
 	return l
 }
 
-var theListener *Listener
-
 func (gateway *GatewayConfig) handleConnection(client net.Conn) {
-	clientWrapper := &connWrapper{conn: client, cacheRead: true}
+	remoteAddr := client.RemoteAddr()
+	fmt.Printf("client '%v' connected!\n", remoteAddr)
+
+	defer func() {
+		fmt.Printf("client '%v' disconnected!\n", remoteAddr)
+	}()
+
+	clientWrapper := network.NewConnWrapper(client)
 
 	closeConn := true
 	defer func() {
@@ -492,7 +427,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 	var hostImplSocket *HostImplSocket
 
 	tlsConn := tls.Server(clientWrapper, &tls.Config{GetConfigForClient: func(clientHelloInfo *tls.ClientHelloInfo) (*tls.Config, error) {
-		clientWrapper.cacheRead = false
+		clientWrapper.StopCaching()
 		serverName = clientHelloInfo.ServerName
 		fmt.Println("ServerName:", serverName)
 
@@ -504,7 +439,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 		var ok bool
 		if hostImplSocket, ok = hostImpl.(*HostImplSocket); ok {
 			// from now on the connection is handled by hostImplSocket
-			clientWrapper.conn = nil
+			clientWrapper.Detach()
 			return nil, os.ErrInvalid
 		}
 
@@ -539,7 +474,7 @@ func (gateway *GatewayConfig) handleConnection(client net.Conn) {
 	closeConn = false
 
 	if hostImplSocket != nil {
-		hostImplSocket.HandleConnectionSocket(client, clientWrapper.buff)
+		hostImplSocket.HandleConnectionSocket(client, clientWrapper.GetCacheBuffer())
 	} else {
 		hostImpl.HandleConnection(tlsConn)
 	}
@@ -657,10 +592,7 @@ func main() {
 				log.Fatal("could not accept client connection", err)
 			}
 			go func() {
-				remoteAddr := client.RemoteAddr()
-				fmt.Printf("client '%v' connected!\n", remoteAddr)
 				gatewayConfig.handleConnection(client)
-				fmt.Printf("client '%v' disconnected!\n", remoteAddr)
 			}()
 		}
 	}()
