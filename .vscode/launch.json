@@ -64,6 +64,17 @@
       ]
     },
     {
+      "name": "Launch - Debug",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/cmd/mypi-debug/mypi-debug.go",
+      "env": {},
+      "args": [
+        "--port=8080"
+      ]
+    },
+    {
       "name": "Launch - Router",
       "type": "go",
       "request": "launch",

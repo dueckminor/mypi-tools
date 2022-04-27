@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/dueckminor/mypi-tools/go/config"
-	"github.com/gin-contrib/static"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +25,7 @@ func init() {
 func main() {
 	r := gin.Default()
 
-	r.Use(static.ServeRoot("/", "/opt/www"))
+	r.Use(ginutil.SingleHostReverseProxy("http://localhost:8081"))
 
 	panic(r.Run(":" + strconv.Itoa(*port)))
 }
