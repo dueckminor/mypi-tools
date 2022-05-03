@@ -48,6 +48,8 @@ func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 
 		if !useExternalHostname {
 			req.Host = url.Hostname()
+		} else {
+			req.Header.Set("Host", req.Host)
 		}
 		proxy.ServeHTTP(c.Writer, req)
 	}
