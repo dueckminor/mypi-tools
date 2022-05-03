@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"strconv"
 
 	"github.com/dueckminor/mypi-tools/go/config"
@@ -13,6 +14,7 @@ var (
 	// authURI   string
 	port     = flag.Int("port", 8080, "The port")
 	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	host     = flag.Bool("host", false, "enable the host mode (Used in the mypi-debug container on the mypi host)")
 )
 
 func init() {
@@ -24,8 +26,20 @@ func init() {
 
 func main() {
 	r := gin.Default()
+	proxy := ginutil.SingleHostReverseProxy("http://localhost:8081", "external-hostname")
 
-	r.Use(ginutil.SingleHostReverseProxy("http://localhost:8081"))
+	if *host {
+		r.Use(proxy)
+	} else {
+		r.Use(func(c *gin.Context) {
+			if c.IsAborted() {
+				return
+			}
+			fmt.Println("Header: ", c.Request.Header)
+
+			proxy(c)
+		})
+	}
 
 	panic(r.Run(":" + strconv.Itoa(*port)))
 }

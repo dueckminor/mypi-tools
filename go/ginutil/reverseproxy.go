@@ -2,6 +2,7 @@ package ginutil
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -40,6 +41,10 @@ func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 			return
 		}
 		req := c.Request
+
+		fmt.Println("Headers:", req.Header)
+		fmt.Println("Hostname:", url.Hostname())
+
 		if !useExternalHostname {
 			req.Host = url.Hostname()
 		}

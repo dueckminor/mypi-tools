@@ -43,4 +43,5 @@ fi
 
 cd "${DIR_MYPI_TOOLS}/web/mypi-auth"
 
+npm install
 npm run dev
