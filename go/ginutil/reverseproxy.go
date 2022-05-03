@@ -44,6 +44,7 @@ func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 
 		fmt.Println("Headers:", req.Header)
 		fmt.Println("Hostname:", url.Hostname())
+		fmt.Println("Host:", req.Host)
 
 		if !useExternalHostname {
 			req.Host = url.Hostname()
