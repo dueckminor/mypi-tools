@@ -35,7 +35,7 @@ func main() {
 			if c.IsAborted() {
 				return
 			}
-			fmt.Println("Header: ", c.Request.Header)
+			fmt.Println("Host: ", c.Request.Host)
 
 			proxy(c)
 		})
