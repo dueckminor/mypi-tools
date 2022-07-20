@@ -54,7 +54,7 @@ func main() {
 	r.GET("/api/hosts/:host/actions", webhandler.MakeForwardToHost(webhandler.GetActions))
 	r.GET("/api/hosts/:host/actions/:action/webtty", webhandler.MakeForwardToHost(webhandler.GetActionWebTTY))
 
-	r.POST("/api/hosts/:host/actions/:action", webhandler.MakeForwardToHost(webhandler.GetAction))
+	r.POST("/api/hosts/:host/actions/:action", webhandler.MakeForwardToHost(webhandler.PostAction))
 
 	if err != nil {
 		panic(err)

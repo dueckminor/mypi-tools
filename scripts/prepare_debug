@@ -4,14 +4,19 @@ set -e
 
 DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
 
-SESSION_NAME=mypi-tools-debug
-tmux kill-session -t "${SESSION_NAME}" &> /dev/null || true
-tmux new-session -d -s "${SESSION_NAME}" -n tmp
-if [[ -d "${DIR_ROOT}/../mypi-admin" ]]; then
-    tmux split-window -v -t "${SESSION_NAME}:0.0"
-    tmux send-keys -t "${SESSION_NAME}:0.1" "cd \"${DIR_ROOT}/../mypi-admin\"; PORT=9100 npm run dev-remote" C-m
-    tmux resize-pane -t "${SESSION_NAME}:0.0" -y 3
-fi
-tmux send-keys -t "${SESSION_NAME}:0.0" "ssh -R 8080:127.0.0.1:8080 -L 11111:localhost:11111 pi@rpi.fritz.box /opt/mypi/scripts/debug" C-m
-tmux resize-pane -t "${SESSION_NAME}:0.0" -y 3
+cd "${DIR_ROOT}"
+GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-debug-proxy" "cmd/mypi-debug-proxy/"*.go
 
+(cd build; tar czf /dev/stdout mypi-debug-proxy) | \
+ssh pi@mypi -p 2022 \
+    -o ServerAliveInterval=60 \
+    -o ServerAliveCountMax=3 \
+    -R 8081:localhost:8080 \
+bash -c \
+'"
+tar xvzf /dev/stdin
+pwd
+cd /home/pi
+ps -ef | grep mypi-debug-proxy | grep -v grep | sed \"s/  */ /g\" | cut -d\" \" -f 2 | xargs -r -n 1 kill -9
+/home/pi/mypi-debug-proxy
+"'

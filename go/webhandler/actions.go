@@ -34,7 +34,7 @@ func GetActionWebTTY(c *gin.Context) {
 	}
 }
 
-func GetAction(c *gin.Context) {
+func PostAction(c *gin.Context) {
 	action := c.Params.ByName("action")
 	if command, err := cmd.GetCommand(action); err == nil {
 		data, err := c.GetRawData()
@@ -48,14 +48,20 @@ func GetAction(c *gin.Context) {
 		fmt.Println(parsedArgs)
 
 		data, err = json.Marshal(parsedArgs)
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+		}
 
-		c := exec.Command(os.Args[0], action, "@")
-		err = cachedcommand.AttachProcess(action, c)
-		c.Stdin = bytes.NewReader(data)
+		cmd := exec.Command(os.Args[0], action, "@")
+		err = cachedcommand.AttachProcess(action, cmd)
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+		}
+		cmd.Stdin = bytes.NewReader(data)
 
 		go func() {
-			c.Start()
-			c.Wait()
+			cmd.Start()
+			cmd.Wait()
 		}()
 	}
 }

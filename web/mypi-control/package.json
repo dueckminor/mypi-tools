@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "dev": "vue-cli-service serve --port 9601"
+    "dev": "vue-cli-service serve --port 9601",
+    "dev_on_port": "vue-cli-service serve --port $PORT"
   },
   "dependencies": {
     "chart.js": "^3.7.1",

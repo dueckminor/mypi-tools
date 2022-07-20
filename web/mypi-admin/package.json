@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "dev": "vue-cli-service serve --port 9001"
+    "dev": "vue-cli-service serve --port 9001",
+    "dev_on_port": "vue-cli-service serve --port $PORT"
   },
   "dependencies": {
     "axios": "^0.21.2",
