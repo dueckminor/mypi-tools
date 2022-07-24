@@ -1,4 +1,4 @@
-# mypi-auth
+# mypi-videostream
 
 ## Project setup
 ```

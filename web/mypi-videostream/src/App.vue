@@ -2,29 +2,29 @@
   <v-app light id="app">
     <v-app-bar app>
       <v-btn @click.stop="folder()" >
-        <v-icon>folder_open</v-icon>
+        <v-icon >mdi-folder-open</v-icon>
       </v-btn>
       <v-spacer />
       <v-btn @click.stop="prev()" class="hidden-sm-and-down">
-        <v-icon>skip_previous</v-icon>
+        <v-icon>mdi-skip-previous</v-icon>
       </v-btn>
       <v-btn @click.stop="play()">
-        <v-icon>play_arrow</v-icon>
+        <v-icon>mdi-play</v-icon>
       </v-btn>
       <v-btn @click.stop="pause()" class="hidden-sm-and-down">
-        <v-icon>pause</v-icon>
+        <v-icon>mdi-pause</v-icon>
       </v-btn>
       <v-btn @click.stop="next()" class="hidden-sm-and-down">
-        <v-icon>skip_next</v-icon>
+        <v-icon>mdi-skip-next</v-icon>
       </v-btn>
       <v-spacer />
       <v-btn @click.stop="fullscreen()" >
-        <v-icon>fullscreen</v-icon>
+        <v-icon>mdi-fullscreen</v-icon>
       </v-btn>
     </v-app-bar>
-    <v-content>
-      <video ref="video" muted="muted" autoplay playsinline width="100%"/>
-    </v-content>
+    <v-main>
+      <video ref="video" muted="muted" autoplay playsinline :style="{'width': '100%', 'height':'100%'}"/>
+    </v-main>
   </v-app>
 </template>
 

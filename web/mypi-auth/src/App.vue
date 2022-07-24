@@ -9,18 +9,18 @@
       </v-btn>
       <span>{{username}}</span>
     </v-app-bar>
-    <Login ref="loginDialog" v-model="showLogin" v-on:login-clicked="login"/>
+    <LoginDialog ref="loginDialog" v-model="showLogin" v-on:login-clicked="login"/>
   </v-app>
 </template>
 
 <script>
-import Login from './Login'
+import LoginDialog from './LoginDialog'
 //import VueRouter from 'vue-router'
 
 export default {
   name: 'app',
   components: {
-    Login
+    LoginDialog
   },
   data: function () {
     return {

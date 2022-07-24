@@ -13,6 +13,5 @@ test_web() {
 
 test_web mypi-admin
 test_web mypi-auth
-test_web mypi-pwa
 test_web mypi-setup
 test_web mypi-videostream

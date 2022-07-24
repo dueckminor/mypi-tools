@@ -97,7 +97,7 @@
       "args": [
         "--port=9300",
         "--webpack-debug=http://localhost:9301",
-        "--exec=${workspaceFolder}/scripts/mypi-videostream/start_local_js.sh",
+        //"--exec=${workspaceFolder}/scripts/mypi-videostream/start_local_js.sh",
         "--mypi-root=${workspaceFolder}/.mypi"
       ]
     },
