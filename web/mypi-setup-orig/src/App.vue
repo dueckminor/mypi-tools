@@ -15,6 +15,7 @@
 
 <script>
 import AppNavigation from "@/components/AppNavigation";
+import Vue from "vue";
 
 export default {
   name: "app",
@@ -24,6 +25,7 @@ export default {
   created() {
     // eslint-disable-next-line no-console
     console.log("app-created");
+    Vue.prototype.$app = this;
   },
   mounted() {
     // eslint-disable-next-line no-console

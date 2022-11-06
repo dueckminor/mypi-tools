@@ -8,8 +8,8 @@
     </v-app-bar>
     <v-navigation-drawer app v-model="drawer" hide-overlay stateless>
       <v-list nav>
-        <template v-for="(item, index) in items" :key="index">
-          <v-list-item link  :to="item.url">
+        <template v-for="(item, index) in items">
+          <v-list-item link :key="index" :to="item.url">
             <v-list-item-icon>
               <v-icon>{{ item.icon }}</v-icon>
             </v-list-item-icon>

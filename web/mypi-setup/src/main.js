@@ -1,20 +1,15 @@
 import 'material-design-icons-iconfont/dist/material-design-icons.css'
-import '@mdi/font/css/materialdesignicons.css'
 import 'hack-font/build/web/hack.css'
 
-import Vue from 'vue';
-import vuetify from './plugins/vuetify';
-import VueRouter from 'vue-router'
+import { createApp } from 'vue'
+import App from './App.vue'
+import vuetify from './plugins/vuetify'
+import { loadFonts } from './plugins/webfontloader'
+import router from './router'
 
-import App from './App.vue';
-import 'vuetify/dist/vuetify.min.css'
-import router from "./router";
+loadFonts()
 
-Vue.use(VueRouter)
+createApp(App).use(router)
+  .use(vuetify)
+  .mount('#app')
 
-new Vue({
-  router,
-  vuetify,
-  el: '#app',
-  render: h => h(App)
-});

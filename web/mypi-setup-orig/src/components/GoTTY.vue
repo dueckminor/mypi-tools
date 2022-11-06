@@ -38,7 +38,7 @@ export default {
       that._fitAddon.fit();
     });
   },
-  beforeUnmount() {
+  beforeDestroy() {
     window.removeEventListener("resize", this.handleResize);
     this._xterm.dispose();
   },
