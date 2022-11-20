@@ -37,7 +37,7 @@
 import axios from "axios";
 
 export default {
-  name: "hosts",
+  name: "HostsView",
   components: {},
   computed: {},
   data: function() {

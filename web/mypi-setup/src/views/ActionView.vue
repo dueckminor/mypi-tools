@@ -12,7 +12,7 @@ import GoTTY from "../components/GoTTY";
 //import axios from "axios";
 
 export default {
-  name: "action",
+  name: "ActionView",
   components: {
     GoTTY
   },

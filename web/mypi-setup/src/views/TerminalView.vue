@@ -13,7 +13,7 @@
 import GoTTY from "../components/GoTTY";
 
 export default {
-  name: "terminal",
+  name: "TerminalView",
   components: {
     GoTTY,
   },

@@ -1,5 +1,7 @@
 <template>
-  <v-container ref="xterm" fluid/>
+  <v-container fluid>
+    <div ref="xterm"/>
+  </v-container>
 </template>
 
 <script>
@@ -7,14 +9,15 @@ import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import "hack-font/build/web/hack.css";
-import { WebTTY, protocols } from "./GoTTY/webtty";
-import { ConnectionFactory } from "./GoTTY/websocket";
+import { WebTTY, protocols } from "./webtty";
+import { ConnectionFactory } from "./websocket";
+
 export default {
   name: "XTerm",
   props: ["path"],
   mounted() {
     var that = this;
-    document.fonts.load('10pt "Hack"').then(function() {
+    that.$nextTick(function() {
       that._xterm = new Xterm({ fontFamily: "Hack, monospace" });
       that._fitAddon = new FitAddon();
       that._xterm.open(that.$refs["xterm"]);
@@ -38,7 +41,7 @@ export default {
       that._fitAddon.fit();
     });
   },
-  beforeDestroy() {
+  beforeUnmount() {
     window.removeEventListener("resize", this.handleResize);
     this._xterm.dispose();
   },
