@@ -12,7 +12,7 @@
       <div v-else-if="certificates.length > 0">
         <v-card elevation="2" outlined v-for="(item, i) in certificates" :key="i">
           <v-card-title>
-            <v-icon v-text="item.icon"></v-icon>
+            <v-icon>{{item.icon}}</v-icon>
             <h4 v-text="item.label"/>
           </v-card-title>
           <v-card-text class="text--primary">

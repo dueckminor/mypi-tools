@@ -5,13 +5,12 @@ import CertificatesView from "../views/CertificatesView.vue";
 import InitializedSD from "../views/InitializeSD.vue";
 import TerminalView from "../views/TerminalView.vue";
 import ActionView from "../views/ActionView.vue";
-import AboutView from "../views/AboutView.vue";
 
 const routes = [
   {
     path: "/",
     name: "home",
-    component: AboutView,
+    component: HostsView,
   },
   {
     path: "/hosts",
@@ -42,11 +41,6 @@ const routes = [
     path: "/hosts/:host/actions/:action",
     name: "setup",
     component: ActionView,
-  },
-  {
-    path: "/about",
-    name: "about",
-    component: AboutView,
   },
 ]
 

@@ -1,64 +1,27 @@
 <template>
-  <span>
-    <v-container fluid>
-      <v-stepper v-model="step" vertical>
-        <v-stepper-step step="1" :complete="step > 1"
-          >Alpine Version</v-stepper-step
-        >
-        <v-stepper-content step="1">
-          Select the Alpine Linux version which shall be deployed on your
-          Raspberry-PI
-          <v-select
-            v-model="alpine_version"
-            :items="alpine_versions"
-            label="Alpine Version"
-            :value="alpine_version"
-            @change='versionChanged()'
-          ></v-select>
-          Select the architecture. (aarch64 is recommended)
-          <v-select
-            v-model="alpine_arch"
-            :items="alpine_archs"
-            label="Alpine Arch"
-            :value="alpine_arch"
-          ></v-select>
-          <v-btn color="primary" @click="step = 2">Continue</v-btn>
-        </v-stepper-content>
-        <!--
-        <v-stepper-step step="2" :complete="step > 2"
-          >System Preferences</v-stepper-step
-        >
-        <v-stepper-content step="2">
-          <v-text-field
-            name="hostname"
-            label="Hostname"
-            id="hostname"
-            v-model="hostname"
-          ></v-text-field>
-          <v-btn color="primary" @click="step = 3">Continue</v-btn>
+  <v-container fluid>
+    <h3>Alpine Version</h3>
+    Select the Alpine Linux version which shall be deployed on your
+    Raspberry-PI
 
-          <v-btn @click="step = 1">Back</v-btn>
-        </v-stepper-content>
-        -->
-        <v-stepper-step step="2" :complete="step > 3">Medium</v-stepper-step>
-        <v-stepper-content step="2">
-          Select the SD-Card for your Alpine-Linux
-          <v-select
-            :items="sd_cards"
-            label="SD-Card"
-            :value="sd_card"
-          ></v-select>
-          <v-btn color="primary" :to="{name:'initializesd', params:{
-            AlpineVersion: this.alpine_version,
-            AlpineArch: this.alpine_arch,
-            Hostname: this.hostname,
-            Disk: this.sd_card
-          }}">Continue</v-btn>
-          <v-btn @click="step = 1">Back</v-btn>
-        </v-stepper-content>
-      </v-stepper>
-    </v-container>
-  </span>
+    <v-select v-model="alpine_version" :items="alpine_versions" label="Alpine Version" :value="alpine_version"
+      @change='versionChanged()'></v-select>
+    Select the architecture. (aarch64 is recommended)
+    <v-select v-model="alpine_arch" :items="alpine_archs" label="Alpine Arch" :value="alpine_arch"></v-select>
+    
+    <h3>Medium</h3>
+    Select the SD-Card for your Alpine-Linux
+    
+    <v-select :items="sd_cards" label="SD-Card" :value="sd_card"></v-select>
+  <v-btn color="primary" :to="{
+        name: 'initializesd', params: {
+          AlpineVersion: this.alpine_version,
+          AlpineArch: this.alpine_arch,
+          Hostname: this.hostname,
+          Disk: this.sd_card
+        }
+      }">Continue</v-btn>
+  </v-container>
 </template>
 
 <script>
@@ -69,7 +32,6 @@ export default {
   components: {},
   data: function() {
     return {
-      step: 1,
       alpine_versions: [],
       alpine_version: "",
       alpine_archs: [],
