@@ -9,8 +9,8 @@ import { Terminal as Xterm } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import "hack-font/build/web/hack.css";
-import { WebTTY, protocols } from "./GoTTY/webtty";
-import { ConnectionFactory } from "./GoTTY/websocket";
+import { WebTTY, protocols } from "./webtty";
+import { ConnectionFactory } from "./websocket";
 
 export default {
   name: "XTerm",
