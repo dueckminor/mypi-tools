@@ -23,17 +23,17 @@
 
 <script>
 // @ is an alias to /src
-import Vue from 'vue'
+//import Vue from 'vue'
 import { GChart } from "vue-google-charts";
 
 export default {
-  name: "Home",
+  name: "HomeView",
   data: () => ({
     gaugeData: [
       ["",""],
-      ["CPU", 55],
-      ["RAM", 95],
-      //["SWAP", 5],
+      ["CPU", 0],
+      ["RAM", 0],
+      //["SWAP", 0],
     ],
     gaugeOptions: {
       width: 400,
@@ -50,13 +50,13 @@ export default {
   },
   mounted() {
     this.sockets.subscribe("stats/rpi/cpu", (data) => {
-      Vue.set(this.gaugeData, 1, ["CPU", parseFloat(data)])
+      this.gaugeData[1]=["CPU",parseFloat(data)];
     });
     this.sockets.subscribe("stats/rpi/mem", (data) => {
-      Vue.set(this.gaugeData, 2, ["RAM", parseFloat(data)])
+      this.gaugeData[2]=["RAM",parseFloat(data)];
     });
     this.sockets.subscribe("stats/rpi/swap", (data) => {
-      Vue.set(this.gaugeData, 3, ["SWAP", parseFloat(data)])
+      this.gaugeData[3]=["SWAP",parseFloat(data)];
     });
   },
   methods: {

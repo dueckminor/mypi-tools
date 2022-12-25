@@ -1,33 +1,19 @@
-import Vue from 'vue'
-import VueSocketIO from 'vue-socket.io';
-//import VueSocketIOExt from 'vue-socket.io-extended';
-//import * as io from 'socket.io-client'
+import 'material-design-icons-iconfont/dist/material-design-icons.css'
+
+import { createApp } from 'vue'
 import App from './App.vue'
-import vuetify from './plugins/vuetify';
-import Vuetify from './plugins/vuetify';
-import VueGraph from 'vue-graph'
+import vuetify from './plugins/vuetify'
+import { loadFonts } from './plugins/webfontloader'
 import router from './router'
-import store from './store'
+import VueSocketIO from 'vue-3-socket.io';
 
-Vue.config.productionTip = false
-Vue.use(Vuetify)
-Vue.use(VueGraph)
+loadFonts()
 
-Vue.use(new VueSocketIO({
-  debug: true,
-  connection: `//${window.location.host}`,
-  vuex: {
-      store,
-      actionPrefix: 'SOCKET_',
-      mutationPrefix: 'SOCKET_'
-  },
-  options: { path: "/ws" } //Optional options
-}))
-
-
-new Vue({
-  router,
-  vuetify,
-  store,
-  render: h => h(App)
-}).$mount('#app')
+let vue = createApp(App);
+vue.use(router);
+vue.use(vuetify);
+vue.use(new VueSocketIO({
+    connection: `//${window.location.host}`,
+    options: { path: "/ws" }
+  }));
+vue.mount('#app');
