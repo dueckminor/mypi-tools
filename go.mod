@@ -2,7 +2,7 @@ module github.com/dueckminor/mypi-tools
 
 go 1.18
 
-replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.0.0
+replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.4.0
 
 require (
 	docker.io/go-docker v1.0.0
