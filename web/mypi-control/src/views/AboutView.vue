@@ -18,7 +18,7 @@
 
 <script>
 export default {
-    name: 'About',
+    name: 'AboutView',
     computed: {
         userRecipes() {
             return [];
