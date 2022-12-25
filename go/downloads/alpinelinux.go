@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/util"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func getAlpineMetaData(flavor, arch string, major, minor, patch int) (fm *FileMetadata, err error) {
