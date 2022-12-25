@@ -12,7 +12,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/tlsconfig"
 	"github.com/dueckminor/mypi-tools/go/util"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type MQTTClientConfig struct {

@@ -11,7 +11,6 @@ test_web() {
   popd > /dev/null
 }
 
-test_web mypi-admin
 test_web mypi-auth
 test_web mypi-setup
 test_web mypi-videostream
