@@ -7,7 +7,7 @@
     </div>
     <div v-else-if="hosts.length > 0">
       <v-card elevation="2" outlined v-for="(item, i) in hosts" :key="i">
-        <v-card-title v-text="item"></v-card-title>
+        <v-card-title>{{item}}</v-card-title>
         <v-card-actions>
           <router-link :to="'/hosts/' + item + '/terminal'">
             <v-btn color="deep-purple lighten-2" text>
