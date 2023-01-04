@@ -15,7 +15,11 @@ func UnmarshalAndExecute(args []string) (done bool, err error) {
 	if len(args) == 2 && args[1] == "@" {
 		var data []byte
 		data, err = ioutil.ReadAll(os.Stdin)
-		parsedArgs, err = command.UnmarshalArgs(data)
+		if err == nil {
+			parsedArgs, err = command.UnmarshalArgs(data)
+		}
+	} else if len(args) == 2 && args[1][0] == '{' {
+		parsedArgs, err = command.UnmarshalArgs([]byte(args[1]))
 	} else {
 		parsedArgs, err = command.ParseArgs(args[1:])
 	}

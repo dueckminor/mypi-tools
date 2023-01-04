@@ -31,6 +31,7 @@ const routes = [
     path: "/initializesd",
     name: "initializesd",
     component: InitializedSD,
+    params: true,
   },
   {
     path: "/hosts/:host/terminal",

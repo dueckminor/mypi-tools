@@ -15,8 +15,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/google/uuid"
-
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	"github.com/dueckminor/mypi-tools/go/downloads"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
@@ -226,19 +224,21 @@ func createAPKOVL(tarfile string, settings *settings) error {
 }
 
 func (cmd cmdMakeSD) ParseArgs(args []string) (parsedArgs interface{}, err error) {
-	settings := &settings{
-		Hostname: args[0],
-		DirSetup: args[1],
-		DirDist:  args[2],
-		MypiUUID: uuid.New().String(),
+	settings := &settings{}
+
+	f := flag.NewFlagSet("makesd", flag.ExitOnError)
+	f.StringVar(&settings.AlpineVersion, "alpine-version", "latest", "")
+	f.StringVar(&settings.AlpineArch, "alpine-arch", "aarch64", "")
+	f.StringVar(&settings.Disk, "disk", "", "")
+	f.StringVar(&settings.Hostname, "hostname", "", "")
+	f.StringVar(&settings.DirSetup, "dir-setup", "", "")
+
+	err = f.Parse(args)
+	if err != nil {
+		return nil, err
 	}
-	if len(settings.DirSetup) == 0 {
-		settings.DirSetup = *dirSetup
-	}
-	if len(settings.DirDist) == 0 {
-		settings.DirDist = *dirDist
-	}
-	return settings, nil
+
+	return settings, err
 }
 
 func (cmd cmdMakeSD) UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}, err error) {

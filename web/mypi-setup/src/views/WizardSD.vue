@@ -13,14 +13,17 @@
     Select the SD-Card for your Alpine-Linux
     
     <v-select :items="sd_cards" label="SD-Card" :value="sd_card"></v-select>
+    <v-btn color="primary" @click.stop="initializesd()">Continue</v-btn>
+    <!--
   <v-btn color="primary" :to="{
-        name: 'initializesd', params: {
+        name: 'initializesd', state: {
           AlpineVersion: this.alpine_version,
           AlpineArch: this.alpine_arch,
           Hostname: this.hostname,
           Disk: this.sd_card
         }
-      }">Continue</v-btn>
+      }">Continue</v-btn>S
+    -->
   </v-container>
 </template>
 
@@ -109,6 +112,15 @@ export default {
         versionChanged() {
             alert("foo");
         },
+        initializesd() {
+          this.$router.push("/initializesd")
+          axios.post("/api/hosts/localhost/actions/makesd", {
+            AlpineVersion: this.alpine_version,
+            AlpineArch: this.alpine_arch,
+            Hostname: this.hostname,
+            Disk: this.sd_card,
+          })
+        }
     },
 };
 </script>

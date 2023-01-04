@@ -6,7 +6,6 @@
 <!-- ----------------------------------------------------------------------- -->
 <script>
 import GoTTY from "../components/GoTTY";
-import axios from "axios";
 
 export default {
   name: "initialize_sd",
@@ -14,14 +13,7 @@ export default {
     GoTTY
   },
   computed: {},
-  mounted() {
-    axios.post("/api/hosts/localhost/actions/makesd", {
-      Disk:          this.$route.params.Disk,
-      Hostname:      this.$route.params.Hostname,
-      AlpineVersion: this.$route.params.AlpineVersion,
-      AlpineArch:    this.$route.params.AlpineArch,
-    })
-  },
+  mounted() {},
   methods: {}
 };
 </script>

@@ -142,7 +142,13 @@
       "mode": "auto",
       "program": "${workspaceFolder}/cmd/mypi-setup/main.go",
       "env": {},
-      "args": ["makesd", "rpi2", "${workspaceFolder}/setup"]
+      "args": [
+        "makesd", 
+        "--disk=Disk 2",
+        "--hostname=mypi",
+        "--alpine-version=3.17.0",
+        "--dir-setup=${workspaceFolder}/setup"
+      ]
     },
     {
       "name": "Launch - Control",
