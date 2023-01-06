@@ -1,0 +1,1 @@
+python3 -m pip install -r "%~dp0../requirements.txt"
