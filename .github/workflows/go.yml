@@ -16,6 +16,10 @@ jobs:
     - name: Check out sources
       uses: actions/checkout@v3
 
+    - name: Prepare Python
+      run: |
+        ./scripts/prepare
+
     - name: Build
       run: |
         ./scripts/test-golang
