@@ -128,6 +128,7 @@
       "env": {},
       "args": [
         "--port=9500",
+        "--tlsport=9543",
         "--webpack-debug=http://localhost:9501",
         "--dir-setup=${workspaceFolder}/setup",
         "--dir-dist=${workspaceFolder}/build/mypi-setup"
@@ -147,7 +148,8 @@
         "--disk=Disk 2",
         "--hostname=mypi",
         "--alpine-version=3.17.0",
-        "--dir-setup=${workspaceFolder}/setup"
+        "--dir-setup=${workspaceFolder}/setup",
+        "--dir-target=${workspaceFolder}/build/boot"
       ]
     },
     {

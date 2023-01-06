@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
 
@@ -40,6 +41,7 @@ type settings struct {
 	AlpineArch    string
 	DirSetup      string
 	DirDist       string
+	DirTarget     string
 	MypiUUID      string
 
 	BootDevice   string
@@ -49,7 +51,35 @@ type settings struct {
 	SSH          settingsSSH
 }
 
-func extractTarGz(tarFile, destDir string) error {
+type writer interface {
+	CreateFile(filename string) (io.WriteCloser, error)
+}
+
+type fileWriter struct {
+	mountPoint string
+}
+
+func (w *fileWriter) CreateFile(filename string) (io.WriteCloser, error) {
+	absFilename := filepath.Join(w.mountPoint, filename)
+	absDirname := filepath.Dir(absFilename)
+	os.MkdirAll(absDirname, os.ModePerm)
+	return os.Create(absFilename)
+}
+
+func writeSimpleFile(w writer, filename string, content []byte) error {
+	f, err := w.CreateFile(filename)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write(content)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func extractTarGz(tarFile string, w writer) error {
 	f, err := os.Open(tarFile)
 	if err != nil {
 		return err
@@ -75,14 +105,11 @@ func extractTarGz(tarFile, destDir string) error {
 			continue
 		}
 		dir, file := path.Split(header.Name)
-		toDir := path.Join(destDir, dir)
-		toFile := path.Join(toDir, file)
-
-		os.MkdirAll(toDir, os.ModePerm)
+		toFile := path.Join(dir, file)
 
 		fmt.Println(toFile)
 
-		toFileStream, err := os.Create(toFile)
+		toFileStream, err := w.CreateFile(toFile)
 		defer toFileStream.Close()
 
 		if _, err = io.Copy(toFileStream, tarReader); err != nil {
@@ -129,8 +156,8 @@ func tarAddLink(tw *tar.Writer, filename, linkname string, mode int64) error {
 	return tw.WriteHeader(header)
 }
 
-func createAPKOVL(tarfile string, settings *settings) error {
-	file, err := os.Create(tarfile)
+func createAPKOVL(w writer, filename string, settings *settings) error {
+	file, err := w.CreateFile(filename)
 	if err != nil {
 		return err
 	}
@@ -149,8 +176,13 @@ func createAPKOVL(tarfile string, settings *settings) error {
 			return nil
 		}
 		relativePath := path.Join(".", fileName[len(staticFiles):])
-		if info.Mode()&os.ModeSymlink != 0 {
-			linkTarget, err := os.Readlink(fileName)
+		if strings.HasSuffix(fileName, ".lnk") {
+			linkTargetRaw, err := ioutil.ReadFile(fileName)
+			if err != nil {
+				return err
+			}
+			relativePath = relativePath[:len(relativePath)-4]
+			linkTarget := strings.TrimSpace(string(linkTargetRaw))
 			fmt.Println(relativePath + " -> " + linkTarget)
 			if err != nil {
 				return err
@@ -232,6 +264,7 @@ func (cmd cmdMakeSD) ParseArgs(args []string) (parsedArgs interface{}, err error
 	f.StringVar(&settings.Disk, "disk", "", "")
 	f.StringVar(&settings.Hostname, "hostname", "", "")
 	f.StringVar(&settings.DirSetup, "dir-setup", "", "")
+	f.StringVar(&settings.DirTarget, "dir-target", "", "")
 
 	err = f.Parse(args)
 	if err != nil {
@@ -305,21 +338,39 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	fmt.Println("dir-dist", settings.DirDist)
 	fmt.Println("dir-setup", settings.DirSetup)
 
-	disk, err := fdisk.GetDisk(settings.Disk)
-	if err != nil {
-		panic(err)
-	}
+	dirTarget := settings.DirTarget
+	if len(dirTarget) == 0 {
+		disk, err := fdisk.GetDisk(settings.Disk)
+		if err != nil {
+			panic(err)
+		}
 
-	if !disk.IsRemovable() {
-		return nil
-	}
+		if !disk.IsRemovable() {
+			return nil
+		}
 
-	disk.InitializePartitions("MBR", fdisk.PartitionInfo{
-		Size:   256 * 1024 * 1024,
-		Format: "FAT32",
-		Type:   7,
-		Name:   "RPI-BOOT",
-	})
+		disk.InitializePartitions("MBR", fdisk.PartitionInfo{
+			Size:   256 * 1024 * 1024,
+			Format: "FAT32",
+			Type:   7,
+			Name:   "RPI-BOOT",
+		})
+
+		disk, err = fdisk.GetDisk(settings.Disk)
+		if err != nil {
+			panic(err)
+		}
+
+		partitions, err := disk.GetPartitions()
+		if err != nil {
+			panic(err)
+		}
+
+		dirTarget, err = partitions[0].GetMountPoint()
+		if err != nil {
+			panic(err)
+		}
+	}
 
 	fmt.Println("")
 	c.Print("                      ")
@@ -330,33 +381,23 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	fmt.Println("")
 	fmt.Println("")
 
-	disk, err = fdisk.GetDisk(settings.Disk)
+	fmt.Println(dirTarget)
+
+	w := &fileWriter{mountPoint: dirTarget}
+
+	err := extractTarGz(alpineFileDownloader.GetTargetFile(), w)
 	if err != nil {
 		panic(err)
 	}
 
-	partitions, err := disk.GetPartitions()
+	err = createAPKOVL(w, settings.Hostname+".apkovl.tar.gz", settings)
 	if err != nil {
 		panic(err)
 	}
-
-	mountPoint, err := partitions[0].GetMountPoint()
+	err = writeSimpleFile(w, "mypiuuid.txt", []byte(settings.MypiUUID+"\n"))
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(mountPoint)
-
-	err = extractTarGz(alpineFileDownloader.GetTargetFile(), mountPoint)
-	if err != nil {
-		panic(err)
-	}
-
-	err = createAPKOVL(path.Join(mountPoint, settings.Hostname+".apkovl.tar.gz"), settings)
-	if err != nil {
-		panic(err)
-	}
-	ioutil.WriteFile(path.Join(mountPoint, "mypiuuid.txt"), []byte(settings.MypiUUID+"\n"), os.ModePerm)
 
 	fmt.Println("")
 	c.Print("                   ")

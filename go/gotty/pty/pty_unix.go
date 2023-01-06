@@ -4,6 +4,12 @@
 package pty
 
 import (
+	"fmt"
+	"os"
+	"os/exec"
+	"syscall"
+	"unsafe"
+
 	unix_pty "github.com/creack/pty"
 )
 
@@ -12,8 +18,8 @@ type ptyUnix struct {
 	Tty *os.File
 }
 
-func newPty() (pty Pty, err error) {
-	pty = &ptyUnix{}
+func newPty() (result Pty, err error) {
+	pty := &ptyUnix{}
 	pty.Pty, pty.Tty, err = unix_pty.Open()
 	if err != nil {
 		return nil, err
@@ -22,11 +28,11 @@ func newPty() (pty Pty, err error) {
 }
 
 func (pty *ptyUnix) Read(p []byte) (n int, err error) {
-	return pty.Pty.Read()
+	return pty.Pty.Read(p)
 }
 
 func (pty *ptyUnix) Write(p []byte) (n int, err error) {
-	return pty.Pty.Write()
+	return pty.Pty.Write(p)
 }
 
 func (pty *ptyUnix) Close() error {
@@ -44,14 +50,14 @@ func (pty *ptyUnix) SetSize(sx int, sy int) error {
 		x   uint16
 		y   uint16
 	}{
-		uint16(rows),
-		uint16(columns),
+		uint16(sy),
+		uint16(sx),
 		0,
 		0,
 	}
 	_, _, errno := syscall.Syscall(
 		syscall.SYS_IOCTL,
-		pty.Pty.Fd(),
+		pty.Tty.Fd(),
 		syscall.TIOCSWINSZ,
 		uintptr(unsafe.Pointer(&window)),
 	)
