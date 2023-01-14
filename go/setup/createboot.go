@@ -1,5 +1,5 @@
 package setup
 
-func CreateBootImage(w DirWriter) {
-
+func CreateBootImage(w DirWriter) error {
+	return nil
 }

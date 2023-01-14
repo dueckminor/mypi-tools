@@ -10,7 +10,7 @@ import (
 func TestPty(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	pty, err := newPty()
+	pty, err := NewPty()
 	g.Expect(pty, err).NotTo(BeNil())
 
 	pty.SetSize(20, 10)
