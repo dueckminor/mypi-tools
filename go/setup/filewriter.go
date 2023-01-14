@@ -1,9 +1,11 @@
 package setup
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type fileWriter struct {
@@ -11,6 +13,9 @@ type fileWriter struct {
 }
 
 func (w *fileWriter) CreateFile(fi FileInfo) (io.WriteCloser, error) {
+	if strings.Contains(fi.Name, "..") {
+		return nil, fmt.Errorf("filenames with .. are not allowed")
+	}
 	absFilename := filepath.Join(w.mountPoint, fi.Name)
 	absDirname := filepath.Dir(absFilename)
 	err := os.MkdirAll(absDirname, os.ModePerm)
