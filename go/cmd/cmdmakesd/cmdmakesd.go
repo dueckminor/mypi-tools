@@ -1,7 +1,6 @@
 package cmdmakesd
 
 import (
-	"archive/tar"
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
@@ -12,16 +11,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"text/template"
 	"time"
-
-	"github.com/google/uuid"
 
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	"github.com/dueckminor/mypi-tools/go/downloads"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
-	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/fatih/color"
+	"gopkg.in/yaml.v3"
+
+	. "github.com/dueckminor/mypi-tools/go/setup"
 )
 
 var (
@@ -42,6 +42,8 @@ type settings struct {
 	AlpineArch    string
 	DirSetup      string
 	DirDist       string
+	DirTarget     string
+	ZipTarget     string
 	MypiUUID      string
 
 	BootDevice   string
@@ -51,88 +53,65 @@ type settings struct {
 	SSH          settingsSSH
 }
 
-func extractTarGz(tarFile, destDir string) error {
-	f, err := os.Open(tarFile)
+func writeSimpleFile(w DirWriter, filename string, content []byte) error {
+
+	f, err := w.CreateFile(FileInfo{Type: FileTypeFile, Name: filename})
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-
-	gzf, err := gzip.NewReader(f)
+	_, err = f.Write(content)
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	tarReader := tar.NewReader(gzf)
+type staticFileInfos struct {
+	Executables []string
+	Softlinks   map[string]string
+}
 
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
+func (s *staticFileInfos) GetLinkInfo(fileName string) (linkTarget string, ok bool) {
+	fileName = strings.TrimPrefix(fileName, "./")
+	if linkTarget, ok = s.Softlinks[fileName]; ok {
+		return linkTarget, ok
+	}
+	return "", false
+}
+
+func (s *staticFileInfos) GetFileMode(fileName string) (fileMode int64, ok bool) {
+	fileName = strings.TrimPrefix(fileName, "./")
+	if fileName == "fileinfos.yml" {
+		return 0, false
+	}
+
+	parts := strings.Split(fileName, "/")
+
+	for _, pattern := range s.Executables {
+		patternParts := strings.Split(pattern, "/")
+		if len(patternParts) != len(parts) {
+			continue
+		}
+		match := true
+		for i, part := range parts {
+			if patternParts[i] == "*" || patternParts[i] == part {
+				continue
+			}
+			match = false
 			break
 		}
-		if header.Typeflag != tar.TypeReg {
-			continue
-		}
-		if !util.FileIsSafePath(header.Name) {
-			continue
-		}
-		dir, file := path.Split(header.Name)
-		toDir := path.Join(destDir, dir)
-		toFile := path.Join(toDir, file)
-
-		os.MkdirAll(toDir, os.ModePerm)
-
-		fmt.Println(toFile)
-
-		toFileStream, err := os.Create(toFile)
-		defer toFileStream.Close()
-
-		if _, err = io.Copy(toFileStream, tarReader); err != nil {
-			return err
+		if match {
+			return int64(0755), true
 		}
 
-		toFileStream.Close()
 	}
-	return nil
+
+	return int64(0644), true
 }
 
-func tarCreateFile(tw *tar.Writer, filename string, mode, size int64) error {
-	header := new(tar.Header)
-	header.Name = filename
-	header.Size = size
-	header.Mode = mode
-	header.ModTime = time.Now()
-	// write the header to the tarball archive
-	if err := tw.WriteHeader(header); err != nil {
-		return err
-	}
-	return nil
-}
-
-func tarAddBuffer(tw *tar.Writer, filename string, data []byte, mode int64) error {
-	if err := tarCreateFile(tw, filename, mode, int64(len(data))); err != nil {
-		return err
-	}
-	// copy the file data to the tarball
-	if _, err := tw.Write(data); err != nil {
-		return err
-	}
-	return nil
-}
-
-func tarAddLink(tw *tar.Writer, filename, linkname string, mode int64) error {
-	header := new(tar.Header)
-	header.Name = filename
-	header.Linkname = linkname
-	header.Typeflag = tar.TypeSymlink
-	header.Mode = int64(mode | int64(os.ModeSymlink))
-	header.ModTime = time.Now()
-	// write the header to the tarball archive
-	return tw.WriteHeader(header)
-}
-
-func createAPKOVL(tarfile string, settings *settings) error {
-	file, err := os.Create(tarfile)
+func createAPKOVL(w DirWriter, filename string, settings *settings) error {
+	file, err := w.CreateFile(FileInfo{Type: FileTypeFile, Name: filename})
 	if err != nil {
 		return err
 	}
@@ -141,42 +120,57 @@ func createAPKOVL(tarfile string, settings *settings) error {
 	gw := gzip.NewWriter(file)
 	defer gw.Close()
 
-	tw := tar.NewWriter(gw)
+	tw, err := NewTarWriter(gw)
+	if err != nil {
+		return err
+	}
 	defer tw.Close()
 
 	staticFiles := path.Join(settings.DirSetup, "static")
 
+	staticFileInfosYml, err := ioutil.ReadFile(path.Join(staticFiles, "fileinfos.yml"))
+	if err != nil {
+		return err
+	}
+	var staticFileInfos staticFileInfos
+	yaml.Unmarshal(staticFileInfosYml, &staticFileInfos)
+
 	err = filepath.Walk(staticFiles, func(fileName string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if info.IsDir() {
 			return nil
 		}
 		relativePath := path.Join(".", fileName[len(staticFiles):])
-		if info.Mode()&os.ModeSymlink != 0 {
-			linkTarget, err := os.Readlink(fileName)
-			fmt.Println(relativePath + " -> " + linkTarget)
+		if linkTarget, ok := staticFileInfos.GetLinkInfo(relativePath); ok {
+			return tw.AddLink(relativePath, linkTarget, int64(0644))
+		} else if fileMode, ok := staticFileInfos.GetFileMode(relativePath); ok {
+			w, err := tw.CreateFile(relativePath, fileMode, info.Size())
 			if err != nil {
 				return err
 			}
-			tarAddLink(tw, relativePath, linkTarget, int64(info.Mode()))
-			return nil
-		}
-		fmt.Println(relativePath)
-		tarCreateFile(tw, relativePath, int64(info.Mode()), info.Size())
-
-		f, err := os.Open(fileName)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		_, err = io.Copy(tw, f)
-		if err != nil {
-			return err
+			f, err := os.Open(fileName)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			_, err = io.Copy(w, f)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	templateFiles := path.Join(settings.DirSetup, "templates")
 	err = filepath.Walk(templateFiles, func(fileName string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if info.IsDir() {
 			return nil
 		}
@@ -198,15 +192,21 @@ func createAPKOVL(tarfile string, settings *settings) error {
 		}
 
 		fmt.Println(relativePath)
-		tarCreateFile(tw, relativePath, int64(info.Mode()), int64(buf.Len()))
+		w, err := tw.CreateFile(relativePath, int64(info.Mode()), int64(buf.Len()))
+		if err != nil {
+			return err
+		}
 
-		_, err = buf.WriteTo(tw)
+		_, err = buf.WriteTo(w)
 		if err != nil {
 			return err
 		}
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	mypiControl := path.Join(settings.DirDist, "mypi-control", "mypi-control-linux-arm64")
 	fmt.Println("checking for mypi-control:", mypiControl)
@@ -214,31 +214,39 @@ func createAPKOVL(tarfile string, settings *settings) error {
 	if err != nil {
 		return err
 	}
-	tarCreateFile(tw, "mypi-control/bin/mypi-control", 0755, stat.Size())
+	w2, err := tw.CreateFile("mypi-control/bin/mypi-control", 0755, stat.Size())
+	if err != nil {
+		return err
+	}
 	f, err := os.Open(mypiControl)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	_, err = io.Copy(tw, f)
+	_, err = io.Copy(w2, f)
 
 	return err
 }
 
 func (cmd cmdMakeSD) ParseArgs(args []string) (parsedArgs interface{}, err error) {
-	settings := &settings{
-		Hostname: args[0],
-		DirSetup: args[1],
-		DirDist:  args[2],
-		MypiUUID: uuid.New().String(),
+	settings := &settings{}
+
+	f := flag.NewFlagSet("makesd", flag.ExitOnError)
+	f.StringVar(&settings.AlpineVersion, "alpine-version", "latest", "")
+	f.StringVar(&settings.AlpineArch, "alpine-arch", "aarch64", "")
+	f.StringVar(&settings.Disk, "disk", "", "")
+	f.StringVar(&settings.Hostname, "hostname", "", "")
+	f.StringVar(&settings.DirSetup, "dir-setup", "", "")
+	f.StringVar(&settings.DirDist, "dir-dist", "", "")
+	f.StringVar(&settings.DirTarget, "dir-target", "", "")
+	f.StringVar(&settings.ZipTarget, "zip-target", "", "")
+
+	err = f.Parse(args)
+	if err != nil {
+		return nil, err
 	}
-	if len(settings.DirSetup) == 0 {
-		settings.DirSetup = *dirSetup
-	}
-	if len(settings.DirDist) == 0 {
-		settings.DirDist = *dirDist
-	}
-	return settings, nil
+
+	return settings, err
 }
 
 func (cmd cmdMakeSD) UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}, err error) {
@@ -305,58 +313,74 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	fmt.Println("dir-dist", settings.DirDist)
 	fmt.Println("dir-setup", settings.DirSetup)
 
-	disk, err := fdisk.GetDisk(settings.Disk)
+	var w DirWriter
+	var err error
+
+	dirTarget := settings.DirTarget
+	if len(settings.ZipTarget) > 0 {
+		filewriter, err := os.Create(settings.ZipTarget)
+		if err != nil {
+			panic(err)
+		}
+		w, err = NewZipWriter(filewriter)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		if len(dirTarget) == 0 {
+			disk, err := fdisk.GetDisk(settings.Disk)
+			if err != nil {
+				panic(err)
+			}
+
+			if !disk.IsRemovable() {
+				return nil
+			}
+
+			disk.InitializePartitions("MBR", fdisk.PartitionInfo{
+				Size:   256 * 1024 * 1024,
+				Format: "FAT32",
+				Type:   7,
+				Name:   "RPI-BOOT",
+			})
+
+			disk, err = fdisk.GetDisk(settings.Disk)
+			if err != nil {
+				panic(err)
+			}
+
+			partitions, err := disk.GetPartitions()
+			if err != nil {
+				panic(err)
+			}
+
+			dirTarget, err = partitions[0].GetMountPoint()
+			if err != nil {
+				panic(err)
+			}
+		}
+		w, err = NewFileWriter(dirTarget)
+		if err != nil {
+			panic(err)
+		}
+	}
+	defer w.Close()
+
+	err = TarGzFileExtract(alpineFileDownloader.GetTargetFile(), w)
 	if err != nil {
 		panic(err)
 	}
 
-	if !disk.IsRemovable() {
-		return nil
-	}
-
-	disk.InitializePartitions("MBR", fdisk.PartitionInfo{
-		Size:   256 * 1024 * 1024,
-		Format: "FAT32",
-		Type:   7,
-		Name:   "RPI-BOOT",
-	})
-
-	fmt.Println("")
-	c.Print("                      ")
-	fmt.Println("")
-	c.Print(" --- Extract data --- ")
-	fmt.Println("")
-	c.Print("                      ")
-	fmt.Println("")
-	fmt.Println("")
-
-	disk, err = fdisk.GetDisk(settings.Disk)
+	// there has to be exactly ONE `*.apkovl.tar.gz` in the root-directory
+	err = createAPKOVL(w, settings.Hostname+".apkovl.tar.gz", settings)
 	if err != nil {
 		panic(err)
 	}
 
-	partitions, err := disk.GetPartitions()
+	err = writeSimpleFile(w, "mypiuuid.txt", []byte(settings.MypiUUID+"\n"))
 	if err != nil {
 		panic(err)
 	}
-
-	mountPoint, err := partitions[0].GetMountPoint()
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(mountPoint)
-
-	err = extractTarGz(alpineFileDownloader.GetTargetFile(), mountPoint)
-	if err != nil {
-		panic(err)
-	}
-
-	err = createAPKOVL(path.Join(mountPoint, settings.Hostname+".apkovl.tar.gz"), settings)
-	if err != nil {
-		panic(err)
-	}
-	ioutil.WriteFile(path.Join(mountPoint, "mypiuuid.txt"), []byte(settings.MypiUUID+"\n"), os.ModePerm)
 
 	fmt.Println("")
 	c.Print("                   ")

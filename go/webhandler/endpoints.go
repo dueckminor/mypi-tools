@@ -23,8 +23,7 @@ func (wh *WebHandler) postLogin(c *gin.Context) {
 	}
 	err := c.BindJSON(&params)
 
-	cookie, _ := c.Cookie("token")
-	fmt.Println("Cookie:", cookie)
+	//cookie, _ := c.Cookie("token")
 
 	if err != nil {
 		c.AbortWithStatus(http.StatusBadRequest)

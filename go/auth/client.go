@@ -67,9 +67,6 @@ func (ac *AuthClient) handleAuth(c *gin.Context) {
 	redirectToAuthURI.Path = "/oauth/authorize"
 	redirectToAuthURI.RawQuery = values.Encode()
 
-	fmt.Println(c.Request.URL.String())
-	fmt.Println(redirectToAuthURI.String())
-
 	c.Header("Location", redirectToAuthURI.String())
 	c.AbortWithStatus(http.StatusFound)
 }

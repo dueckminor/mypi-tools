@@ -2,10 +2,12 @@ mypi.yml
 vendor
 main
 debug
-build
+build/
+gen/
 tmp
 __debug_bin
 .DS_Store
 ._.*
 .mypi
 coverage.txt
+__pycache__

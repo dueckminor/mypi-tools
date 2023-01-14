@@ -16,6 +16,14 @@ jobs:
     - name: Check out sources
       uses: actions/checkout@v3
 
+    - name: Prepare Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip' # caching pip dependencies
+
+    - run: ./scripts/prepare
+
     - name: Build
       run: |
         ./scripts/test-golang

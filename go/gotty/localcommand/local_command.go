@@ -5,9 +5,8 @@ import (
 	"os/exec"
 	"syscall"
 	"time"
-	"unsafe"
 
-	"github.com/creack/pty"
+	"github.com/dueckminor/mypi-tools/go/gotty/pty"
 	"github.com/pkg/errors"
 )
 
@@ -24,17 +23,29 @@ type LocalCommand struct {
 	closeTimeout time.Duration
 
 	cmd       *exec.Cmd
-	pty       *os.File
+	pty       pty.Pty
 	ptyClosed chan struct{}
 }
 
 func New(command string, argv []string, options ...Option) (*LocalCommand, error) {
 	cmd := exec.Command(command, argv...)
 
+	pty, err := pty.NewPty()
+	if err != nil {
+		// todo close cmd?
+		return nil, errors.Wrapf(err, "failed to start command `%s`", command)
+	}
+
+	err = pty.AttachProcess(cmd)
+	if err != nil {
+		// todo close cmd?
+		return nil, errors.Wrapf(err, "failed to start command `%s`", command)
+	}
+
 	cmd.Env = []string{"TERM=xterm-256color"}
 	cmd.Env = append(cmd.Env, os.Environ()...)
 
-	pty, err := pty.Start(cmd)
+	err = cmd.Start()
 	if err != nil {
 		// todo close cmd?
 		return nil, errors.Wrapf(err, "failed to start command `%s`", command)
@@ -102,28 +113,7 @@ func (lcmd *LocalCommand) WindowTitleVariables() map[string]interface{} {
 }
 
 func (lcmd *LocalCommand) ResizeTerminal(width int, height int) error {
-	window := struct {
-		row uint16
-		col uint16
-		x   uint16
-		y   uint16
-	}{
-		uint16(height),
-		uint16(width),
-		0,
-		0,
-	}
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		lcmd.pty.Fd(),
-		syscall.TIOCSWINSZ,
-		uintptr(unsafe.Pointer(&window)),
-	)
-	if errno != 0 {
-		return errno
-	} else {
-		return nil
-	}
+	return lcmd.pty.SetSize(width, height)
 }
 
 func (lcmd *LocalCommand) closeTimeoutC() <-chan time.Time {

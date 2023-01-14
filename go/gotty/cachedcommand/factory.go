@@ -2,13 +2,10 @@ package cachedcommand
 
 import (
 	"io"
-	"os"
 	"os/exec"
 	"sync"
-	"syscall"
-	"unsafe"
 
-	"github.com/creack/pty"
+	"github.com/dueckminor/mypi-tools/go/gotty/pty"
 	"github.com/dueckminor/mypi-tools/go/gotty/server"
 )
 
@@ -28,8 +25,7 @@ type CachedCommand struct {
 	name         string
 	columns      int
 	rows         int
-	Pty          *os.File
-	Tty          *os.File
+	Pty          pty.Pty
 	mutex        sync.Mutex
 	waitForRead  bool
 	waitForReadC chan bool
@@ -55,7 +51,7 @@ func New(name string) (c *CachedCommand, err error) {
 
 func (c *CachedCommand) createTty() (err error) {
 	if c.Pty == nil {
-		c.Pty, c.Tty, err = pty.Open()
+		c.Pty, err = pty.NewPty()
 		if err != nil {
 			return err
 		}
@@ -74,20 +70,7 @@ func AttachProcess(name string, command *exec.Cmd) (err error) {
 	}
 
 	cachedCommand.createTty()
-
-	command.Stdout = cachedCommand.Tty
-	command.Stderr = cachedCommand.Tty
-	command.Env = append(os.Environ(), "TERM=xterm-256color")
-
-	if command.SysProcAttr == nil {
-		command.SysProcAttr = &syscall.SysProcAttr{}
-	}
-	command.SysProcAttr.Setctty = true
-	command.SysProcAttr.Setsid = true
-	command.SysProcAttr.Ctty = 3
-	command.ExtraFiles = []*os.File{cachedCommand.Tty}
-
-	return nil
+	return cachedCommand.Pty.AttachProcess(command)
 }
 
 func (factory *Factory) New(params map[string][]string) (server.Slave, error) {
@@ -104,10 +87,7 @@ func (c *CachedCommand) Read(p []byte) (n int, err error) {
 		if err == nil {
 			return
 		} else if err == io.EOF {
-			c.Pty.Close()
-			c.Tty.Close()
-			c.Pty = nil
-			c.Tty = nil
+			c.Close()
 			if n != 0 {
 				return n, nil
 			}
@@ -123,10 +103,6 @@ func (c *CachedCommand) Write(p []byte) (n int, err error) {
 }
 
 func (c *CachedCommand) Close() error {
-	if nil != c.Tty {
-		c.Tty.Close()
-		c.Tty = nil
-	}
 	if nil != c.Pty {
 		c.Pty.Close()
 		c.Pty = nil
@@ -148,26 +124,5 @@ func (c *CachedCommand) WindowTitleVariables() map[string]interface{} {
 func (c *CachedCommand) ResizeTerminal(columns int, rows int) error {
 	c.columns = columns
 	c.rows = rows
-
-	window := struct {
-		row uint16
-		col uint16
-		x   uint16
-		y   uint16
-	}{
-		uint16(rows),
-		uint16(columns),
-		0,
-		0,
-	}
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		c.Pty.Fd(),
-		syscall.TIOCSWINSZ,
-		uintptr(unsafe.Pointer(&window)),
-	)
-	if errno != 0 {
-		return errno
-	}
-	return nil
+	return c.Pty.SetSize(columns, rows)
 }

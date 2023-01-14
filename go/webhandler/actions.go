@@ -45,7 +45,6 @@ func GetAction(c *gin.Context) {
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
 		}
-		fmt.Println(parsedArgs)
 
 		data, err = json.Marshal(parsedArgs)
 
