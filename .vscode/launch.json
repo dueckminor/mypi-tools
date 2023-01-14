@@ -149,7 +149,9 @@
         "--hostname=mypi",
         "--alpine-version=3.17.0",
         "--dir-setup=${workspaceFolder}/setup",
-        "--dir-target=${workspaceFolder}/build/boot"
+        "--dir-dist=${workspaceFolder}/build/mypi-setup",
+        "--dir-target=${workspaceFolder}/build/boot",
+        //"--zip-target=${workspaceFolder}/build/boot.zip"
       ]
     },
     {

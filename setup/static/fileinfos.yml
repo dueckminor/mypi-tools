@@ -1,0 +1,6 @@
+---
+executables:
+- mypi-control/*
+- etc/init.d/mypi-control
+softlinks:
+  etc/runlevels/default/mypi-control: ../../init.d/mypi-control
