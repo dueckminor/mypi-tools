@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"flag"
-	"fmt"
 	"net"
 	"net/http"
 	"net/url"
@@ -73,10 +72,10 @@ func login(c *gin.Context) {
 	session := sessions.Default(c)
 
 	secret, _ := session.Get("secret").(string)
-	domain, _ := session.Get("domain").(string)
+	//domain, _ := session.Get("domain").(string)
 
 	if len(secret) == 0 {
-		domain = ""
+		domain := ""
 		host, _, _ := net.SplitHostPort(c.Request.Host)
 		addr := net.ParseIP(host)
 		if addr != nil {
@@ -88,7 +87,6 @@ func login(c *gin.Context) {
 			}
 		}
 
-		fmt.Println("Host:", host)
 		if addr == nil {
 			hostParts := strings.Split(host, ".")
 			if len(hostParts) > 1 {
