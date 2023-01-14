@@ -3,6 +3,7 @@ vendor
 main
 debug
 build/
+gen/
 tmp
 __debug_bin
 .DS_Store

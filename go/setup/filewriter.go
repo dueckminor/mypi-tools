@@ -9,21 +9,24 @@ import (
 )
 
 type fileWriter struct {
-	mountPoint string
+	baseDir string
 }
 
 func (w *fileWriter) CreateFile(fi FileInfo) (io.WriteCloser, error) {
 	if strings.Contains(fi.Name, "..") {
 		return nil, fmt.Errorf("filenames with .. are not allowed")
 	}
-	absFilename := filepath.Join(w.mountPoint, fi.Name)
+	absFilename := filepath.Join(w.baseDir, fi.Name)
 	absDirname := filepath.Dir(absFilename)
 	err := os.MkdirAll(absDirname, os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
-	if fi.Type == FileTypeFile {
+	switch fi.Type {
+	case FileTypeFile:
 		return os.Create(absFilename)
+	case FileTypeDir:
+		return nil, os.MkdirAll(absFilename, os.ModePerm)
 	}
 	return nil, nil
 }
@@ -34,6 +37,6 @@ func (w *fileWriter) Close() error {
 
 func NewFileWriter(dir string) (DirWriter, error) {
 	return &fileWriter{
-		mountPoint: dir,
+		baseDir: dir,
 	}, nil
 }
