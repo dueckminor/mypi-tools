@@ -95,7 +95,10 @@ func main() {
 
 		go runFFMPEG(dir, url)
 
-		r.Use(static.ServeRoot(path, dir))
+		r.GET("/cams/", func(c *gin.Context) {
+			c.Header("Expires", "0")
+		}, static.ServeRoot(path, dir))
+
 		r.Use(static.ServeRoot(path, "./web"))
 		iCam++
 	}
