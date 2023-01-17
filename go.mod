@@ -6,6 +6,7 @@ replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.4.0
 
 require (
 	docker.io/go-docker v1.0.0
+	github.com/bhendo/go-powershell v0.0.0-20190719160123-219e7fb4e41e
 	github.com/creack/pty v1.1.18
 	github.com/docker/docker v20.10.22+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.2
@@ -20,7 +21,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/googollee/go-socket.io v1.6.2
 	github.com/gorilla/websocket v1.5.0
-	github.com/onsi/gomega v1.24.2
+	github.com/onsi/gomega v1.25.0
 	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.4.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
@@ -34,7 +35,6 @@ require (
 
 require (
 	github.com/Microsoft/go-winio v0.5.2 // indirect
-	github.com/bhendo/go-powershell v0.0.0-20190719160123-219e7fb4e41e // indirect
 	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/docker/distribution v2.8.1+incompatible // indirect
 	github.com/docker/docker/internal/testutil v0.0.0-00010101000000-000000000000 // indirect
