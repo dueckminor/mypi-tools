@@ -71,9 +71,9 @@
       "program": "${workspaceFolder}/cmd/mypi-router/mypi-router.go",
       "env": {},
       "args": [
-        "--https-port=10443",
-        "--http-port=10080",
-        "${workspaceFolder}/tmp/gateway.yml"
+        "--https-port=8443",
+        "--http-port=8080",
+        "/opt/mypi/etc/mypi-router/router.yml"
       ]
     },
     {

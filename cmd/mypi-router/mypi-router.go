@@ -98,8 +98,12 @@ func (h *HostImplSocket) HandleConnection(conn net.Conn) {
 func (h *HostImplSocket) HandleConnectionSocket(conn net.Conn, buf []byte) {
 	defer conn.Close()
 	targetConn, err := net.Dial("tcp", h.Target)
-	if err == nil {
-		_, err = targetConn.Write(buf)
+	if err != nil {
+		return
+	}
+	_, err = targetConn.Write(buf)
+	if err != nil {
+		return
 	}
 	forwardConnect(conn, targetConn)
 }
