@@ -32,6 +32,10 @@ func findRoot() string {
 	mypiYML := os.Getenv("MYPI_CONFIG")
 	mypiRoot = os.Getenv("MYPI_ROOT")
 
+	if len(mypiRoot) == 0 {
+		mypiRoot = "/opt/mypi"
+	}
+
 	for mypiYML != mypiRoot+"/config/mypi.yml" {
 		if len(mypiYML) > 0 && fileExists(mypiYML) {
 			mypiConfig, err = readConfigFile(mypiYML)
