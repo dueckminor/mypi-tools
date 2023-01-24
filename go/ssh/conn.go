@@ -64,7 +64,28 @@ func (c *Client) HostKeyCallback(hostname string, remote net.Addr, key ssh.Publi
 	return nil
 }
 
+type Dial interface {
+	Dial() (io.ReadWriteCloser, error)
+}
+
+type DialNet struct {
+	Network string
+	Address string
+}
+
+func (d DialNet) Dial() (io.ReadWriteCloser, error) {
+	network, address := d.Network, d.Address
+	if len(address) == 0 {
+		return nil, net.ErrClosed
+	}
+	return net.Dial(network, address)
+}
+
 func (c *Client) RemoteForward(remoteAddr, localAddr string) error {
+	return c.RemoteForwardDial(remoteAddr, &DialNet{"tcp", localAddr})
+}
+
+func (c *Client) RemoteForwardDial(remoteAddr string, dial Dial) error {
 	incoming, err := c.Listen("tcp", remoteAddr)
 	if err != nil {
 		return err
@@ -81,7 +102,7 @@ func (c *Client) RemoteForward(remoteAddr, localAddr string) error {
 			}
 			go func() {
 				defer remote_conn.Close()
-				local_conn, err := net.Dial("tcp", localAddr)
+				local_conn, err := dial.Dial()
 				if err != nil {
 					return
 				}

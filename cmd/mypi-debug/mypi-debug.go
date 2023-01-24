@@ -16,9 +16,14 @@ func ConnectToMypiDebug() (err error) {
 		return err
 	}
 
+	dial := &ssh.DialNet{
+		Network: "tcp",
+		Address: "127.0.0.1:8443",
+	}
+
 	go func() {
 		defer client.Close()
-		client.RemoteForward("0.0.0.0:8443", "127.0.0.1:8443")
+		client.RemoteForwardDial("0.0.0.0:8443", dial)
 	}()
 
 	return nil
