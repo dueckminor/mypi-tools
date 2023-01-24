@@ -280,11 +280,22 @@ func (w *connWrapper) SetWriteDeadline(t time.Time) error {
 	return w.conn.SetWriteDeadline(t)
 }
 
-func forwardConnect(a, b net.Conn) {
+func forwardConnect(client, server net.Conn) {
 	done := make(chan bool, 2)
 
-	go func() { io.Copy(a, b); done <- true }()
-	go func() { io.Copy(b, a); done <- true }()
+	go func() {
+		io.Copy(client, server)
+		// when the server closes the connection,
+		// it's no longer necassary to send something
+		// -> lets close the client connection
+		client.Close()
+		done <- true
+	}()
+
+	go func() {
+		io.Copy(server, client)
+		done <- true
+	}()
 
 	<-done
 	<-done
