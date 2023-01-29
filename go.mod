@@ -10,7 +10,7 @@ require (
 	github.com/creack/pty v1.1.18
 	github.com/docker/docker v20.10.23+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.2
-	github.com/fatih/color v1.14.0
+	github.com/fatih/color v1.14.1
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-contrib/cors v1.4.0
