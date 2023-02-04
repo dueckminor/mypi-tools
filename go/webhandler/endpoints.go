@@ -10,8 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/dueckminor/mypi-tools/go/docker"
 
-	// "github.com/docker/docker/api/types/container"
-	// "github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/gin-gonic/gin"
 )
@@ -87,7 +86,7 @@ func (wh *WebHandler) getContainers(c *gin.Context) {
 
 func (wh *WebHandler) postContainersStop(c *gin.Context) {
 	id := c.Param("id")
-	wh.dockerCLI.ContainerStop(c, id, nil)
+	wh.dockerCLI.ContainerStop(c, id, container.StopOptions{})
 }
 
 func (wh *WebHandler) postServicesStart(c *gin.Context) {
