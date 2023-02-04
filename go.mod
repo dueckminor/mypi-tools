@@ -8,7 +8,7 @@ require (
 	docker.io/go-docker v1.0.0
 	github.com/bhendo/go-powershell v0.0.0-20190719160123-219e7fb4e41e
 	github.com/creack/pty v1.1.18
-	github.com/docker/docker v20.10.23+incompatible
+	github.com/docker/docker v23.0.0+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/fatih/color v1.14.1
 	github.com/fatih/structs v1.1.0
@@ -18,7 +18,6 @@ require (
 	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.8.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/google/uuid v1.3.0
 	github.com/googollee/go-socket.io v1.6.3
 	github.com/gorilla/websocket v1.5.0
 	github.com/onsi/gomega v1.26.0
@@ -66,7 +65,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.6 // indirect
 	github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/ugorji/go/codec v1.2.7 // indirect
