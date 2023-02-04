@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+import os
+
+from mypi.debug.api import API
+from mypi.debug.ctrl import CtrlGo,Ctrl
+from mypi.debug.config import Config
+
+
+class CtrlRouter(CtrlGo):
+    def __init__(self):
+        CtrlGo.__init__(self,"mypi-router",web=False)
+    def create_config(self):
+        api = API.from_env()
+
+        cfg = api.download_yml('config/mypi.yml')
+
+        domain=""
+
+        for domain_info in cfg['config']['domains']:
+            if domain_info.get('debug') == True:
+                domain=domain_info.get('name')
+
+        for filename in ['fullchain.pem','privkey.pem']:
+            filename = f'etc/letsencrypt/live/{domain}/{filename}'
+            content = api.download_file(filename)
+            Config().write(filename=filename,content=content)
+
+        config={}
+        config['auth']={
+            'client_id': 'mypi-router',
+            'client_secret': '...',
+            'server_key': '...'
+        }
+        config['certs']=[
+            {
+                'cert': Config().filename(f'etc/letsencrypt/live/{domain}/fullchain.pem'),
+                'key': Config().filename(f'etc/letsencrypt/live/{domain}/privkey.pem'),
+            }
+        ]
+
+        Config().write(filename="etc/mypi-router.yml",content=config)
+
+
+        #ctrl_auth = Ctrl.load('mypi-auth','go')
+        #print(ctrl_auth.service)
+
+ctrl = CtrlRouter()
+
+if __name__ == '__main__':
+    ctrl.create_config()
+    ctrl.run()

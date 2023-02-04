@@ -18,25 +18,29 @@ func TestPty(t *testing.T) {
 	cmd := exec.Command("tput", "lines")
 	pty.AttachProcess(cmd)
 
-	err = cmd.Run()
+	err = cmd.Start()
 	g.Expect(err).To(BeNil())
 
 	buf := make([]byte, 20)
 	n, err := pty.Read(buf)
 	g.Expect(n, err).To(Equal(4))
 
+	cmd.Wait()
+
 	g.Expect(buf[:n]).To(Equal([]byte("10\r\n")))
 
 	cmd = exec.Command("tput", "cols")
 	pty.AttachProcess(cmd)
 
-	err = cmd.Run()
+	err = cmd.Start()
 	g.Expect(err).To(BeNil())
 
 	n, err = pty.Read(buf)
 	g.Expect(n, err).To(Equal(4))
 
 	g.Expect(buf[:n]).To(Equal([]byte("20\r\n")))
+
+	cmd.Wait()
 
 	cmd = exec.Command("cat")
 	pty.AttachProcess(cmd)
@@ -45,13 +49,15 @@ func TestPty(t *testing.T) {
 		pty.Write([]byte("test\r\n\x04"))
 	}()
 
-	err = cmd.Run()
+	err = cmd.Start()
 	g.Expect(err).To(BeNil())
 
 	n, err = pty.Read(buf)
 	g.Expect(n, err).To(Equal(16))
 
 	g.Expect(buf[:n]).To(Equal([]byte("test\r\n\r\ntest\r\n\r\n")))
+
+	cmd.Wait()
 
 	err = pty.Close()
 	g.Expect(err).To(BeNil())

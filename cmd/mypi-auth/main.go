@@ -30,10 +30,11 @@ import (
 
 var (
 	// authURI   string
-	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
-	port         = flag.Int("port", 8080, "The port")
-	execDebug    = flag.String("exec", "", "start process")
-	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	webpackDebug  = flag.String("webpack-debug", "", "The debug URI")
+	port          = flag.Int("port", 8080, "The port")
+	execDebug     = flag.String("exec", "", "start process")
+	mypiRoot      = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
 	// targetURI string
 
 	userCfg *users.UserCfg
@@ -264,5 +265,10 @@ func main() {
 		r.Use(static.ServeRoot("/", "./dist"))
 	}
 
-	panic(r.Run(":" + strconv.Itoa(*port)))
+	host := ""
+	if *localhostOnly {
+		host = "localhost"
+	}
+
+	panic(r.Run(host + ":" + strconv.Itoa(*port)))
 }

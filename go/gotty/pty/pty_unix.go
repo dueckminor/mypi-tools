@@ -72,7 +72,10 @@ func (pty *ptyUnix) AttachProcess(command *exec.Cmd) error {
 	command.Stdout = pty.Tty
 	command.Stderr = pty.Tty
 	command.Stdin = pty.Tty
-	command.Env = append(os.Environ(), "TERM=xterm-256color")
+	if command.Env == nil {
+		command.Env = os.Environ()
+	}
+	command.Env = append(command.Env, "TERM=xterm-256color")
 
 	if command.SysProcAttr == nil {
 		command.SysProcAttr = &syscall.SysProcAttr{}

@@ -38,6 +38,11 @@ func getRouterInternalIPDarwin() (routerIP *net.IPAddr, err error) {
 				routerIP, err = net.ResolveIPAddr("", line)
 				break
 			}
+			if strings.HasPrefix(line, "gateway:") {
+				line = strings.Trim(line[9:], " \t")
+				routerIP, err = net.ResolveIPAddr("", line)
+				break
+			}
 		}
 		// We're all done, unblock the channel
 		done <- struct{}{}
