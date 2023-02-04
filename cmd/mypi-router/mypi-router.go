@@ -36,6 +36,9 @@ var (
 	store               memstore.Store
 	authURI             string
 	authClientID        string
+
+	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
+	mypiRoot      = flag.String("mypi-root", "", "The root of the mypi filesystem")
 )
 
 func init() {
@@ -417,9 +420,11 @@ func (gateway *GatewayConfig) loadConfig() {
 	if len(gateway.configFile) > 0 {
 		var newConfig *GatewayConfig
 		config.ReadYAML(gateway.configFile, &newConfig)
-		gateway.Certs = newConfig.Certs
-		gateway.Hosts = newConfig.Hosts
-		gateway.Auth = newConfig.Auth
+		if newConfig != nil {
+			gateway.Certs = newConfig.Certs
+			gateway.Hosts = newConfig.Hosts
+			gateway.Auth = newConfig.Auth
+		}
 	}
 
 	gateway.updateMaps()
@@ -597,10 +602,15 @@ func (c *GatewayConfig) GetAuthClient() *auth.AuthClient {
 
 func main() {
 	flag.Parse()
+	if mypiRoot != nil && len(*mypiRoot) > 0 {
+		config.InitApp(*mypiRoot)
+	}
 
 	if len(gatewayInternalName) > 0 {
 		network.SetRouterInternalName(gatewayInternalName)
 	}
+
+	fmt.Println("Root-Dir:", config.GetRoot())
 
 	ip, _ := network.GetRouterInternalIP()
 	fmt.Println("Router internal IP:", ip)
@@ -618,7 +628,10 @@ func main() {
 		panic("To many args specified")
 	}
 	gatewayConfig = &GatewayConfig{}
-	configFile := flag.CommandLine.Arg(0)
+	configFile := config.GetFilename("etc/mypi-router/router.yml")
+	if nArgs == 1 {
+		configFile = flag.CommandLine.Arg(0)
+	}
 	gatewayConfig.configFile = configFile
 
 	gatewayConfig.loadConfig()
@@ -633,6 +646,11 @@ func main() {
 			stop <- true
 		}
 	}()
+
+	host := ""
+	if *localhostOnly {
+		host = "localhost"
+	}
 
 	if portHTTP > 0 {
 		http.HandleFunc("/.well-known/acme-challenge/", func(w http.ResponseWriter, r *http.Request) {
@@ -655,11 +673,11 @@ func main() {
 			http.Redirect(w, r, target, http.StatusMovedPermanently)
 		})
 		go func() {
-			http.ListenAndServe(fmt.Sprintf(":%d", portHTTP), nil)
+			http.ListenAndServe(fmt.Sprintf("%s:%d", host, portHTTP), nil)
 		}()
 	}
 
-	incoming, err := net.Listen("tcp", fmt.Sprintf(":%d", portHTTPS))
+	incoming, err := net.Listen("tcp", fmt.Sprintf("%s:%d", host, portHTTPS))
 	if err != nil {
 		log.Fatalf("could not start server on %d: %v", portHTTPS, err)
 	}

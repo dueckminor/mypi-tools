@@ -32,6 +32,9 @@
 				"request": "launch",
 				"mode": "auto",
 				"program": "${workspaceFolder:mypi-tools}/cmd/mypi-debug/mypi-debug.go",
+				"args": [
+					"--dist-dir", "${workspaceFolder:mypi-tools}/web/mypi-debug/dist",
+				]
 			  },
 		],
 		"compounds": []
