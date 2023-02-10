@@ -18,7 +18,7 @@ require (
 	github.com/gin-contrib/static v0.0.1
 	github.com/gin-gonic/gin v1.8.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/googollee/go-socket.io v1.6.3
+	github.com/googollee/go-socket.io v1.7.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/onsi/gomega v1.26.0
 	github.com/pkg/errors v0.9.1
