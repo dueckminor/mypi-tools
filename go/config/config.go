@@ -98,8 +98,8 @@ type configImplOnFile struct {
 	filename string
 }
 
-func toMap(cfg interface{}) map[interface{}]interface{} {
-	if m, ok := cfg.(map[interface{}]interface{}); ok {
+func toMap(cfg interface{}) map[string]interface{} {
+	if m, ok := cfg.(map[string]interface{}); ok {
 		return m
 	}
 	return nil
@@ -177,7 +177,7 @@ func (c *configImpl) GetString(path ...interface{}) string {
 
 func (c *configImpl) SetString(name, value string) error {
 	switch v := c.cfg.(type) {
-	case map[interface{}]interface{}:
+	case map[string]interface{}:
 		v[name] = value
 		return nil
 	}
@@ -191,19 +191,19 @@ func (c *configImpl) CreateMap(path ...interface{}) (result ConfigMap, err error
 				return nil, errors.New("wrong type")
 			}
 		} else {
-			c.cfg = make(map[interface{}]interface{})
+			c.cfg = make(map[string]interface{})
 		}
 		return &configMapImpl{configImpl: *c}, nil
 	}
 	switch v := path[0].(type) {
 	case string:
 		if c.cfg == nil {
-			c.cfg = make(map[interface{}]interface{})
+			c.cfg = make(map[string]interface{})
 		}
 		m := toMap(c.cfg)
 		if m != nil {
 			if len(path) == 1 {
-				m[v] = make(map[interface{}]interface{})
+				m[v] = make(map[string]interface{})
 				return &configMapImpl{configImpl: configImpl{cfg: m[v]}}, nil
 			} else {
 				panic("not yet implemented")
