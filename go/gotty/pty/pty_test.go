@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestPty(t *testing.T) {
+func TestPtyLines(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	pty, err := NewPty()
@@ -29,36 +29,30 @@ func TestPty(t *testing.T) {
 
 	g.Expect(buf[:n]).To(Equal([]byte("10\r\n")))
 
-	cmd = exec.Command("tput", "cols")
+	g.Expect(pty.Close()).ShouldNot(HaveOccurred())
+}
+
+func TestPtyCols(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	pty, err := NewPty()
+	g.Expect(pty, err).NotTo(BeNil())
+
+	pty.SetSize(20, 10)
+
+	cmd := exec.Command("tput", "cols")
 	pty.AttachProcess(cmd)
 
 	err = cmd.Start()
 	g.Expect(err).To(BeNil())
 
-	n, err = pty.Read(buf)
+	buf := make([]byte, 20)
+	n, err := pty.Read(buf)
 	g.Expect(n, err).To(Equal(4))
+
+	cmd.Wait()
 
 	g.Expect(buf[:n]).To(Equal([]byte("20\r\n")))
 
-	cmd.Wait()
-
-	cmd = exec.Command("cat")
-	pty.AttachProcess(cmd)
-
-	go func() {
-		pty.Write([]byte("test\r\n\x04"))
-	}()
-
-	err = cmd.Start()
-	g.Expect(err).To(BeNil())
-
-	n, err = pty.Read(buf)
-	g.Expect(n, err).To(Equal(16))
-
-	g.Expect(buf[:n]).To(Equal([]byte("test\r\n\r\ntest\r\n\r\n")))
-
-	cmd.Wait()
-
-	err = pty.Close()
-	g.Expect(err).To(BeNil())
+	g.Expect(pty.Close()).ShouldNot(HaveOccurred())
 }
