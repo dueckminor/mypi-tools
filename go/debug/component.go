@@ -22,11 +22,19 @@ type Component interface {
 	SetState(state string)
 }
 
+type ActionInfo struct {
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Selected bool   `json:"selected"`
+	Disabled bool   `json:"disabled"`
+}
+
 type ComponentInfo struct {
-	Service string `json:"service"`
-	Name    string `json:"name"`
-	Port    int    `json:"port"`
-	State   string `json:"state"`
+	Service string       `json:"service"`
+	Name    string       `json:"name"`
+	Port    int          `json:"port"`
+	State   string       `json:"state"`
+	Actions []ActionInfo `json:"actions"`
 }
 
 //##############################################################################
@@ -47,6 +55,29 @@ func newComponent(svc *service, name string) *component {
 	comp.info.Name = name
 	comp.info.Service = svc.name
 	svc.components[name] = comp
+
+	if name == "go" {
+		comp.info.Actions = []ActionInfo{
+			ActionInfo{
+				Name:     "restart",
+				Type:     "button",
+				Disabled: false,
+			},
+			ActionInfo{
+				Name:     "debug",
+				Type:     "button",
+				Disabled: false,
+			},
+		}
+	} else {
+		comp.info.Actions = []ActionInfo{
+			ActionInfo{
+				Name:     "restart",
+				Type:     "button",
+				Disabled: false,
+			},
+		}
+	}
 
 	comp.messageHost.Subscribe("*", func(topic string, value any) {
 		svc.messageHost.Publish(name+"/"+topic, value)

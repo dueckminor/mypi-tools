@@ -7,7 +7,7 @@ from mypi.debug.ctrl import CtrlGo,Ctrl
 from mypi.debug.config import Config
 
 
-class CtrlRouter(CtrlGo):
+class CtrlRouterConfig(Ctrl):
     def __init__(self):
         CtrlGo.__init__(self,"mypi-router",web=False)
     def create_config(self):
@@ -41,12 +41,8 @@ class CtrlRouter(CtrlGo):
 
         Config().write(filename="etc/mypi-router.yml",content=config)
 
-
-        #ctrl_auth = Ctrl.load('mypi-auth','go')
-        #print(ctrl_auth.service)
-
-ctrl = CtrlRouter()
+ctrl = CtrlRouterConfig()
 
 if __name__ == '__main__':
     ctrl.create_config()
-    ctrl.run()
+

@@ -57,9 +57,9 @@ func (service *serviceDebug) handler(c *gin.Context) {
 	}
 
 	handler := service.proxyHandler
-	//if handler == nil {
-	handler = service.fileHandler
-	//}
+	if handler == nil {
+		handler = service.fileHandler
+	}
 	handler(c)
 
 	//if !c.IsAborted() {
@@ -83,6 +83,11 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 	comp := &componentDebug{}
 	comp.info.Name = "ssh"
 	comp.info.Service = svc.Name()
+	comp.info.Actions = []ActionInfo{
+		ActionInfo{
+			Name: "restart",
+		},
+	}
 
 	svc.AddComponent(comp)
 
@@ -111,13 +116,15 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 	// }
 	ccNodejs.Start()
 
-	svc.Subscribe("web/port", func(topic string, value any) {
-		svc.webPort = value.(int)
-		if svc.webPort <= 0 {
-			svc.proxyHandler = nil
-		} else {
+	compWeb := svc.GetComponent("web")
+
+	svc.Subscribe("web/state", func(topic string, value any) {
+		if compWeb.GetInfo().State == "running" {
+			svc.webPort = compWeb.GetInfo().Port
 			svc.proxyHandler = ginutil.SingleHostReverseProxy(
 				fmt.Sprintf("http://localhost:%d", svc.webPort))
+		} else {
+			svc.proxyHandler = nil
 		}
 	})
 
