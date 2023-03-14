@@ -79,21 +79,15 @@ func newEmptyService(svcs *services, name string) *service {
 
 func newServiceMypiRouter(svcs *services) Service {
 	svc := newEmptyService(svcs, "mypi-router")
-
-	comp := newComponent(svc, "go")
-	comp.Start()
-
+	newComponent(svc, "go")
 	return svc
 }
 
 func newGenericService(svcs *services, name string) Service {
 	svc := newEmptyService(svcs, name)
 
-	ccNodejs := newComponent(svc, "web")
-	ccNodejs.Start()
-
-	comp := newComponent(svc, "go")
-	comp.Start()
+	newComponent(svc, "web")
+	newComponent(svc, "go")
 
 	return svc
 }

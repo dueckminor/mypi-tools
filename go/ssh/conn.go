@@ -1,6 +1,7 @@
 package ssh
 
 import (
+	"context"
 	"io"
 	"io/fs"
 	"io/ioutil"
@@ -86,11 +87,32 @@ func (d DialNet) Dial() (io.ReadWriteCloser, error) {
 	return net.Dial(network, address)
 }
 
-func (c *Client) RemoteForward(remoteAddr, localAddr string) error {
-	return c.RemoteForwardDial(remoteAddr, &DialNet{"tcp", localAddr})
+func (c *Client) RemoteForward(ctx context.Context, remoteAddr, localAddr string) error {
+	return c.RemoteForwardDial(ctx, remoteAddr, &DialNet{"tcp", localAddr})
 }
 
-func (c *Client) RemoteForwardDial(remoteAddr string, dial Dial) error {
+func handleRemoteConn(remote_conn net.Conn, dial Dial) {
+	defer remote_conn.Close()
+	local_conn, err := dial.Dial()
+	if err != nil {
+		return
+	}
+	defer local_conn.Close()
+
+	done := make(chan bool)
+
+	go func() {
+		io.Copy(remote_conn, local_conn)
+		done <- true
+	}()
+
+	io.Copy(local_conn, remote_conn)
+
+	<-done
+	return
+}
+
+func (c *Client) RemoteForwardDial(ctx context.Context, remoteAddr string, dial Dial) error {
 	incoming, err := c.Listen("tcp", remoteAddr)
 	if err != nil {
 		return err
@@ -99,34 +121,23 @@ func (c *Client) RemoteForwardDial(remoteAddr string, dial Dial) error {
 
 	stop := make(chan bool)
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	go func() {
 		for {
 			remote_conn, err := incoming.Accept()
 			if err != nil {
-				stop <- true
 				break
 			}
-			go func() {
-				defer remote_conn.Close()
-				local_conn, err := dial.Dial()
-				if err != nil {
-					return
-				}
-				defer local_conn.Close()
-
-				done := make(chan bool)
-
-				go func() {
-					io.Copy(remote_conn, local_conn)
-					<-done
-				}()
-
-				io.Copy(local_conn, remote_conn)
-
-				<-done
-			}()
+			go handleRemoteConn(remote_conn, dial)
 		}
+		cancel()
+		stop <- true
 	}()
+
+	<-ctx.Done()
+	incoming.Close()
+	cancel()
 
 	<-stop
 

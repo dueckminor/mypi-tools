@@ -31,7 +31,5 @@ func main() {
 	r.Use(cors.Default())
 
 	services := debug.NewServices(r)
-	services.AddGenericService("mypi-auth")
-
 	services.Run()
 }

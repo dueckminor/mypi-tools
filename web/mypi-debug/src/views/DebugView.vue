@@ -13,11 +13,12 @@ v-container
               div &nbsp; {{ component.name }}
               v-spacer
               template(v-for="action in component.actions")
-                v-btn(v-if="action.name=='restart'" @click="call_action(service.name,component.name,action.name)",@click.native.stop)
-                  v-icon mdi-restart
-                v-btn(v-else-if="action.name=='debug'" @click="call_action(service.name,component.name,action.name)",@click.native.stop)
-                  v-icon mdi-bug-outline
-                v-btn(v-else @click="call_action(service.name,component.name,action.name)",@click.native.stop) {{action.name}}
+                v-btn(@click="call_action(service.name,component.name,action.name)",@click.native.stop)
+                  v-icon(v-if="action.name=='restart'") mdi-restart
+                  v-icon(v-else-if="action.name=='start'") mdi-play
+                  v-icon(v-else-if="action.name=='stop'") mdi-stop
+                  v-icon(v-else-if="action.name=='debug'") mdi-bug-outline
+                  v-text(v-else) {{action.name}}
             v-expansion-panel-text
               go-tty(:path="`/api/services/`+service.name+`/components/`+component.name+`/tty`" style="padding: 0")
 </template>
@@ -38,7 +39,7 @@ const services = storeToRefs(useServiceStore()).services
 function call_action(service,component,action) {
   // eslint-disable-next-line no-console
   console.log("call_action "+component+action);
-  axios({ method: "POST", url: "/api/services/"+service+"/components/"+component+"/"+action })
+  axios({ method: "POST", url: "/api/services/"+service+"/components/"+component+"/actions/"+action })
 }
 </script>
 <!-- ----------------------------------------------------------------------- -->
