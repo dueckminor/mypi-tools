@@ -1,6 +1,7 @@
 package debug
 
 import (
+	"context"
 	"fmt"
 	"path"
 	"strings"
@@ -32,21 +33,22 @@ type serviceDebug struct {
 	proxyHandler gin.HandlerFunc
 }
 
-func (comp *componentDebug) Start() error {
+func (comp *componentDebug) startSSH(ctx context.Context) (result chan error, err error) {
 	tty, err := comp.GetTTY()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	pty, err := tty.CreatePTY()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	comp.connector, err = StartSSHConnector("ssh://pi@mypi:2022", 8443, pty)
+	result, comp.connector, err = StartSSHConnector(ctx, "ssh://pi@mypi:2022", 8443, pty)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	comp.SetState("running")
+	return result, nil
 }
 
 func (service *serviceDebug) handler(c *gin.Context) {
@@ -81,6 +83,7 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 	svcs.AddService(svc)
 
 	comp := &componentDebug{}
+	comp.startFunc = comp.startSSH
 	comp.info.Name = "ssh"
 	comp.info.Service = svc.Name()
 	comp.info.Actions = []ActionInfo{
@@ -93,7 +96,7 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 
 	err := comp.Start()
 	if err != nil {
-		panic(err)
+		comp.SetState("failed")
 	}
 
 	svcs.Subscribe("mypi-router/golang/port", func(topic string, value any) {

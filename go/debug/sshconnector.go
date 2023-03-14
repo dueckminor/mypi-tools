@@ -1,6 +1,7 @@
 package debug
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -47,10 +48,10 @@ func (c *sshConnector) Logf(format string, a ...any) {
 	fmt.Fprintf(c.tty, format, a...)
 }
 
-func StartSSHConnector(uri string, port int, tty io.Writer) (connector SSHConnector, err error) {
+func StartSSHConnector(ctx context.Context, uri string, port int, tty io.Writer) (result chan error, connector SSHConnector, err error) {
 	parsedURI, err := url.Parse(uri)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	username := "pi"
 	if parsedURI.User != nil {
@@ -67,13 +68,13 @@ func StartSSHConnector(uri string, port int, tty io.Writer) (connector SSHConnec
 	c.client = &ssh.Client{}
 	err = c.client.AddPrivateKeyFile("id_rsa")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	c.Logf("Username: %v\n", username)
 	c.Logf("Host: %v\n", parsedURI.Host)
 	err = c.client.Dial(username, parsedURI.Host)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	c.dial = &ssh.DialNet{
@@ -81,13 +82,19 @@ func StartSSHConnector(uri string, port int, tty io.Writer) (connector SSHConnec
 		Address: fmt.Sprintf("127.0.0.1:%d", port),
 	}
 
+	result = make(chan error)
+
 	go func() {
 		defer c.client.Close()
 		c.Logln("Listen on remote port: 0.0.0.0:8443")
-		c.client.RemoteForwardDial("0.0.0.0:8443", c.dial)
+		err := c.client.RemoteForwardDial(ctx, "0.0.0.0:8443", c.dial)
+		if err != nil {
+			fmt.Println("RemoteForwardDial failed:", err)
+		}
+		result <- err
 	}()
 
-	return c, nil
+	return result, c, nil
 }
 
 func (c *sshConnector) GetFS() (fs.FS, error) {

@@ -2,7 +2,11 @@ package debug
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"path"
+	"sort"
+	"time"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/gotty/server/ginhandler"
@@ -43,14 +47,34 @@ func NewServices(r *gin.Engine) Services {
 	svcs.r = r
 	svcs.rgAPI = r.Group("/api")
 	svcs.registerGinAPIHandler(svcs.rgAPI)
-
-	svcs.addDebug()
-	svcs.addRouter()
-
+	svcs.load()
 	fmt.Printf("\n\nhttp://localhost:8080?local_secret=%s\n\n\n",
 		svcs.authClient.LocalSecret)
 
 	return svcs
+}
+
+func (svcs *services) load() error {
+	servicesDir := path.Join(GetWorkspaceRoot(), "debug", "services")
+
+	files, err := ioutil.ReadDir(servicesDir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			serviceName := file.Name()
+			if serviceName == "mypi-debug" {
+				svcs.addDebug()
+			} else if serviceName == "mypi-router" {
+				svcs.addRouter()
+			} else {
+				svcs.AddGenericService(serviceName)
+			}
+		}
+	}
+	return nil
 }
 
 func (svcs *services) AddService(service Service) {
@@ -97,6 +121,16 @@ func (svcs *services) AddGenericService(name string) {
 }
 
 func (svcs *services) Run() {
+	go func() {
+		time.Sleep(time.Second * 2)
+		for _, svc := range svcs.services {
+			if svc.Name() != "mypi-debug" {
+				for _, comp := range svc.GetComponents() {
+					comp.Start()
+				}
+			}
+		}
+	}()
 	svcs.serviceDebug.Run(svcs.r)
 }
 
@@ -109,7 +143,8 @@ func (svcs *services) registerGinAPIHandler(r *gin.RouterGroup) {
 	r.GET("/services", svcs.getServices)
 	r.GET("/services/:service", svcs.getService)
 	r.GET("/services/:service/components", svcs.getComponents)
-	r.POST("/services/:service/components/:component/restart", svcs.postComponentRestart)
+	r.POST("/services/:service/components/:component/restart", svcs.postComponentRestart) // to be deleted
+	r.POST("/services/:service/components/:component/actions/:action", svcs.postComponentAction)
 	r.GET("/services/:service/components/:component", svcs.getComponent)
 	r.PATCH("/services/:service/components/:component", svcs.patchComponent)
 	r.GET("/services/:service/components/:component/tty", svcs.getComponentTty)
@@ -135,9 +170,24 @@ func (svcs *services) ginGetComponent(c *gin.Context) Component {
 
 func (svcs *services) getServices(c *gin.Context) {
 	result := make([]any, 0)
+
+	result = append(result, svcs.services["mypi-debug"].GetData())
+	result = append(result, svcs.services["mypi-router"].GetData())
+
+	names := make([]string, 0)
+
 	for _, svc := range svcs.services {
-		result = append(result, svc.GetData())
+		name := svc.Name()
+		if name != "mypi-debug" && name != "mypi-router" {
+			names = append(names, name)
+		}
 	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		result = append(result, svcs.services[name].GetData())
+	}
+
 	c.JSON(http.StatusOK, result)
 }
 
@@ -162,6 +212,18 @@ func (svcs *services) postComponentRestart(c *gin.Context) {
 	}
 	component.Stop()
 	component.Start()
+}
+
+func (svcs *services) postComponentAction(c *gin.Context) {
+	component := svcs.ginGetComponent(c)
+	if component == nil {
+		return
+	}
+	action := c.Param("action")
+	if action == "restart" {
+		component.Stop()
+		component.Start()
+	}
 }
 
 func (svcs *services) getComponent(c *gin.Context) {

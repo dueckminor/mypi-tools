@@ -37,16 +37,19 @@ type ComponentInfo struct {
 	Actions []ActionInfo `json:"actions"`
 }
 
+type startFunc func(ctx context.Context) (result chan error, err error)
+
 //##############################################################################
 
 type component struct {
 	messageHost
-	svc     *service
-	info    ComponentInfo
-	ctx     context.Context
-	cancel  context.CancelFunc
-	tty     buffered.BufferedTty
-	stopped chan bool
+	svc       *service
+	info      ComponentInfo
+	ctx       context.Context
+	cancel    context.CancelFunc
+	tty       buffered.BufferedTty
+	stopped   chan bool
+	startFunc startFunc
 }
 
 func newComponent(svc *service, name string) *component {
@@ -54,16 +57,17 @@ func newComponent(svc *service, name string) *component {
 	comp.svc = svc
 	comp.info.Name = name
 	comp.info.Service = svc.name
+	comp.info.State = "stopped"
 	svc.components[name] = comp
 
 	if name == "go" {
 		comp.info.Actions = []ActionInfo{
-			ActionInfo{
+			{
 				Name:     "restart",
 				Type:     "button",
 				Disabled: false,
 			},
-			ActionInfo{
+			{
 				Name:     "debug",
 				Type:     "button",
 				Disabled: false,
@@ -71,7 +75,7 @@ func newComponent(svc *service, name string) *component {
 		}
 	} else {
 		comp.info.Actions = []ActionInfo{
-			ActionInfo{
+			{
 				Name:     "restart",
 				Type:     "button",
 				Disabled: false,
@@ -133,17 +137,20 @@ func (comp *component) GetTTY() (tty buffered.BufferedTty, err error) {
 	return comp.tty, nil
 }
 
-func (comp *component) NewCommand(name string, arg ...string) *exec.Cmd {
+func (comp *component) createContext() context.Context {
 	if nil == comp.ctx || comp.ctx.Err() != nil {
 		comp.ctx, comp.cancel = context.WithCancel(context.Background())
 	}
+	return comp.ctx
+}
 
+func (comp *component) NewCommand(ctx context.Context, name string, arg ...string) *exec.Cmd {
 	tty, err := comp.GetTTY()
 	if err != nil {
 		panic(err)
 	}
 
-	cmd := exec.CommandContext(comp.ctx, name, arg...)
+	cmd := exec.CommandContext(ctx, name, arg...)
 
 	cmd.Env = append(os.Environ(),
 		"PATH="+path.Join(GetWorkspaceRoot(), ".venv/bin")+":"+os.Getenv("PATH"),
@@ -171,26 +178,23 @@ func (comp *component) Stop() error {
 
 	cancel()
 	<-stopped
+	comp.SetState("stopped")
 
 	return nil
 }
 
 func (comp *component) Start() error {
+	ctx := comp.createContext()
+
 	comp.stopped = make(chan bool)
 
-	dir := GetWorkspaceRoot()
-	ctrl := path.Join(dir, "debug", "services", comp.info.Service, "components", comp.info.Name, "ctrl")
-
-	cmd := comp.NewCommand(ctrl, "run")
-	cmd.Dir = dir
-
-	err := cmd.Start()
-	if err != nil {
-		comp.tty.ClosePTY()
-		cmd = comp.NewCommand(ctrl, "run")
-		cmd.Dir = dir
-		err = cmd.Start()
+	f := comp.startFunc
+	if nil == f {
+		f = comp.startGeneric
 	}
+
+	comp.SetState("starting")
+	done, err := f(ctx)
 
 	if err != nil {
 		close(comp.stopped)
@@ -200,12 +204,34 @@ func (comp *component) Start() error {
 	}
 
 	go func() {
-		err = cmd.Wait()
+		<-done
 		comp.tty.ClosePTY()
+		comp.SetState("stopped")
 		close(comp.stopped)
 		comp.stopped = nil
 		comp.cancel = nil
 	}()
 
 	return nil
+}
+
+func (comp *component) startGeneric(ctx context.Context) (result chan error, err error) {
+	dir := GetWorkspaceRoot()
+	ctrl := path.Join(dir, "debug", "services", comp.info.Service, "components", comp.info.Name, "ctrl")
+
+	cmd := comp.NewCommand(ctx, ctrl, "run")
+	cmd.Dir = dir
+
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	result = make(chan error)
+
+	go func() {
+		result <- cmd.Wait()
+	}()
+
+	return result, nil
 }
