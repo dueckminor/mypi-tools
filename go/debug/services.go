@@ -65,8 +65,6 @@ func (svcs *services) load() error {
 			serviceName := file.Name()
 			if serviceName == "mypi-debug" {
 				svcs.addDebug()
-			} else if serviceName == "mypi-router" {
-				svcs.addRouter()
 			} else {
 				svcs.AddGenericService(serviceName)
 			}
@@ -108,10 +106,6 @@ func (svcs *services) GetComponent(svcName string, compName string) Component {
 
 func (svcs *services) addDebug() {
 	svcs.serviceDebug = newServiceDebug(svcs, svcs.rgAPI)
-}
-
-func (svcs *services) addRouter() {
-	newServiceMypiRouter(svcs)
 }
 
 func (svcs *services) AddGenericService(name string) {

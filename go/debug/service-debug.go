@@ -7,7 +7,6 @@ import (
 	"path"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/ginutil"
@@ -28,7 +27,7 @@ type componentDebug struct {
 
 type serviceDebug struct {
 	service
-	mutex      sync.Mutex
+
 	webPort    int
 	distFolder string
 
@@ -66,14 +65,15 @@ func (service *serviceDebug) handler(c *gin.Context) {
 	}
 
 	handler := service.proxyHandler
-	if handler == nil {
-		handler = service.fileHandler
+	if handler != nil {
+		handler(c)
+		return
 	}
-	handler(c)
 
-	//if !c.IsAborted() {
-	//	c.File(path.Join(service.distFolder, "index.html"))
-	//}
+	service.fileHandler(c)
+	if !c.IsAborted() {
+		c.File(path.Join(service.distFolder, "index.html"))
+	}
 }
 
 func (service *serviceDebug) Run(r *gin.Engine) {
@@ -133,11 +133,7 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 	svc.distFolder = path.Join(workspace, "web", "mypi-debug", "dist")
 	svc.fileHandler = static.ServeRoot("/", svc.distFolder)
 
-	// if util.FileExists(path.Join(service.distFolder, "index.html")) {
-	// } else {
-	// }
 	ccNodejs.Start()
-
 	compWeb := svc.GetComponent("web")
 
 	svc.Subscribe("web/state", func(topic string, value any) {

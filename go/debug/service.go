@@ -1,6 +1,9 @@
 package debug
 
 import (
+	"io/ioutil"
+	"path"
+
 	"golang.org/x/exp/maps"
 )
 
@@ -77,17 +80,21 @@ func newEmptyService(svcs *services, name string) *service {
 	return svc
 }
 
-func newServiceMypiRouter(svcs *services) Service {
-	svc := newEmptyService(svcs, "mypi-router")
-	newComponent(svc, "go")
-	return svc
-}
-
 func newGenericService(svcs *services, name string) Service {
 	svc := newEmptyService(svcs, name)
 
-	newComponent(svc, "web")
-	newComponent(svc, "go")
+	servicesDir := path.Join(GetWorkspaceRoot(), "debug", "services", name, "components")
+
+	files, err := ioutil.ReadDir(servicesDir)
+	if err != nil {
+		return nil
+	}
+
+	for _, file := range files {
+		if file.IsDir() {
+			newComponent(svc, file.Name())
+		}
+	}
 
 	return svc
 }
