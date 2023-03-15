@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+from typing import List
 
 from mypi.debug.api import API
 from mypi.debug.ctrl import CtrlGo,Ctrl
@@ -38,12 +39,26 @@ class CtrlRouter(CtrlGo):
                 'key': Config().filename(f'etc/letsencrypt/live/{domain}/privkey.pem'),
             }
         ]
+        config['hosts']=[
+            {
+                'name': f'auth.{domain}',
+                'target': f'localhost:{api.get_component_info("mypi-auth","go")["port"]}',
+                'mode': 'http'
+            }
+        ]
 
-        Config().write(filename="etc/mypi-router.yml",content=config)
+        Config().write(filename="etc/mypi-router/router.yml",content=config)
 
 
         #ctrl_auth = Ctrl.load('mypi-auth','go')
         #print(ctrl_auth.service)
+
+    def _get_port_args(self) -> List[str]:
+        return [
+            '--https-port',str(self.get_port()),
+            f'--mypi-root={Config().mypi_root}'
+        ]
+
 
 ctrl = CtrlRouter()
 

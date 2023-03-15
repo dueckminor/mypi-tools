@@ -14,6 +14,7 @@ import (
 
 type SSHConnector interface {
 	io.Closer
+	Run(ctx context.Context, uri string, port int, tty io.Writer) (result chan error, err error)
 	SetLocalRouterPort(port int) (err error)
 	GetFS() (fs.FS, error)
 	GetHttpFS() (http.FileSystem, error)
@@ -23,6 +24,19 @@ type sshConnector struct {
 	client *ssh.Client
 	dial   *ssh.DialNet
 	tty    io.Writer
+
+	httpfs http.FileSystem
+}
+
+type httpfs struct {
+	conn *sshConnector
+}
+
+func (fs httpfs) Open(name string) (f http.File, err error) {
+	if fs.conn.httpfs == nil {
+		return nil, fmt.Errorf("File not found: %s", name)
+	}
+	return fs.conn.httpfs.Open(name)
 }
 
 func (c *sshConnector) Close() (err error) {
@@ -48,10 +62,10 @@ func (c *sshConnector) Logf(format string, a ...any) {
 	fmt.Fprintf(c.tty, format, a...)
 }
 
-func StartSSHConnector(ctx context.Context, uri string, port int, tty io.Writer) (result chan error, connector SSHConnector, err error) {
+func (c *sshConnector) Run(ctx context.Context, uri string, port int, tty io.Writer) (result chan error, err error) {
 	parsedURI, err := url.Parse(uri)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	username := "pi"
 	if parsedURI.User != nil {
@@ -61,25 +75,30 @@ func StartSSHConnector(ctx context.Context, uri string, port int, tty io.Writer)
 	if tty == nil {
 		tty = os.Stderr
 	}
-	c := &sshConnector{
-		tty: tty,
-	}
+	c.tty = tty
 
 	c.client = &ssh.Client{}
 	err = c.client.AddPrivateKeyFile("id_rsa")
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	c.Logf("Username: %v\n", username)
 	c.Logf("Host: %v\n", parsedURI.Host)
 	err = c.client.Dial(username, parsedURI.Host)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	c.dial = &ssh.DialNet{
-		Network: "tcp",
-		Address: fmt.Sprintf("127.0.0.1:%d", port),
+	c.httpfs, err = c.client.GetHttpFS()
+	if err != nil {
+		return nil, err
+	}
+
+	if c.dial == nil {
+		c.dial = &ssh.DialNet{
+			Network: "tcp",
+			Address: fmt.Sprintf("127.0.0.1:%d", port),
+		}
 	}
 
 	result = make(chan error)
@@ -94,12 +113,12 @@ func StartSSHConnector(ctx context.Context, uri string, port int, tty io.Writer)
 		result <- err
 	}()
 
-	return result, c, nil
+	return result, nil
 }
 
 func (c *sshConnector) GetFS() (fs.FS, error) {
 	return c.client.GetFS()
 }
 func (c *sshConnector) GetHttpFS() (fs http.FileSystem, err error) {
-	return c.client.GetHttpFS()
+	return httpfs{c}, nil
 }
