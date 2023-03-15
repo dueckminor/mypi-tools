@@ -48,8 +48,6 @@ func NewServices(r *gin.Engine) Services {
 	svcs.rgAPI = r.Group("/api")
 	svcs.registerGinAPIHandler(svcs.rgAPI)
 	svcs.load()
-	fmt.Printf("\n\nhttp://localhost:8080?local_secret=%s\n\n\n",
-		svcs.authClient.LocalSecret)
 
 	return svcs
 }

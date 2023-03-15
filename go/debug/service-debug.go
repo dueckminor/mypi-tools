@@ -3,9 +3,12 @@ package debug
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/restapi"
@@ -76,6 +79,18 @@ func (service *serviceDebug) handler(c *gin.Context) {
 func (service *serviceDebug) Run(r *gin.Engine) {
 	restapi.LocalhostOnly()
 	r.Use(service.handler)
+
+	url := fmt.Sprintf("http://localhost:8080?local_secret=%s", service.svcs.authClient.LocalSecret)
+
+	if runtime.GOOS == "darwin" {
+		go func() {
+			time.Sleep(time.Second * 1)
+			exec.Command(path.Join(GetWorkspaceRoot(), "scripts", "macos-open-chrome"), url).Run()
+		}()
+	}
+
+	fmt.Printf("\n\n%s\n\n\n", url)
+
 	panic(r.Run("localhost:8080"))
 }
 
