@@ -1,0 +1,7 @@
+---
+service:
+  dependencies:
+    - mypi-router
+  components:
+    - name: web
+    - name: go
