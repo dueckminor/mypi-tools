@@ -1,4 +1,5 @@
 import subprocess
+import socket
 import os
 import glob
 from typing import Optional,List
@@ -86,6 +87,26 @@ class WaitForPort(Thread):
                 pass
             sleep(0.5)
 
+class WaitForRawPort(Thread):
+    def __init__(self, ctrl:Ctrl, port:int):
+        Thread.__init__(self)
+        self.ctrl = ctrl
+        self.port = port
+        self.stopped = False
+        self.start()
+
+    def run(self):
+        while not self.stopped:
+            try:
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect(("localhost", self.port))
+                    print("RUNNING")
+                    self.ctrl.set_state("running")
+                    break
+            except Exception:
+                pass
+            sleep(0.5)
+
 class CtrlWeb(Ctrl):
     def __init__(self, service:str):
         Ctrl.__init__(self, service=service, component="web")
@@ -129,13 +150,15 @@ class CtrlGo(Ctrl):
         args=['go','run',]
         args.extend(go_files)
         args.append('--localhost-only')
-        args.extend(self._get_port_args())
         if self.web:
             args.append(f'--webpack-debug=http://localhost:{web_port}')
 
-        w = WaitForPort(self,self.get_port())
-        subprocess.run(args=args,cwd=cwd)
+        args.extend(self._get_port_args())
+
+        w = WaitForRawPort(self,self.get_port())
+        proc = subprocess.run(args=args,cwd=cwd)
         w.stopped = True
+        print(f'RC: {proc.returncode}')
 
         self.set_state("stopped")
 

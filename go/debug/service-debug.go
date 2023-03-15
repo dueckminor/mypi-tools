@@ -43,7 +43,11 @@ func (comp *componentDebug) startSSH(ctx context.Context) (result chan error, er
 		return nil, err
 	}
 
-	result, comp.connector, err = StartSSHConnector(ctx, "ssh://pi@mypi:2022", 8443, pty)
+	if nil == comp.connector {
+		comp.connector = new(sshConnector)
+	}
+
+	result, err = comp.connector.Run(ctx, "ssh://pi@mypi:2022", 8443, pty)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +103,7 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 		comp.SetState("failed")
 	}
 
-	svcs.Subscribe("mypi-router/golang/port", func(topic string, value any) {
+	svcs.Subscribe("mypi-router/go/port", func(topic string, value any) {
 		comp.connector.SetLocalRouterPort(value.(int))
 	})
 
