@@ -3,8 +3,6 @@ package restapi
 import (
 	"flag"
 	"fmt"
-	"os"
-	"os/exec"
 	"path"
 	"strconv"
 
@@ -20,20 +18,11 @@ var (
 	distDir       = flag.String("dist-dir", "", "The location of the dist dir")
 	port          = flag.Int("port", 8080, "The port")
 	tlsPort       = flag.Int("tlsport", 443, "The TLS port")
-	execDebug     = flag.String("exec", "", "start process")
 	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
 	listenHost    = ""
 )
 
 func prepare(r *gin.Engine) {
-	if len(*execDebug) > 0 {
-		cmd := exec.Command(*execDebug)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Start()
-		defer cmd.Wait()
-	}
-
 	if len(*webpackDebug) > 0 {
 		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
 	} else {
