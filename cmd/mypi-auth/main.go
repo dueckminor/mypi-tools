@@ -6,8 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"path"
 	"strconv"
 	"strings"
@@ -32,7 +30,6 @@ var (
 	// authURI   string
 	webpackDebug  = flag.String("webpack-debug", "", "The debug URI")
 	port          = flag.Int("port", 8080, "The port")
-	execDebug     = flag.String("exec", "", "start process")
 	mypiRoot      = flag.String("mypi-root", "", "The root of the mypi filesystem")
 	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
 	// targetURI string
@@ -239,14 +236,6 @@ func handleStatus(c *gin.Context) {
 
 func main() {
 	r := gin.Default()
-
-	if len(*execDebug) > 0 {
-		cmd := exec.Command(*execDebug)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Start()
-		defer cmd.Wait()
-	}
 
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("MYPI_AUTH_SESSION", store))
