@@ -27,6 +27,9 @@ class Ctrl:
     def set_state(self, state:str):
         a = API.from_env()
         a.set_component_state(self.service,self.component,state)
+    def set_dist(self, dist:str):
+        a = API.from_env()
+        a.set_component_dist(self.service,self.component,dist)
 
     def get_port(self) -> int:
         a = API.from_env()
@@ -113,12 +116,14 @@ class CtrlWeb(Ctrl):
 
     def run(self):
         self.set_state("starting")
+        cwd=f'{repo_dir}/web/{self.service}'
+        if os.path.exists(os.path.join(cwd,"dist","index.html")):
+            self.set_dist(os.path.join(cwd,"dist"))
 
         port = self.get_port()
 
         w = WaitForPort(self,port)
 
-        cwd=f'{repo_dir}/web/{self.service}'
         subprocess.run(args=['npm','install'],cwd=cwd)
         subprocess.run(args=
             [
