@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os/exec"
 	"path"
+	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/gotty/server/ginhandler"
+	"github.com/dueckminor/mypi-tools/go/restapi"
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/exp/maps"
 )
@@ -30,11 +36,17 @@ type Services interface {
 
 type services struct {
 	messageHost
-	services     map[string]Service
-	r            *gin.Engine
-	rgAPI        *gin.RouterGroup
-	serviceDebug ServiceDebug
-	authClient   auth.AuthClientLocalSecret
+	services   map[string]Service
+	r          *gin.Engine
+	rgAPI      *gin.RouterGroup
+	authClient auth.AuthClientLocalSecret
+
+	browserStarted bool
+
+	distFolder   string
+	uiPort       int
+	fileHandler  gin.HandlerFunc
+	proxyHandler gin.HandlerFunc
 }
 
 func NewServices(r *gin.Engine) Services {
@@ -47,7 +59,30 @@ func NewServices(r *gin.Engine) Services {
 	svcs.r = r
 	svcs.rgAPI = r.Group("/api")
 	svcs.registerGinAPIHandler(svcs.rgAPI)
-	svcs.load()
+
+	go func() {
+		time.Sleep(time.Second)
+		svcs.load()
+	}()
+
+	svcs.Subscribe("mypi-debug/web/dist", func(topic string, value any) {
+		distFolder := value.(string)
+		svcs.fileHandler = static.ServeRoot("/", svcs.distFolder)
+		svcs.distFolder = distFolder
+		svcs.startBrowser()
+	})
+	svcs.Subscribe("mypi-debug/web/port", func(topic string, value any) {
+		svcs.uiPort = value.(int)
+	})
+	svcs.Subscribe("mypi-debug/web/state", func(topic string, value any) {
+		if value == "running" {
+			svcs.proxyHandler = ginutil.SingleHostReverseProxy(
+				fmt.Sprintf("http://localhost:%d", svcs.uiPort))
+			svcs.startBrowser()
+		} else {
+			svcs.proxyHandler = nil
+		}
+	})
 
 	return svcs
 }
@@ -105,7 +140,7 @@ func (svcs *services) GetComponent(svcName string, compName string) Component {
 }
 
 func (svcs *services) addDebug() {
-	svcs.serviceDebug = newServiceDebug(svcs, svcs.rgAPI)
+	newServiceDebug(svcs, svcs.rgAPI)
 }
 
 func (svcs *services) AddGenericService(name string) {
@@ -123,7 +158,52 @@ func (svcs *services) Run() {
 			}
 		}
 	}()
-	svcs.serviceDebug.Run(svcs.r)
+
+	restapi.LocalhostOnly()
+	svcs.r.Use(svcs.handler)
+
+	panic(svcs.r.Run("localhost:8080"))
+}
+
+func (svcs *services) startBrowser() {
+	if svcs.browserStarted {
+		return
+	}
+	url := fmt.Sprintf("http://localhost:8080?local_secret=%s", svcs.authClient.LocalSecret)
+
+	if runtime.GOOS == "darwin" {
+		go func() {
+			time.Sleep(time.Second * 1)
+			exec.Command(path.Join(GetWorkspaceRoot(), "scripts", "macos-open-chrome"), url).Run()
+		}()
+	}
+
+	fmt.Printf("\n\n%s\n\n\n", url)
+	svcs.browserStarted = true
+}
+
+func (svcs *services) handler(c *gin.Context) {
+	p := c.Request.URL.Path
+	if strings.HasPrefix(p, "/api") || strings.HasPrefix(p, "api") {
+		// we don't want to handle the API here
+		return
+	}
+
+	handler := svcs.proxyHandler
+	if handler != nil {
+		handler(c)
+		return
+	}
+
+	if nil == svcs.fileHandler {
+		c.AbortWithStatus(http.StatusNotFound)
+		return
+	}
+
+	svcs.fileHandler(c)
+	if !c.IsAborted() {
+		c.File(path.Join(svcs.distFolder, "index.html"))
+	}
 }
 
 func (svcs *services) registerGinAPIHandler(r *gin.RouterGroup) {
@@ -241,6 +321,11 @@ func (svcs *services) patchComponent(c *gin.Context) {
 		component.SetState(compInfo.State)
 	}
 	component.SetPort(compInfo.Port)
+
+	if len(compInfo.Dist) > 0 {
+		component.SetDist(compInfo.Dist)
+	}
+
 	fmt.Printf("%v\n", component.GetInfo())
 	c.JSON(http.StatusOK, component.GetInfo())
 }

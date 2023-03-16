@@ -19,6 +19,7 @@ type Component interface {
 	Start() error
 	Stop() error
 	SetPort(port int) error
+	SetDist(dist string)
 	SetState(state string)
 }
 
@@ -33,6 +34,7 @@ type ComponentInfo struct {
 	Service string       `json:"service"`
 	Name    string       `json:"name"`
 	Port    int          `json:"port"`
+	Dist    string       `json:"dist,omitempty"`
 	State   string       `json:"state"`
 	Actions []ActionInfo `json:"actions"`
 }
@@ -119,6 +121,13 @@ func (comp *component) SetState(state string) {
 	if len(state) > 0 && state != comp.info.State {
 		comp.info.State = state
 		comp.messageHost.Publish("state", state)
+	}
+}
+
+func (comp *component) SetDist(dist string) {
+	if len(dist) > 0 && dist != comp.info.Dist {
+		comp.info.Dist = dist
+		comp.messageHost.Publish("dist", dist)
 	}
 }
 

@@ -46,3 +46,10 @@ class API:
         data = yaml.safe_load(resp.text)
         return data
     
+    def set_component_dist(self, svc:str, comp:str, dist:str) -> dict:
+        resp = self.session.patch(
+            f'{self.url}/api/services/{svc}/components/{comp}',
+            json={'dist':dist})
+        data = yaml.safe_load(resp.text)
+        return data
+    

@@ -2,37 +2,13 @@ package debug
 
 import (
 	"context"
-	"fmt"
-	"os/exec"
-	"path"
-	"runtime"
-	"strings"
-	"time"
 
-	"github.com/dueckminor/mypi-tools/go/ginutil"
-	"github.com/dueckminor/mypi-tools/go/restapi"
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
-
-type ServiceDebug interface {
-	Service
-	Run(r *gin.Engine)
-}
 
 type componentDebug struct {
 	component
 	connector SSHConnector
-}
-
-type serviceDebug struct {
-	service
-
-	webPort    int
-	distFolder string
-
-	fileHandler  gin.HandlerFunc
-	proxyHandler gin.HandlerFunc
 }
 
 func (comp *componentDebug) startSSH(ctx context.Context) (result chan error, err error) {
@@ -57,58 +33,15 @@ func (comp *componentDebug) startSSH(ctx context.Context) (result chan error, er
 	return result, nil
 }
 
-func (service *serviceDebug) handler(c *gin.Context) {
-	p := c.Request.URL.Path
-	if strings.HasPrefix(p, "/api") || strings.HasPrefix(p, "api") {
-		// we don't want to handle the API here
-		return
-	}
-
-	handler := service.proxyHandler
-	if handler != nil {
-		handler(c)
-		return
-	}
-
-	service.fileHandler(c)
-	if !c.IsAborted() {
-		c.File(path.Join(service.distFolder, "index.html"))
-	}
-}
-
-func (service *serviceDebug) Run(r *gin.Engine) {
-	restapi.LocalhostOnly()
-	r.Use(service.handler)
-
-	url := fmt.Sprintf("http://localhost:8080?local_secret=%s", service.svcs.authClient.LocalSecret)
-
-	if runtime.GOOS == "darwin" {
-		go func() {
-			time.Sleep(time.Second * 1)
-			exec.Command(path.Join(GetWorkspaceRoot(), "scripts", "macos-open-chrome"), url).Run()
-		}()
-	}
-
-	fmt.Printf("\n\n%s\n\n\n", url)
-
-	panic(r.Run("localhost:8080"))
-}
-
-func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
-	svc := &serviceDebug{}
-	svc.name = "mypi-debug"
-	svc.svcs = svcs
-
-	svcs.AddService(svc)
+func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) Service {
+	svc := newEmptyService(svcs, "mypi-debug")
 
 	comp := &componentDebug{}
 	comp.startFunc = comp.startSSH
 	comp.info.Name = "ssh"
 	comp.info.Service = svc.Name()
 	comp.info.Actions = []ActionInfo{
-		ActionInfo{
-			Name: "restart",
-		},
+		{Name: "restart"},
 	}
 
 	svc.AddComponent(comp)
@@ -127,24 +60,10 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) ServiceDebug {
 		rgAPI.StaticFS("fs/", sshFS)
 	}
 
-	ccNodejs := newComponent(&svc.service, "web")
-
-	workspace := GetWorkspaceRoot()
-	svc.distFolder = path.Join(workspace, "web", "mypi-debug", "dist")
-	svc.fileHandler = static.ServeRoot("/", svc.distFolder)
+	ccNodejs := newComponent(svc, "web")
 
 	ccNodejs.Start()
-	compWeb := svc.GetComponent("web")
-
-	svc.Subscribe("web/state", func(topic string, value any) {
-		if compWeb.GetInfo().State == "running" {
-			svc.webPort = compWeb.GetInfo().Port
-			svc.proxyHandler = ginutil.SingleHostReverseProxy(
-				fmt.Sprintf("http://localhost:%d", svc.webPort))
-		} else {
-			svc.proxyHandler = nil
-		}
-	})
+	svc.GetComponent("web")
 
 	return svc
 }
