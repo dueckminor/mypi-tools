@@ -60,14 +60,9 @@ func NewServices(r *gin.Engine) Services {
 	svcs.rgAPI = r.Group("/api")
 	svcs.registerGinAPIHandler(svcs.rgAPI)
 
-	go func() {
-		time.Sleep(time.Second)
-		svcs.load()
-	}()
-
 	svcs.Subscribe("mypi-debug/web/dist", func(topic string, value any) {
 		distFolder := value.(string)
-		svcs.fileHandler = static.ServeRoot("/", svcs.distFolder)
+		svcs.fileHandler = static.ServeRoot("/", distFolder)
 		svcs.distFolder = distFolder
 		svcs.startBrowser()
 	})
@@ -83,6 +78,10 @@ func NewServices(r *gin.Engine) Services {
 			svcs.proxyHandler = nil
 		}
 	})
+
+	go func() {
+		svcs.load()
+	}()
 
 	return svcs
 }
@@ -204,7 +203,11 @@ func (svcs *services) handler(c *gin.Context) {
 
 	svcs.fileHandler(c)
 	if !c.IsAborted() {
-		c.File(path.Join(svcs.distFolder, "index.html"))
+		if !strings.HasPrefix(p, "/js/") &&
+			!strings.HasPrefix(p, "/css/") &&
+			!strings.HasPrefix(p, "/fonts/") {
+			c.File(path.Join(svcs.distFolder, "index.html"))
+		}
 	}
 }
 

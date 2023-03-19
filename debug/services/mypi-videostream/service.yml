@@ -5,3 +5,9 @@ service:
   components:
     - name: web
     - name: go
+  routes:
+    - hostname: cam
+      component: go
+      mode: http
+      options:
+      - auth

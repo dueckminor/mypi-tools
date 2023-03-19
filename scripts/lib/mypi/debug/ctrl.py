@@ -10,9 +10,6 @@ from requests import get
 from threading import Thread
 from time import sleep
 
-#import importlib.machinery
-#import importlib.util
-
 class Ctrl:
     def __init__(self, service:str, component: str):
         self.service = service

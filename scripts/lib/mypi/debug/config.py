@@ -10,7 +10,7 @@ def mkdir(dirname: str):
 
 class Config:
     def __init__(self):
-        self.mypi_root = os.path.join(repo_dir,".mypi")
+        self.mypi_root = os.path.join(repo_dir,".mypi/debug")
 
     def filename(self, filename:str) -> str:
         return os.path.join(self.mypi_root,filename)
