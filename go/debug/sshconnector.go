@@ -108,7 +108,7 @@ func (c *sshConnector) Run(ctx context.Context, uri string, port int, tty io.Wri
 		c.Logln("Listen on remote port: 0.0.0.0:8443")
 		err := c.client.RemoteForwardDial(ctx, "0.0.0.0:8443", c.dial)
 		if err != nil {
-			fmt.Println("RemoteForwardDial failed:", err)
+			c.Logln("RemoteForwardDial failed:", err)
 		}
 		result <- err
 	}()

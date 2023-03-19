@@ -171,12 +171,14 @@ func (svcs *services) startBrowser() {
 	}
 	url := fmt.Sprintf("http://localhost:8080?local_secret=%s", svcs.authClient.LocalSecret)
 
-	if runtime.GOOS == "darwin" {
-		go func() {
-			time.Sleep(time.Second * 1)
+	go func() {
+		time.Sleep(time.Second * 1)
+		if runtime.GOOS == "darwin" {
 			exec.Command(path.Join(GetWorkspaceRoot(), "scripts", "macos-open-chrome"), url).Run()
-		}()
-	}
+		} else if runtime.GOOS == "linux" {
+			exec.Command("xdg-open", url).Run()
+		}
+	}()
 
 	fmt.Printf("\n\n%s\n\n\n", url)
 	svcs.browserStarted = true
