@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+from time import sleep
 
 from mypi.debug.api import API
 from mypi.debug.ctrl import CtrlGo,Ctrl
@@ -9,7 +10,8 @@ from mypi.debug.config import Config
 
 class CtrlRouterConfig(Ctrl):
     def __init__(self):
-        CtrlGo.__init__(self,"mypi-router",web=False)
+        Ctrl.__init__(self,"mypi-router",component="config")
+
     def create_config(self):
         api = API.from_env()
 
@@ -38,11 +40,28 @@ class CtrlRouterConfig(Ctrl):
                 'key': Config().filename(f'etc/letsencrypt/live/{domain}/privkey.pem'),
             }
         ]
+        config['hosts']=[
+            {
+                'name': f'auth.{domain}',
+                'target': f'localhost:{api.get_component_info("mypi-auth","go")["port"]}',
+                'mode': 'http'
+            }
+        ]
 
-        Config().write(filename="etc/mypi-router.yml",content=config)
+        print(config)
+        Config().write(filename="etc/mypi-router/router.yml",content=config)
+
+    def run(self):
+        while True:
+            ctrl.set_state("writing configuration")
+            self.create_config()
+            ctrl.set_state("running")
+            print("waiting for changes...")
+            while True:
+                sleep(5)
 
 ctrl = CtrlRouterConfig()
 
 if __name__ == '__main__':
-    ctrl.create_config()
+    ctrl.run()
 
