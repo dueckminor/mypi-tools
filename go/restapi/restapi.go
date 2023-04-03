@@ -2,20 +2,18 @@ package restapi
 
 import (
 	"flag"
-	"fmt"
 	"path"
 	"strconv"
+	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/ginutil"
-	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
 var (
 	// authURI   string
-	webpackDebug  = flag.String("webpack-debug", "", "The debug URI")
-	distDir       = flag.String("dist-dir", "", "The location of the dist dir")
+	_dist         = flag.String("dist", "./dist", "The debug URI")
 	port          = flag.Int("port", 8080, "The port")
 	tlsPort       = flag.Int("tlsport", 443, "The TLS port")
 	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
@@ -23,39 +21,25 @@ var (
 )
 
 func prepare(r *gin.Engine) {
-	if len(*webpackDebug) > 0 {
-		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
-	} else {
-		usedDistDir := *distDir
-		if len(usedDistDir) == 0 {
-			usedDistDir = "./dist"
-		}
-		r.Use(static.ServeRoot("/", usedDistDir))
-		r.NoRoute(func(c *gin.Context) {
-			c.File(path.Join(usedDistDir, "index.html"))
-		})
-	}
-
 	if *localhostOnly {
 		LocalhostOnly()
+	}
+	dist := *_dist
+	if len(dist) == 0 {
+		dist = "./dist"
+	}
+	if strings.HasPrefix(dist, "http://") || strings.HasPrefix(dist, "https://") {
+		r.Use(ginutil.SingleHostReverseProxy(dist))
+	} else {
+		r.Use(static.ServeRoot("/", dist))
+		r.NoRoute(func(c *gin.Context) {
+			c.File(path.Join(dist, "index.html"))
+		})
 	}
 }
 
 func LocalhostOnly() {
 	listenHost = "localhost"
-}
-
-func SetWebpackDebugPort(port int) {
-	*webpackDebug = fmt.Sprintf("http://localhost:%d", port)
-}
-
-func GetDistDir() (string, bool) {
-	if len(*distDir) > 0 {
-		if util.FileExists(path.Join(*distDir, "index.html")) {
-			return *distDir, true
-		}
-	}
-	return "", false
 }
 
 func Run(r *gin.Engine) {

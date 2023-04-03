@@ -18,9 +18,9 @@ import (
 
 var (
 	// authURI   string
-	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
-	port         = flag.Int("port", 8080, "The port")
-	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	dist     = flag.String("dist", "./dist", "The debug URI")
+	port     = flag.Int("port", 8080, "The port")
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
 	// targetURI string
 
 	hostname string

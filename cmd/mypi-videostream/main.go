@@ -6,20 +6,15 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strconv"
 
 	"github.com/dueckminor/mypi-tools/go/config"
-	"github.com/dueckminor/mypi-tools/go/ginutil"
+	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	// authURI   string
-	webpackDebug  = flag.String("webpack-debug", "", "The debug URI")
-	port          = flag.Int("port", 8080, "The port")
-	mypiRoot      = flag.String("mypi-root", "", "The root of the mypi filesystem")
-	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
 )
 
 func init() {
@@ -113,16 +108,5 @@ func main() {
 		iCam++
 	}
 
-	if len(*webpackDebug) > 0 {
-		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
-	} else {
-		r.Use(static.ServeRoot("/", "./dist"))
-	}
-
-	host := ""
-	if *localhostOnly {
-		host = "localhost"
-	}
-
-	panic(r.Run(host + ":" + strconv.Itoa(*port)))
+	restapi.Run(r)
 }

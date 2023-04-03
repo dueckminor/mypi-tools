@@ -7,13 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
-	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/rand"
+	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/users"
 
 	"github.com/golang-jwt/jwt"
@@ -21,20 +20,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-contrib/static"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	// authURI   string
-	webpackDebug  = flag.String("webpack-debug", "", "The debug URI")
-	port          = flag.Int("port", 8080, "The port")
-	mypiRoot      = flag.String("mypi-root", "", "The root of the mypi filesystem")
-	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
-	// targetURI string
-
-	userCfg *users.UserCfg
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	userCfg  *users.UserCfg
 )
 
 func init() {
@@ -248,16 +240,5 @@ func main() {
 	r.GET("/oauth/authorize", handleOauthAuthorize)
 	r.POST("/oauth/token", handleOauthToken)
 
-	if len(*webpackDebug) > 0 {
-		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
-	} else {
-		r.Use(static.ServeRoot("/", "./dist"))
-	}
-
-	host := ""
-	if *localhostOnly {
-		host = "localhost"
-	}
-
-	panic(r.Run(host + ":" + strconv.Itoa(*port)))
+	restapi.Run(r)
 }

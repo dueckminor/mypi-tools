@@ -2,21 +2,16 @@ package main
 
 import (
 	"flag"
-	"strconv"
 
 	"github.com/dueckminor/mypi-tools/go/config"
-	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/pki"
+	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/webhandler"
-	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	// authURI   string
-	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
-	port         = flag.Int("port", 8080, "The port")
-	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
 )
 
 func init() {
@@ -37,11 +32,5 @@ func main() {
 		panic(err)
 	}
 
-	if len(*webpackDebug) > 0 {
-		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
-	} else {
-		r.Use(static.ServeRoot("/", "./dist"))
-	}
-
-	panic(r.Run(":" + strconv.Itoa(*port)))
+	restapi.Run(r)
 }
