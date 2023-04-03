@@ -18,6 +18,7 @@ type Component interface {
 	GetTTY() (buffered.BufferedTty, error)
 	Start() error
 	Stop() error
+	Debug() error
 	SetPort(port int) error
 	SetDist(dist string)
 	SetState(state string)
@@ -193,14 +194,17 @@ func (comp *component) Stop() error {
 }
 
 func (comp *component) Start() error {
-	ctx := comp.createContext()
-
-	comp.stopped = make(chan bool)
-
 	f := comp.startFunc
 	if nil == f {
 		f = comp.startGeneric
 	}
+	return comp.start(f)
+}
+
+func (comp *component) start(f startFunc) error {
+	ctx := comp.createContext()
+
+	comp.stopped = make(chan bool)
 
 	comp.SetState("starting")
 	done, err := f(ctx)
@@ -224,11 +228,21 @@ func (comp *component) Start() error {
 	return nil
 }
 
+func (comp *component) Debug() error {
+	return comp.start(func(ctx context.Context) (result chan error, err error) {
+		return comp.startCtrl(ctx, "debug")
+	})
+}
+
 func (comp *component) startGeneric(ctx context.Context) (result chan error, err error) {
+	return comp.startCtrl(ctx, "run")
+}
+
+func (comp *component) startCtrl(ctx context.Context, args ...string) (result chan error, err error) {
 	dir := GetWorkspaceRoot()
 	ctrl := path.Join(dir, "debug", "services", comp.info.Service, "components", comp.info.Name, "ctrl")
 
-	cmd := comp.NewCommand(ctx, ctrl, "run")
+	cmd := comp.NewCommand(ctx, ctrl, args...)
 	cmd.Dir = dir
 
 	err = cmd.Start()

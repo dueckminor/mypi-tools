@@ -301,6 +301,10 @@ func (svcs *services) postComponentAction(c *gin.Context) {
 		component.Stop()
 		component.Start()
 	}
+	if action == "debug" {
+		component.Stop()
+		component.Debug()
+	}
 }
 
 func (svcs *services) getComponent(c *gin.Context) {

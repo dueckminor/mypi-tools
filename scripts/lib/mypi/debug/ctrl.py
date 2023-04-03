@@ -2,6 +2,10 @@ import subprocess
 import socket
 import os
 import glob
+import sys
+import yaml
+import json
+import pyjson5
 from typing import Optional,List
 from .api import API
 from .config import repo_dir
@@ -9,15 +13,29 @@ import importlib
 from requests import get
 from threading import Thread
 from time import sleep
+from .launch_json import LaunchJson
 
 class Ctrl:
     def __init__(self, service:str, component: str):
         self.service = service
         self.component = component
 
+    def main(self):
+        subcommand = sys.argv[1]
+        if subcommand=='run':
+            self.run()
+        if subcommand=='debug':
+            self.debug()
+
     def run(self):
         """
         run starts a component and waits until it completes
+        """
+        pass
+
+    def debug(self):
+        """
+        debug creates/updates a .vscode/launch.json
         """
         pass
 
@@ -127,7 +145,8 @@ class CtrlWeb(Ctrl):
                 os.path.join(cwd,'node_modules/.bin/vue-cli-service'),
                 'serve',
                 '--host', 'localhost',
-                '--port', str(port)
+                '--port', str(port),
+                '--no-hot','--no-inline'
             ],cwd=cwd)
 
         w.stopped = True
@@ -135,30 +154,22 @@ class CtrlWeb(Ctrl):
 
 
 class CtrlGo(Ctrl):
-    def __init__(self, service:str, web:bool=True):
+    def __init__(self, service:str, web:bool=True, glob:str="*.go"):
         Ctrl.__init__(self, service=service, component="go")
         self.web = web
+        self.glob = glob
+        self.cwd = f'{repo_dir}/cmd/{self.service}'
 
     def run(self):
         self.set_state("starting")
 
-        if self.web:
-            web_port=self.wait_for_port("web")
-
-        cwd=f'{repo_dir}/cmd/{self.service}'
-
-        go_files = glob.glob(f'{cwd}/*.go')
-
+        go_file = self._get_go_file()
         args=['go','run',]
-        args.extend(go_files)
-        args.append('--localhost-only')
-        if self.web:
-            args.append(f'--webpack-debug=http://localhost:{web_port}')
-
-        args.extend(self._get_port_args())
+        args.append(go_file)
+        args.extend(self._get_args())
 
         w = WaitForRawPort(self,self.get_port())
-        proc = subprocess.run(args=args,cwd=cwd)
+        proc = subprocess.run(args=args,cwd=self.cwd)
         w.stopped = True
         print(f'RC: {proc.returncode}')
 
@@ -166,3 +177,38 @@ class CtrlGo(Ctrl):
 
     def _get_port_args(self) -> List[str]:
         return ["--port",str(self.get_port())]
+
+    def _get_go_file(self) -> str:
+        go_files = glob.glob(f'{self.cwd}/{self.glob}')
+        return go_files[0]
+
+    def _get_args(self) -> List[str]:
+        args = [
+            '--localhost-only',
+            f'--mypi-root={repo_dir}/.mypi/debug'
+        ]
+        if self.web:
+            web_port=self.wait_for_port("web")
+            args.append(f'--webpack-debug=http://localhost:{web_port}')
+            
+        
+        args.extend(self._get_port_args())
+        return args
+
+    def debug(self):
+        print("creating debug configuration")
+        launch_json_file = os.path.join(repo_dir,'.vscode','launch.json')
+        print(f'launch_json_file: {launch_json_file}')
+        launch_json = LaunchJson()
+        launch_json.set_configuration(
+            {
+                'name': f'Launch - {self.service}',
+                'type': 'go',
+                'request': 'launch',
+                'mode': 'auto',
+                'program': self._get_go_file().replace(repo_dir,'${workspaceFolder}'),
+                'args': self._get_args()
+            }
+        )
+
+        launch_json.save()

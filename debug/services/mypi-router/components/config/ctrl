@@ -45,11 +45,23 @@ class CtrlRouterConfig(Ctrl):
                 'name': f'auth.{domain}',
                 'target': f'localhost:{api.get_component_info("mypi-auth","go")["port"]}',
                 'mode': 'http'
+            },
+            {
+                'name': f'cam.{domain}',
+                'target': f'localhost:{api.get_component_info("mypi-videostream","go")["port"]}',
+                'mode': 'http'
             }
         ]
 
         print(config)
         Config().write(filename="etc/mypi-router/router.yml",content=config)
+        
+        cfg_local = {
+            'config': {
+                'webcams': [] #cfg['config'].get('webcams')
+            }
+        }
+        Config().write(filename="config/mypi.yml",content=cfg_local)
 
     def run(self):
         while True:

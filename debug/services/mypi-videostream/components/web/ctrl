@@ -4,4 +4,4 @@ from mypi.debug.ctrl import Ctrl
 ctrl = Ctrl.from_file(__file__)
 
 if __name__ == '__main__':
-    ctrl.run()
+    ctrl.main()
