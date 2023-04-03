@@ -42,6 +42,16 @@ class Ctrl:
                     return port
             sleep(0.5)
 
+    def wait_for_dist(self, component:str) -> int:
+        a = API.from_env()
+        while True:
+            info = a.get_component_info(self.service,component)
+            if 'running' == info.get('state'):
+                dist = info.get('dist')
+                if dist:
+                    return dist
+            sleep(0.5)
+
 
     @classmethod
     def from_file(cls, filename:str) -> "Ctrl":
@@ -107,6 +117,22 @@ class WaitForRawPort(Thread):
                 pass
             sleep(0.5)
 
+class WaitForDist(Thread):
+    def __init__(self, ctrl:Ctrl, dist:str):
+        Thread.__init__(self)
+        self.ctrl = ctrl
+        self.dist = dist
+        self.filename = os.path.join(dist,'index.html')
+        self.stopped = False
+        self.start()
+
+    def run(self):
+        while not self.stopped:
+            if os.path.exists(self.filename):
+                self.ctrl.set_dist(self.dist)
+                self.ctrl.set_state("running")
+                break
+
 class CtrlWeb(Ctrl):
     def __init__(self, service:str):
         Ctrl.__init__(self, service=service, component="web")
@@ -114,25 +140,21 @@ class CtrlWeb(Ctrl):
     def run(self):
         self.set_state("starting")
         cwd=f'{repo_dir}/web/{self.service}'
-        if os.path.exists(os.path.join(cwd,"dist","index.html")):
-            self.set_dist(os.path.join(cwd,"dist"))
 
-        port = self.get_port()
-
-        w = WaitForPort(self,port)
+        w = WaitForDist(self, os.path.join(cwd,"dist"))
 
         subprocess.run(args=['npm','install'],cwd=cwd)
         subprocess.run(args=
             [
                 os.path.join(cwd,'node_modules/.bin/vue-cli-service'),
-                'serve',
-                '--host', 'localhost',
-                '--port', str(port)
+                'build',
+                '--mode=development',
+                '--watch',
+                '--no-clean'
             ],cwd=cwd)
 
         w.stopped = True
         self.set_state("stopped")
-
 
 class CtrlGo(Ctrl):
     def __init__(self, service:str, web:bool=True):
@@ -143,7 +165,7 @@ class CtrlGo(Ctrl):
         self.set_state("starting")
 
         if self.web:
-            web_port=self.wait_for_port("web")
+            web_dist=self.wait_for_dist("web")
 
         cwd=f'{repo_dir}/cmd/{self.service}'
 
@@ -153,7 +175,7 @@ class CtrlGo(Ctrl):
         args.extend(go_files)
         args.append('--localhost-only')
         if self.web:
-            args.append(f'--webpack-debug=http://localhost:{web_port}')
+            args.append(f'--dist={web_dist}')
 
         args.extend(self._get_port_args())
 

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
-	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/gotty/server/ginhandler"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/gin-contrib/static"
@@ -66,18 +65,18 @@ func NewServices(r *gin.Engine) Services {
 		svcs.distFolder = distFolder
 		svcs.startBrowser()
 	})
-	svcs.Subscribe("mypi-debug/web/port", func(topic string, value any) {
-		svcs.uiPort = value.(int)
-	})
-	svcs.Subscribe("mypi-debug/web/state", func(topic string, value any) {
-		if value == "running" {
-			svcs.proxyHandler = ginutil.SingleHostReverseProxy(
-				fmt.Sprintf("http://localhost:%d", svcs.uiPort))
-			svcs.startBrowser()
-		} else {
-			svcs.proxyHandler = nil
-		}
-	})
+	// svcs.Subscribe("mypi-debug/web/port", func(topic string, value any) {
+	// 	svcs.uiPort = value.(int)
+	// })
+	// svcs.Subscribe("mypi-debug/web/state", func(topic string, value any) {
+	// 	if value == "running" {
+	// 		svcs.proxyHandler = ginutil.SingleHostReverseProxy(
+	// 			fmt.Sprintf("http://localhost:%d", svcs.uiPort))
+	// 		svcs.startBrowser()
+	// 	} else {
+	// 		svcs.proxyHandler = nil
+	// 	}
+	// })
 
 	go func() {
 		svcs.load()
