@@ -1,43 +1,35 @@
 package main
 
 import (
+	"flag"
+	"os"
+	"path"
+
+	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/debug"
-	"github.com/dueckminor/mypi-tools/go/ssh"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 )
 
-func ConnectToMypiDebug() (err error) {
-	client := &ssh.Client{}
-	err = client.AddPrivateKeyFile("id_rsa")
-	if err != nil {
-		return err
-	}
-	err = client.Dial("pi", "mypi:2022")
-	if err != nil {
-		return err
-	}
-
-	dial := &ssh.DialNet{
-		Network: "tcp",
-		Address: "127.0.0.1:8443",
-	}
-
-	go func() {
-		defer client.Close()
-		client.RemoteForwardDial("0.0.0.0:8443", dial)
-	}()
-
-	return nil
-}
-
 func main() {
-	err := ConnectToMypiDebug()
+	flag.Parse()
+	config.InitApp(path.Join(os.Getenv("HOME"), ".mypi", "debug"))
+	cfg, err := config.GetOrCreateConfigFile("mypi-debug.yml")
 	if err != nil {
 		panic(err)
 	}
 
-	serviceAuth := debug.NewMypiService("mypi-auth")
-	serviceAuth.StartGo()
+	r := gin.Default()
 
-	stop := make(chan bool)
-	<-stop
+	err = ginutil.ConfigureSessionCookies(r, cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	r.SetTrustedProxies(nil)
+	r.Use(cors.Default())
+
+	services := debug.NewServices(r)
+	services.Run()
 }

@@ -1,7 +1,6 @@
 mypi.yml
 vendor
 main
-debug
 build/
 gen/
 tmp
@@ -11,3 +10,4 @@ __debug_bin
 .mypi
 coverage.txt
 __pycache__
+.venv

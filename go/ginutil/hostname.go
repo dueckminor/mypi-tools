@@ -15,7 +15,11 @@ func GetHostname(c *gin.Context) (hostname string) {
 func GetScheme(c *gin.Context) (scheme string) {
 	scheme = c.Request.Header.Get("X-Forwarded-Proto")
 	if len(scheme) == 0 {
-		scheme = "https"
+		if c.Request.TLS != nil {
+			scheme = "https"
+		} else {
+			scheme = "http"
+		}
 	}
 	return scheme
 }

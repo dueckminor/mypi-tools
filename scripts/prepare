@@ -1,9 +1,25 @@
 #!/usr/bin/env bash
 
-set -e
+set -eou pipefail
 
 DIR_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
 
 cd "${DIR_ROOT}"
 
+if [[ ! -d .venv ]]; then
+    python3 -m venv .venv
+fi
+
+# shellcheck source=/dev/null
+source .venv/bin/activate
+
+python3 -m pip install --upgrade pip
 python3 -m pip install -r ./requirements.txt
+
+SITE_PACKAGES="$(python -c 'import site; print(site.getsitepackages()[0])')"
+
+pushd "${SITE_PACKAGES}"
+if [[ ! -e mypi ]]; then
+    ln -s "${DIR_ROOT}/scripts/lib/mypi" .
+fi
+popd

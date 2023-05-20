@@ -1,0 +1,6 @@
+---
+service:
+  dependencies:
+    - mypi-debug
+  components:
+    - name: go

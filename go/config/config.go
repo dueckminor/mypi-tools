@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/dueckminor/mypi-tools/go/util"
 	yaml "gopkg.in/yaml.v3"
 )
 
@@ -75,7 +76,7 @@ type Config interface {
 	GetBool(path ...interface{}) bool
 	GetArray(path ...interface{}) []Config
 	GetMap(path ...interface{}) (ConfigMap, error)
-	CreateMap(path ...interface{}) (ConfigMap, error)
+	MakeMap(path ...interface{}) (ConfigMap, error)
 	AddArrayElement(obj interface{}, path ...interface{}) error
 	SetString(name, value string) error
 	Write() error
@@ -184,7 +185,7 @@ func (c *configImpl) SetString(name, value string) error {
 	return errors.New("wrong type")
 }
 
-func (c *configImpl) CreateMap(path ...interface{}) (result ConfigMap, err error) {
+func (c *configImpl) MakeMap(path ...interface{}) (result ConfigMap, err error) {
 	if len(path) == 0 {
 		if c.cfg != nil {
 			if nil == toMap(c.cfg) {
@@ -203,6 +204,14 @@ func (c *configImpl) CreateMap(path ...interface{}) (result ConfigMap, err error
 		m := toMap(c.cfg)
 		if m != nil {
 			if len(path) == 1 {
+				if e, ok := m[v]; ok {
+					m = toMap(e)
+					if m != nil {
+						return &configMapImpl{configImpl: configImpl{cfg: m}}, nil
+					} else {
+						return nil, errors.New("wrong type")
+					}
+				}
 				m[v] = make(map[string]interface{})
 				return &configMapImpl{configImpl: configImpl{cfg: m[v]}}, nil
 			} else {
@@ -294,6 +303,14 @@ func ReadConfigFile(filename string) (Config, error) {
 	return readConfigFile(GetFilename(filename))
 }
 
+func GetOrCreateConfigFile(filename string) (Config, error) {
+	filename = GetFilename(filename)
+	if util.FileExists(filename) {
+		return readConfigFile(filename)
+	}
+	return New(filename, map[string]interface{}{}), nil
+}
+
 func GetConfig() (c Config) {
 	if nil == mypiConfig {
 		findRoot()
@@ -336,7 +353,7 @@ func InitApp(root string) (err error) {
 
 	mypiConfig = &configImpl{}
 
-	cfg, err := mypiConfig.CreateMap("config")
+	cfg, err := mypiConfig.MakeMap("config")
 	if err != nil {
 		return err
 	}

@@ -1,16 +1,31 @@
 {
     "cSpell.words": [
-        "MYPI",
-        "Macos",
-        "bcrypt",
-        "devtool",
-        "dueckminor",
-        "fdisk",
-        "gonic",
-        "mqtt",
-        "mypi",
-        "oauth",
-        "uuid",
-        "woff"
-    ]
+      "axios",
+      "bcrypt",
+      "devtool",
+      "dueckminor",
+      "fdisk",
+      "ginutil",
+      "gomega",
+      "gonic",
+      "Macos",
+      "mqtt",
+      "mypi",
+      "MYPI",
+      "oauth",
+      "onsi",
+      "pyjson",
+      "restapi",
+      "Softlink",
+      "svcs",
+      "tput",
+      "uuid",
+      "woff"
+    ],
+    "python.autoComplete.extraPaths": [
+        "${workspaceFolder}/scripts/lib"
+      ],
+      "python.analysis.extraPaths": [
+        "${workspaceFolder}/scripts/lib"
+      ],
 }

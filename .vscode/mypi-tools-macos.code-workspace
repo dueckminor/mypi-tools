@@ -1,0 +1,39 @@
+{
+	"folders": [
+		{
+			"name": "mypi-tools",
+			"path": ".."
+		},
+		{
+			"name": "/opt/mypi",
+			"path": "../.mypi/debug"
+		}
+	],
+	"settings": {
+		"cSpell.words": [
+			"MYPI",
+			"bcrypt",
+			"devtool",
+			"dueckminor",
+			"gonic",
+			"mqtt",
+			"mypi",
+			"oauth",
+			"woff"
+		],
+		"git.ignoreLimitWarning": true
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Launch - debug",
+				"type": "go",
+				"request": "launch",
+				"mode": "auto",
+				"program": "${workspaceFolder:mypi-tools}/cmd/mypi-debug/mypi-debug.go",
+			  },
+		],
+		"compounds": []
+	}
+}

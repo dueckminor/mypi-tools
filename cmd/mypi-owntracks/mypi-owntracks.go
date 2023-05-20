@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 
 	"github.com/dueckminor/mypi-tools/go/config"
@@ -19,10 +18,9 @@ import (
 
 var (
 	// authURI   string
-	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
-	port         = flag.Int("port", 8080, "The port")
-	execDebug    = flag.String("exec", "", "start process")
-	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	dist     = flag.String("dist", "./dist", "The debug URI")
+	port     = flag.Int("port", 8080, "The port")
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
 	// targetURI string
 
 	hostname string
@@ -88,14 +86,6 @@ func handleQR(c *gin.Context) {
 func main() {
 
 	r := gin.Default()
-
-	if len(*execDebug) > 0 {
-		cmd := exec.Command(*execDebug)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Start()
-		defer cmd.Wait()
-	}
 
 	tlsconfig := tlsconfig.NewTLSConfig()
 	opts := mqtt.NewClientOptions()

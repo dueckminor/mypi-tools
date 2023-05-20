@@ -6,16 +6,13 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
-	"os/exec"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
-	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/rand"
+	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/users"
 
 	"github.com/golang-jwt/jwt"
@@ -23,20 +20,13 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
-	"github.com/gin-contrib/static"
 
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	// authURI   string
-	webpackDebug = flag.String("webpack-debug", "", "The debug URI")
-	port         = flag.Int("port", 8080, "The port")
-	execDebug    = flag.String("exec", "", "start process")
-	mypiRoot     = flag.String("mypi-root", "", "The root of the mypi filesystem")
-	// targetURI string
-
-	userCfg *users.UserCfg
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
+	userCfg  *users.UserCfg
 )
 
 func init() {
@@ -239,14 +229,6 @@ func handleStatus(c *gin.Context) {
 func main() {
 	r := gin.Default()
 
-	if len(*execDebug) > 0 {
-		cmd := exec.Command(*execDebug)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Start()
-		defer cmd.Wait()
-	}
-
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("MYPI_AUTH_SESSION", store))
 
@@ -258,11 +240,5 @@ func main() {
 	r.GET("/oauth/authorize", handleOauthAuthorize)
 	r.POST("/oauth/token", handleOauthToken)
 
-	if len(*webpackDebug) > 0 {
-		r.Use(ginutil.SingleHostReverseProxy(*webpackDebug))
-	} else {
-		r.Use(static.ServeRoot("/", "./dist"))
-	}
-
-	panic(r.Run(":" + strconv.Itoa(*port)))
+	restapi.Run(r)
 }

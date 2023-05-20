@@ -1,0 +1,11 @@
+---
+service:
+  dependencies:
+    - mypi-router
+  components:
+    - name: web
+    - name: go
+  routes:
+    - hostname: auth
+      component: go
+      mode: http

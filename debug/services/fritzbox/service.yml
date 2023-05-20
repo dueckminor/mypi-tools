@@ -1,0 +1,11 @@
+---
+service:
+  dependencies:
+    - mypi-router
+  routes:
+    - hostname: fritzbox
+      target: fritz.box
+      mode: https
+      options:
+      - auth
+      - insecure

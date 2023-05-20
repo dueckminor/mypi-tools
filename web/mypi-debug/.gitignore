@@ -1,0 +1,22 @@
+.DS_Store
+
+# Ignore files from node.js
+node_modules/
+/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+
+# Ignore files from golang
+main
+debug
+
+.mypi
+
+# Editor directories and files
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

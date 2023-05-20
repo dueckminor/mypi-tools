@@ -1,1 +1,4 @@
+pyjson5
 python_path
+pyyaml
+requests

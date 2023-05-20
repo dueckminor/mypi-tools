@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+
+import os
+from typing import List
+
+from mypi.debug.api import API
+from mypi.debug.ctrl import CtrlGo,Ctrl
+from mypi.debug.config import Config
+
+
+class CtrlRouter(CtrlGo):
+    def __init__(self):
+        CtrlGo.__init__(self,"mypi-router",web=False)
+
+    def _get_port_args(self) -> List[str]:
+        return [
+            '--https-port',str(self.get_port()),
+            f'--mypi-root={Config().mypi_root}'
+        ]
+
+ctrl = CtrlRouter()
+
+if __name__ == '__main__':
+    ctrl_config = Ctrl.load('mypi-router','config')
+    ctrl_config.create_config()
+    ctrl.run()

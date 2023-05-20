@@ -1,0 +1,7 @@
+---
+service:
+  dependencies: []
+  components:
+    - name: ssh
+      builtin: true
+    - name: web
