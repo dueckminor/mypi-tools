@@ -8,7 +8,7 @@ require (
 	docker.io/go-docker v1.0.0
 	github.com/bhendo/go-powershell v0.0.0-20190719160123-219e7fb4e41e
 	github.com/creack/pty v1.1.18
-	github.com/docker/docker v23.0.6+incompatible
+	github.com/docker/docker v24.0.2+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.2
 	github.com/fatih/color v1.15.0
 	github.com/fatih/structs v1.1.0
