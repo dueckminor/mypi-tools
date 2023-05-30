@@ -49,6 +49,7 @@ export default {
         },
         body: JSON.stringify(params)
       }).then((response) => {
+          console.log('login succeeded')
           if (response.status !== 200) {
             //noop
           } else {
@@ -70,9 +71,10 @@ export default {
     }
   },
   beforeMount() {
-    this.redirectURI = this.$route.query.redirect_uri
-    this.clientId = this.$route.query.client_id
-    this.responseType = this.$route.query.response_type
+    const url = new URL(window.location.href)
+    this.redirectURI = url.searchParams.get('redirect_uri')
+    this.clientId = url.searchParams.get('params.client_id')
+    this.responseType = url.searchParams.get('response_type')
     if (this.redirectURI != undefined && this.redirectURI !== "") {
       this.$router.replace("/")
       window.redirectURI = this.redirectURI
