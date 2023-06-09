@@ -58,7 +58,7 @@ class CtrlRouterConfig(Ctrl):
         
         cfg_local = {
             'config': {
-                'webcams': [] #cfg['config'].get('webcams')
+                'webcams': cfg['config'].get('webcams')
             }
         }
         Config().write(filename="config/mypi.yml",content=cfg_local)

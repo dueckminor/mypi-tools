@@ -73,39 +73,30 @@ func main() {
 
 	iCam := 0
 
-	for _, url := range flag.Args() {
-
+	addCam := func(url string) {
 		dir := path.Join(tmpDir, fmt.Sprintf("%d", iCam))
 		path := fmt.Sprintf("/cams/%d/", iCam)
+		filter := fmt.Sprintf("%s/:file", path)
 
 		os.MkdirAll(dir, os.ModePerm)
 
 		go runFFMPEG(dir, url)
 
-		r.GET("/cams/", func(c *gin.Context) {
+		r.GET(filter, func(c *gin.Context) {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+			c.Header("Pragma", "no-cache")
 			c.Header("Expires", "0")
 		}, static.ServeRoot(path, dir))
 
-		r.Use(static.ServeRoot(path, "./web"))
 		iCam++
 	}
 
+	for _, url := range flag.Args() {
+		addCam(url)
+	}
+
 	for _, e := range config.GetConfig().GetArray("config", "webcams") {
-		url := e.GetString("url")
-
-		dir := path.Join(tmpDir, fmt.Sprintf("%d", iCam))
-		path := fmt.Sprintf("/cams/%d/", iCam)
-
-		os.MkdirAll(dir, os.ModePerm)
-
-		go runFFMPEG(dir, url)
-
-		r.GET("/cams/", func(c *gin.Context) {
-			c.Header("Expires", "0")
-		}, static.ServeRoot(path, dir))
-
-		r.Use(static.ServeRoot(path, "./web"))
-		iCam++
+		addCam(e.GetString("url"))
 	}
 
 	restapi.Run(r)
