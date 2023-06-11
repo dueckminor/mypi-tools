@@ -11,6 +11,7 @@ import (
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/rand"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/users"
@@ -19,7 +20,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/cookie"
 
 	"github.com/gin-gonic/gin"
 )
@@ -229,8 +229,15 @@ func handleStatus(c *gin.Context) {
 func main() {
 	r := gin.Default()
 
-	store := cookie.NewStore([]byte("secret"))
-	r.Use(sessions.Sessions("MYPI_AUTH_SESSION", store))
+	cfg, err := config.GetOrCreateConfigFile("mypi-auth.yml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = ginutil.ConfigureSessionCookies(r, cfg, "MYPI_AUTH_SESSION")
+	if err != nil {
+		panic(err)
+	}
 
 	r.Use(cors.Default())
 

@@ -24,6 +24,7 @@ type AuthServer struct {
 
 func (a *AuthServer) Register(r *gin.Engine) {
 
+	panic("TODO: use random secrets")
 	store := cookie.NewStore([]byte("222222"), nil, []byte("333333"))
 	r.Use(cors.Default())
 

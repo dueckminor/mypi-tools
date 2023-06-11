@@ -22,7 +22,7 @@ func main() {
 
 	r := gin.Default()
 
-	err = ginutil.ConfigureSessionCookies(r, cfg)
+	err = ginutil.ConfigureSessionCookies(r, cfg, "mypi-debug-session")
 	if err != nil {
 		panic(err)
 	}

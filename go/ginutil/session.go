@@ -46,7 +46,7 @@ func readKeyPair(cfg config.Config) (auth []byte, enc []byte) {
 	return readKey(cfg, "auth"), readKey(cfg, "enc")
 }
 
-func ConfigureSessionCookies(r *gin.Engine, cfg config.Config) (err error) {
+func ConfigureSessionCookies(r *gin.Engine, cfg config.Config, session string) (err error) {
 	cfgSession, err := cfg.MakeMap("session")
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func ConfigureSessionCookies(r *gin.Engine, cfg config.Config) (err error) {
 	}
 
 	store := cookie.NewStore(auth, enc)
-	r.Use(sessions.Sessions("mypi-debug-session", store))
+	r.Use(sessions.Sessions(session, store))
 
 	return nil
 }
