@@ -21,6 +21,9 @@ import (
 	"github.com/shirou/gopsutil/mem"
 
 	_ "github.com/dueckminor/mypi-tools/go/cmd/cmdsetup"
+
+	_ "github.com/dueckminor/mypi-tools/go/restapi/http"
+	"github.com/dueckminor/mypi-tools/go/restapi/https"
 )
 
 func flashLED() {
@@ -133,5 +136,6 @@ func main() {
 	r.GET("/api/hosts/:host/actions/:action/webtty", webhandler.MakeForwardToHost(webhandler.GetActionWebTTY))
 	r.POST("/api/hosts/:host/actions/:action", webhandler.MakeForwardToHost(webhandler.GetAction))
 
-	restapi.RunBoth(r, "priv.pem", "cert.pem")
+	https.SetKeyFiles("priv.pem", "cert.pem")
+	restapi.Run(r)
 }

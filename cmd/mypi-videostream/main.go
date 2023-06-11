@@ -11,6 +11,9 @@ import (
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+
+	// provide only the http rest api
+	_ "github.com/dueckminor/mypi-tools/go/restapi/http"
 )
 
 var (

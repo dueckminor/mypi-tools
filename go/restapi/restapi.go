@@ -3,8 +3,8 @@ package restapi
 import (
 	"flag"
 	"path"
-	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/gin-contrib/static"
@@ -14,13 +14,14 @@ import (
 var (
 	// authURI   string
 	_dist         = flag.String("dist", "./dist", "The debug URI")
-	port          = flag.Int("port", 8080, "The port")
-	tlsPort       = flag.Int("tlsport", 443, "The TLS port")
 	localhostOnly = flag.Bool("localhost-only", false, "Listen on localhost only")
 	listenHost    = ""
 )
 
 func prepare(r *gin.Engine) {
+	if len(runners) == 0 {
+		panic("please import at least one of restapi.http or restapi.https")
+	}
 	if *localhostOnly {
 		LocalhostOnly()
 	}
@@ -42,22 +43,35 @@ func LocalhostOnly() {
 	listenHost = "localhost"
 }
 
+type Runner interface {
+	Run(r *gin.Engine) error
+}
+
+var runners = make([]Runner, 0)
+
+func RegisterRunner(runner Runner) {
+	runners = append(runners, runner)
+}
+
+func GetListenHost() string {
+	return listenHost
+}
+
 func Run(r *gin.Engine) {
 	prepare(r)
-	panic(r.Run(listenHost + ":" + strconv.Itoa(*port)))
-}
 
-func RunTLS(r *gin.Engine, keyFile, certFile string) {
-	prepare(r)
-	panic(r.RunTLS(listenHost+":"+strconv.Itoa(*tlsPort), certFile, keyFile))
-}
+	wg := sync.WaitGroup{}
+	wg.Add(len(runners))
 
-func RunBoth(r *gin.Engine, keyFile, certFile string) {
-	prepare(r)
+	for _, runner := range runners {
+		go func(runner Runner) {
+			err := runner.Run(r)
+			if err != nil {
+				panic(err)
+			}
+			wg.Done()
+		}(runner)
+	}
 
-	go func() {
-		r.RunTLS(listenHost+":"+strconv.Itoa(*tlsPort), certFile, keyFile)
-	}()
-
-	panic(r.Run(listenHost + ":" + strconv.Itoa(*port)))
+	wg.Wait()
 }

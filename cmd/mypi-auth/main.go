@@ -3,15 +3,18 @@ package main
 import (
 	"encoding/base64"
 	"flag"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/ginutil"
+	"github.com/dueckminor/mypi-tools/go/pki"
 	"github.com/dueckminor/mypi-tools/go/rand"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/users"
@@ -22,6 +25,9 @@ import (
 	"github.com/gin-contrib/sessions"
 
 	"github.com/gin-gonic/gin"
+
+	// provide only the http rest api
+	_ "github.com/dueckminor/mypi-tools/go/restapi/http"
 )
 
 var (
@@ -226,7 +232,64 @@ func handleStatus(c *gin.Context) {
 	})
 }
 
+func GenerateRsaKeyPair(privFilename, pubFilename string) error {
+	priv, pub := pki.GenerateRsaKeyPair()
+	privPEM := pki.RsaPrivateKeyToPem(priv)
+	pubPEM := pki.RsaPublicKeyToPem(pub)
+
+	privFilename = config.GetFilename(privFilename)
+	pubFilename = config.GetFilename(pubFilename)
+
+	print(path.Dir(privFilename))
+	os.MkdirAll(path.Dir(privFilename), 0755)
+	os.MkdirAll(path.Dir(pubFilename), 0755)
+
+	err := ioutil.WriteFile(privFilename, privPEM, 0600)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(pubFilename, pubPEM, 0644)
+}
+
 func main() {
+	if len(flag.Args()) > 0 {
+		if flag.Args()[0] == "init" {
+			err := GenerateRsaKeyPair("etc/auth/server/server_priv.pem", "etc/auth/server/server_pub.pem")
+			if err != nil {
+				panic(err)
+			}
+			os.Exit(0)
+		}
+		if flag.Args()[0] == "create-client" {
+			if len(flag.Args()) != 2 {
+				panic("create-client needs exactly one arg")
+			}
+			os.MkdirAll(config.GetFilename("etc/auth/clients"), 0755)
+
+			clientID := flag.Args()[1]
+			pub, err := config.FileToString("etc/auth/server/server_pub.pem")
+			if err != nil {
+				panic(err)
+			}
+			clientConfig, err := config.GetOrCreateConfigFile(path.Join("etc/auth/clients", clientID+".yml"))
+			clientConfig.SetString("server_key", pub)
+			clientConfig.SetString("client_id", clientID)
+			if len(clientConfig.GetString("client_secret")) == 0 {
+				clientSecret, err := rand.GetString(32)
+				if err != nil {
+					panic(err)
+				}
+				clientConfig.SetString("client_secret", clientSecret)
+			}
+
+			err = clientConfig.Write()
+			if err != nil {
+				panic(err)
+			}
+			os.Exit(0)
+		}
+	}
+
 	r := gin.Default()
 
 	cfg, err := config.GetOrCreateConfigFile("mypi-auth.yml")

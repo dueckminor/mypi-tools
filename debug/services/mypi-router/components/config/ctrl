@@ -28,11 +28,14 @@ class CtrlRouterConfig(Ctrl):
             content = api.download_file(filename)
             Config().write(filename=filename,content=content)
 
+        client_config = Config().read_yml('etc/auth/clients/mypi-router.yml')
+
         config={}
         config['auth']={
             'client_id': 'mypi-router',
-            'client_secret': '...',
-            'server_key': '...'
+            'client_secret': client_config.get('client_secret'),
+            'server_key': client_config.get('server_key'),
+            'uri': f'https://auth.{domain}'
         }
         config['certs']=[
             {
@@ -49,7 +52,8 @@ class CtrlRouterConfig(Ctrl):
             {
                 'name': f'cam.{domain}',
                 'target': f'localhost:{api.get_component_info("mypi-videostream","go")["port"]}',
-                'mode': 'http'
+                'mode': 'http',
+                'options': ['auth']
             }
         ]
 

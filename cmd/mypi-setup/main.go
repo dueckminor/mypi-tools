@@ -15,6 +15,9 @@ import (
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	_ "github.com/dueckminor/mypi-tools/go/cmd/cmdmakesd"
 	_ "github.com/dueckminor/mypi-tools/go/cmd/cmdsetup"
+
+	_ "github.com/dueckminor/mypi-tools/go/restapi/http"
+	"github.com/dueckminor/mypi-tools/go/restapi/https"
 )
 
 func main() {
@@ -63,5 +66,6 @@ func main() {
 	keyFile := path.Join(os.Getenv("HOME"), ".mypi", "pki", "localhost_tls_priv.pem")
 	certFile := path.Join(os.Getenv("HOME"), ".mypi", "pki", "localhost_tls_cert.pem")
 
-	restapi.RunBoth(r, keyFile, certFile)
+	https.SetKeyFiles(keyFile, certFile)
+	restapi.Run(r)
 }

@@ -23,3 +23,8 @@ class Config:
                 yaml.dump(data=content,stream=stream)
             else:
                 stream.write(content)
+
+    def read_yml(self, filename:str) -> dict:
+        filename = self.filename(filename)
+        with open(filename,'r') as stream:
+            return yaml.safe_load(stream)

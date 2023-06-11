@@ -118,6 +118,19 @@ func GenerateRsaKeyPair() (*rsa.PrivateKey, *rsa.PublicKey) {
 	return privkey, &privkey.PublicKey
 }
 
+func RsaPrivateKeyToPem(priv *rsa.PrivateKey) []byte {
+	binary := x509.MarshalPKCS1PrivateKey(priv)
+	return pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: binary})
+}
+
+func RsaPublicKeyToPem(pub *rsa.PublicKey) []byte {
+	binary, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		panic(err)
+	}
+	return pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: binary})
+}
+
 func ParseRsaPrivateKeyFromPem(privPEM []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(privPEM)
 	if block == nil {
