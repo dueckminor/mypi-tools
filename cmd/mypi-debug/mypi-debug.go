@@ -15,7 +15,7 @@ import (
 func main() {
 	flag.Parse()
 	config.InitApp(path.Join(os.Getenv("HOME"), ".mypi", "debug"))
-	cfg, err := config.GetOrCreateConfigFile("mypi-debug.yml")
+	cfg, err := config.GetOrCreateConfigFile("etc/mypi-debug/mypi-debug.yml")
 	if err != nil {
 		panic(err)
 	}

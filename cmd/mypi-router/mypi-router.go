@@ -419,7 +419,7 @@ func (gateway *GatewayConfig) startWatcher() (err error) {
 func (gateway *GatewayConfig) loadConfig() {
 	if len(gateway.configFile) > 0 {
 		var newConfig *GatewayConfig
-		config.ReadYAML(gateway.configFile, &newConfig)
+		config.ReadYAML(&newConfig, gateway.configFile)
 		if newConfig != nil {
 			gateway.Certs = newConfig.Certs
 			gateway.Hosts = newConfig.Hosts
@@ -578,7 +578,7 @@ func (c *GatewayConfig) GetAuthClient() *auth.AuthClient {
 	ServerKey := c.Auth.ServerKey
 
 	if len(ServerKey) == 0 || len(ac.ClientSecret) == 0 {
-		clientConfig, err := config.ReadConfigFile(path.Join("etc/auth/clients", ac.ClientID+".yml"))
+		clientConfig, err := config.ReadConfigFile("etc/mypi-auth/clients", ac.ClientID+".yml")
 		if err != nil {
 			panic(err)
 		}

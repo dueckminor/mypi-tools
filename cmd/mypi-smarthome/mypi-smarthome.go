@@ -128,7 +128,7 @@ func main() {
 
 	var cfg Config
 	if len(flag.Args()) == 1 {
-		config.ReadYAML(flag.Arg(0), &cfg)
+		config.ReadYAML(&cfg, flag.Arg(0))
 	}
 
 	tlsconfig := tlsconfig.NewTLSConfig()

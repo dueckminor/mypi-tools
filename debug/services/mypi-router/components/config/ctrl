@@ -28,7 +28,7 @@ class CtrlRouterConfig(Ctrl):
             content = api.download_file(filename)
             Config().write(filename=filename,content=content)
 
-        client_config = Config().read_yml('etc/auth/clients/mypi-router.yml')
+        client_config = Config().read_yml('etc/mypi-auth/clients/mypi-router.yml')
 
         config={}
         config['auth']={

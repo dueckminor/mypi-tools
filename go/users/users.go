@@ -69,12 +69,12 @@ func (cfg *UserCfg) UpdateUser(user *User) error {
 
 func ReadUserCfg() (result *UserCfg, err error) {
 	result = &UserCfg{}
-	result.Config, err = config.ReadConfigFile("etc/users.yml")
+	result.Config, err = config.ReadConfigFile("etc/mypi-auth/users.yml")
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
-		result.Config = config.New("etc/users.yml", make([]interface{}, 0))
+		result.Config = config.New("etc/mypi-auth/users.yml", make([]interface{}, 0))
 	}
 	return result, nil
 }

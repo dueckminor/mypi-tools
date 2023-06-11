@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"path"
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/config"
@@ -152,7 +151,7 @@ func (a *AuthServer) basicAuth(c *gin.Context) string {
 		return ""
 	}
 
-	clientConfig, err := config.ReadConfigFile(path.Join("etc/auth/clients", clientID+".yml"))
+	clientConfig, err := config.ReadConfigFile("etc/mypi-auth/clients", clientID+".yml")
 	if err != nil {
 		return ""
 	}
@@ -194,7 +193,7 @@ func (a *AuthServer) handleOauthToken(c *gin.Context) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, ClaimsWithScope{})
-	key, _ := config.ReadRSAPrivateKey("etc/auth/server/server_priv.pem")
+	key, _ := config.ReadRSAPrivateKey("etc/mypi-auth/server/server_priv.pem")
 	jwt, _ := token.SignedString(key)
 
 	response := OauthTokenResponse{

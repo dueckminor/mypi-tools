@@ -6,14 +6,14 @@ DIR_MYPI_AUTH="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)"
 
 DIR_MYPI_ROOT="${DIR_MYPI_AUTH}/.mypi"
 
-DIR_AUTH_SERVER="${DIR_MYPI_ROOT}/etc/auth/server"
-DIR_AUTH_CLIENTS="${DIR_MYPI_ROOT}/etc/auth/clients"
+DIR_AUTH_SERVER="${DIR_MYPI_ROOT}/etc/mypi-auth/server"
+DIR_AUTH_CLIENTS="${DIR_MYPI_ROOT}/etc/mypi-auth/clients"
 
 mkdir -p "${DIR_AUTH_CLIENTS}"
 mkdir -p "${DIR_AUTH_SERVER}"
 
-if [[ ! -f "${DIR_MYPI_ROOT}/etc/users.yml" ]]; then
-    cat > "${DIR_MYPI_ROOT}/etc/users.yml" <<__EOF__
+if [[ ! -f "${DIR_MYPI_ROOT}/etc/mypi-auth/users.yml" ]]; then
+    cat > "${DIR_MYPI_ROOT}/etc/mypi-auth/users.yml" <<__EOF__
 - name: admin
   password: \$2a\$10\$MsH/XNruBjWZ0irP06JiWuWvHPyiHxfFaymQZtaSGfFtMHibE/iKi
 __EOF__

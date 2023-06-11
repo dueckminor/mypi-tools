@@ -33,6 +33,8 @@ import (
 var (
 	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
 	userCfg  *users.UserCfg
+
+	dirMypiAuthClients = "etc/mypi-auth/clients"
 )
 
 func init() {
@@ -160,7 +162,7 @@ func basicAuth(c *gin.Context) string {
 		return ""
 	}
 
-	clientConfig, err := config.ReadConfigFile(path.Join("etc/auth/clients", clientID+".yml"))
+	clientConfig, err := config.ReadConfigFile(dirMypiAuthClients, clientID+".yml")
 	if err != nil {
 		return ""
 	}
@@ -202,7 +204,7 @@ func handleOauthToken(c *gin.Context) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, ClaimsWithScope{})
-	key, _ := config.ReadRSAPrivateKey("etc/auth/server/server_priv.pem")
+	key, _ := config.ReadRSAPrivateKey("etc/mypi-auth/server/server_priv.pem")
 	jwt, _ := token.SignedString(key)
 
 	response := OauthTokenResponse{
@@ -254,7 +256,7 @@ func GenerateRsaKeyPair(privFilename, pubFilename string) error {
 func main() {
 	if len(flag.Args()) > 0 {
 		if flag.Args()[0] == "init" {
-			err := GenerateRsaKeyPair("etc/auth/server/server_priv.pem", "etc/auth/server/server_pub.pem")
+			err := GenerateRsaKeyPair("etc/mypi-auth/server/server_priv.pem", "etc/mypi-auth/server/server_pub.pem")
 			if err != nil {
 				panic(err)
 			}
@@ -264,14 +266,14 @@ func main() {
 			if len(flag.Args()) != 2 {
 				panic("create-client needs exactly one arg")
 			}
-			os.MkdirAll(config.GetFilename("etc/auth/clients"), 0755)
+			os.MkdirAll(config.GetFilename(dirMypiAuthClients), 0755)
 
 			clientID := flag.Args()[1]
-			pub, err := config.FileToString("etc/auth/server/server_pub.pem")
+			pub, err := config.FileToString("etc/mypi-auth/server/server_pub.pem")
 			if err != nil {
 				panic(err)
 			}
-			clientConfig, err := config.GetOrCreateConfigFile(path.Join("etc/auth/clients", clientID+".yml"))
+			clientConfig, err := config.GetOrCreateConfigFile(dirMypiAuthClients, clientID+".yml")
 			clientConfig.SetString("server_key", pub)
 			clientConfig.SetString("client_id", clientID)
 			if len(clientConfig.GetString("client_secret")) == 0 {
@@ -292,7 +294,7 @@ func main() {
 
 	r := gin.Default()
 
-	cfg, err := config.GetOrCreateConfigFile("mypi-auth.yml")
+	cfg, err := config.GetOrCreateConfigFile("etc/mypi-auth/mypi-auth.yml")
 	if err != nil {
 		panic(err)
 	}

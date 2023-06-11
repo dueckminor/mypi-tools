@@ -184,10 +184,7 @@ class CtrlGo(Ctrl):
     def run(self):
         self.set_state("starting")
 
-        go_file = self._get_go_file()
-        args=['go','run',]
-        args.append(go_file)
-        args.extend(self._get_args())
+        args=self.get_go_run_cmdline()
 
         w = WaitForRawPort(self,self.get_port())
         proc = subprocess.run(args=args,cwd=self.cwd)
@@ -195,6 +192,13 @@ class CtrlGo(Ctrl):
         print(f'RC: {proc.returncode}')
 
         self.set_state("stopped")
+
+    def get_go_run_cmdline(self) -> List[str]:
+        go_file = self._get_go_file()
+        args=['go','run',]
+        args.append(go_file)
+        args.extend(self._get_args())
+        return args
 
     def _get_port_args(self) -> List[str]:
         return ["--port",str(self.get_port())]

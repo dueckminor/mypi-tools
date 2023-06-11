@@ -299,12 +299,12 @@ func readConfigFile(filename string) (Config, error) {
 	return r, nil
 }
 
-func ReadConfigFile(filename string) (Config, error) {
-	return readConfigFile(GetFilename(filename))
+func ReadConfigFile(filenameParts ...string) (Config, error) {
+	return readConfigFile(GetFilename(filenameParts...))
 }
 
-func GetOrCreateConfigFile(filename string) (Config, error) {
-	filename = GetFilename(filename)
+func GetOrCreateConfigFile(filenameParts ...string) (Config, error) {
+	filename := GetFilename(filenameParts...)
 	if util.FileExists(filename) {
 		return readConfigFile(filename)
 	}
