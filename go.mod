@@ -22,7 +22,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/onsi/gomega v1.27.10
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.13.5
+	github.com/pkg/sftp v1.13.6
 	github.com/pquerna/otp v1.4.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
@@ -78,7 +78,7 @@ require (
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/yusufpapurcu/wmi v1.2.2 // indirect
 	golang.org/x/arch v0.3.0 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
+	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 	golang.org/x/term v0.11.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
