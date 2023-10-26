@@ -184,6 +184,10 @@ func NewHostImplReverseProxy(hostConfig *HostConfig, uri string, ac *auth.AuthCl
 	h.HostConfig = *hostConfig
 	h.r = gin.Default()
 
+	if hostConfig.hasOption("external-hostname") {
+		h.Options = []string{"external-hostname"}
+	}
+
 	if ac != nil {
 		h.r.Use(sessions.Sessions("MYPI_ROUTER_SESSION", store))
 		ac.RegisterHandler(h.r)

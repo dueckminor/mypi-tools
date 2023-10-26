@@ -23,4 +23,4 @@ ctrl = CtrlRouter()
 if __name__ == '__main__':
     ctrl_config = Ctrl.load('mypi-router','config')
     ctrl_config.create_config()
-    ctrl.run()
+    ctrl.main()

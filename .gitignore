@@ -4,10 +4,15 @@ main
 build/
 gen/
 tmp
-__debug_bin
 .DS_Store
 ._.*
 .mypi
 coverage.txt
 __pycache__
 .venv
+
+# launch.json will be created by ./scripts/debug
+.vscode/launch.json
+
+# golang debug binaries
+__debug_bin*

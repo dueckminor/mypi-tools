@@ -54,6 +54,12 @@ class CtrlRouterConfig(Ctrl):
                 'target': f'localhost:{api.get_component_info("mypi-videostream","go")["port"]}',
                 'mode': 'http',
                 'options': ['auth']
+            },
+            {
+                'name': f'esphome.{domain}',
+                'target': f'mypi.fritz.box:6052',
+                'mode': 'http',
+                'options': ['auth']
             }
         ]
 

@@ -1,0 +1,10 @@
+---
+service:
+  dependencies:
+    - mypi-router
+  routes:
+    - hostname: esphome
+      target: mypi.fritz.box:6052
+      mode: http
+      options:
+      - auth
