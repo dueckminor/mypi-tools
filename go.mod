@@ -7,7 +7,7 @@ replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.5.1
 require (
 	docker.io/go-docker v1.0.0
 	github.com/bhendo/go-powershell v0.0.0-20190719160123-219e7fb4e41e
-	github.com/creack/pty v1.1.18
+	github.com/creack/pty v1.1.21
 	github.com/docker/docker v24.0.7+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/fatih/color v1.15.0
