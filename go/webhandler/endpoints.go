@@ -92,6 +92,7 @@ func (wh *WebHandler) postContainersStop(c *gin.Context) {
 	err := wh.dockerCLI.ContainerStop(c, id, container.StopOptions{})
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err) // nolint:errcheck
+		return
 	}
 }
 
