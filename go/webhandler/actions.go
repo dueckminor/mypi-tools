@@ -18,6 +18,7 @@ func GetActions(c *gin.Context) {
 	actions, err := cmd.GetCommands()
 	if err != nil {
 		c.AbortWithError(http.StatusBadRequest, err) // nolint: errcheck
+		return
 	}
 	c.JSON(http.StatusOK, actions)
 }
@@ -40,21 +41,25 @@ func GetAction(c *gin.Context) {
 		data, err := c.GetRawData()
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err) // nolint: errcheck
+			return
 		}
 		parsedArgs, err := command.UnmarshalArgs(data)
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err) // nolint: errcheck
+			return
 		}
 
 		data, err = json.Marshal(parsedArgs)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+			return
 		}
 
 		cmd := exec.Command(os.Args[0], action, "@")
 		err = cachedcommand.AttachProcess(action, cmd)
 		if err != nil {
 			c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+			return
 		}
 		cmd.Stdin = bytes.NewReader(data)
 

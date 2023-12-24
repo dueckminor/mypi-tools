@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/restapi"
@@ -61,8 +62,11 @@ func runFFMPEG(dir, url string) {
 		cmd.Stderr = os.Stderr
 		err := cmd.Start()
 		if err != nil {
-			cmd.Wait() // nolint: errcheck
+			fmt.Println("ffmpeg failed to start:", err)
+			time.Sleep(time.Second * 30)
+			continue
 		}
+		cmd.Wait() // nolint: errcheck
 	}
 }
 

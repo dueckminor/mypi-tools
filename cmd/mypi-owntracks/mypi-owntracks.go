@@ -89,6 +89,7 @@ func handleQR(c *gin.Context) {
 	_, err := c.Writer.Write(png)
 	if err != nil {
 		c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+		return
 	}
 }
 
