@@ -30,9 +30,9 @@ func TestPtyLines(t *testing.T) {
 	buf := make([]byte, 20)
 
 	go func() {
+		defer wg.Done()
 		n, err := pty.Read(buf)
 		g.Expect(n, err).To(Equal(4))
-		wg.Done()
 	}()
 
 	err = cmd.Wait()

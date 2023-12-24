@@ -1,3 +1,4 @@
+//go:build integration
 // +build integration
 
 package xmlrpc
@@ -89,8 +90,8 @@ func Test_ConcurrentCalls(t *testing.T) {
 	for i := 0; i < 100; i++ {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			call()
-			wg.Done()
 		}()
 	}
 

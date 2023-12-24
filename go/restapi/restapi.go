@@ -65,11 +65,11 @@ func Run(r *gin.Engine) {
 
 	for _, runner := range runners {
 		go func(runner Runner) {
+			defer wg.Done()
 			err := runner.Run(r)
 			if err != nil {
 				panic(err)
 			}
-			wg.Done()
 		}(runner)
 	}
 
