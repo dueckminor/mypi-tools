@@ -2,6 +2,7 @@ package pty
 
 import (
 	"os/exec"
+	"sync"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -21,13 +22,21 @@ func TestPtyLines(t *testing.T) {
 	err = cmd.Start()
 	g.Expect(err).To(BeNil())
 
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
 	buf := make([]byte, 20)
-	n, err := pty.Read(buf)
-	g.Expect(n, err).To(Equal(4))
+
+	go func() {
+		n, err := pty.Read(buf)
+		g.Expect(n, err).To(Equal(4))
+		wg.Done()
+	}()
 
 	cmd.Wait()
+	wg.Wait()
 
-	g.Expect(buf[:n]).To(Equal([]byte("10\r\n")))
+	g.Expect(buf[:4]).To(Equal([]byte("10\r\n")))
 
 	g.Expect(pty.Close()).ShouldNot(HaveOccurred())
 }
