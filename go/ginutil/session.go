@@ -24,13 +24,17 @@ func createKeyPair() (auth []byte, enc []byte, err error) {
 	return auth, enc, nil
 }
 
-func storeKey(key []byte, cfg config.Config, name string) {
-	cfg.SetString(name, base64.StdEncoding.EncodeToString(key))
+func storeKey(key []byte, cfg config.Config, name string) (err error) {
+	return cfg.SetString(name, base64.StdEncoding.EncodeToString(key))
 }
-func storeKeyPair(auth []byte, enc []byte, cfg config.Config) {
-	storeKey(auth, cfg, "auth")
-	storeKey(enc, cfg, "enc")
+func storeKeyPair(auth []byte, enc []byte, cfg config.Config) (err error) {
+	err = storeKey(auth, cfg, "auth")
+	if err != nil {
+		return err
+	}
+	return storeKey(enc, cfg, "enc")
 }
+
 func readKey(cfg config.Config, name string) []byte {
 	val := cfg.GetString(name)
 	if len(val) == 0 {
@@ -62,8 +66,14 @@ func ConfigureSessionCookies(r *gin.Engine, cfg config.Config, session string) (
 		if err != nil {
 			return err
 		}
-		storeKeyPair(auth, enc, cfgCurrent)
-		cfg.Write()
+		err = storeKeyPair(auth, enc, cfgCurrent)
+		if err != nil {
+			return err
+		}
+		err = cfg.Write()
+		if err != nil {
+			return err
+		}
 	}
 
 	store := cookie.NewStore(auth, enc)

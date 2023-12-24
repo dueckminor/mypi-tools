@@ -14,13 +14,15 @@ func TestPtyLines(t *testing.T) {
 	pty, err := NewPty()
 	g.Expect(pty, err).NotTo(BeNil())
 
-	pty.SetSize(20, 10)
+	err = pty.SetSize(20, 10)
+	g.Expect(err).NotTo(HaveOccurred())
 
 	cmd := exec.Command("tput", "lines")
-	pty.AttachProcess(cmd)
+	err = pty.AttachProcess(cmd)
+	g.Expect(err).NotTo(HaveOccurred())
 
 	err = cmd.Start()
-	g.Expect(err).To(BeNil())
+	g.Expect(err).NotTo(HaveOccurred())
 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -33,7 +35,8 @@ func TestPtyLines(t *testing.T) {
 		wg.Done()
 	}()
 
-	cmd.Wait()
+	err = cmd.Wait()
+	g.Expect(err).NotTo(HaveOccurred())
 	wg.Wait()
 
 	g.Expect(buf[:4]).To(Equal([]byte("10\r\n")))
@@ -47,10 +50,12 @@ func TestPtyCols(t *testing.T) {
 	pty, err := NewPty()
 	g.Expect(pty, err).NotTo(BeNil())
 
-	pty.SetSize(20, 10)
+	err = pty.SetSize(20, 10)
+	g.Expect(err).NotTo(HaveOccurred())
 
 	cmd := exec.Command("tput", "cols")
-	pty.AttachProcess(cmd)
+	err = pty.AttachProcess(cmd)
+	g.Expect(err).NotTo(HaveOccurred())
 
 	err = cmd.Start()
 	g.Expect(err).To(BeNil())
@@ -59,7 +64,8 @@ func TestPtyCols(t *testing.T) {
 	n, err := pty.Read(buf)
 	g.Expect(n, err).To(Equal(4))
 
-	cmd.Wait()
+	err = cmd.Wait()
+	g.Expect(err).NotTo(HaveOccurred())
 
 	g.Expect(buf[:n]).To(Equal([]byte("20\r\n")))
 

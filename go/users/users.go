@@ -60,8 +60,7 @@ func (cfg *UserCfg) UpdateUser(user *User) error {
 	for _, userEntry := range cfg.GetArray() {
 		name := userEntry.GetString("name")
 		if name == user.Name {
-			userEntry.SetString("password", user.Password)
-			return nil
+			return userEntry.SetString("password", user.Password)
 		}
 	}
 	return ErrNotFound
@@ -95,12 +94,18 @@ func AddUser(username, password string) error {
 	user, _ := userCfg.GetUser(username)
 	if user != nil {
 		user.Password = string(hash)
-		userCfg.UpdateUser(user)
+		err = userCfg.UpdateUser(user)
+		if err != nil {
+			return err
+		}
 	} else {
-		userCfg.AddArrayElement(User{
+		err = userCfg.AddArrayElement(User{
 			Name:     username,
 			Password: string(hash),
 		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return userCfg.Write()

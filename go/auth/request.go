@@ -16,7 +16,7 @@ type AuthRequest struct {
 var authRequests []*AuthRequest
 
 func init() {
-	authRequests = make([]*AuthRequest, 0, 0)
+	authRequests = make([]*AuthRequest, 0)
 }
 
 // NewRequest creates a new AuthRequest

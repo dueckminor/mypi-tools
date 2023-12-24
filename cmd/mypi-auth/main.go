@@ -18,6 +18,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/rand"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/dueckminor/mypi-tools/go/users"
+	"github.com/dueckminor/mypi-tools/go/util/panic"
 
 	"github.com/golang-jwt/jwt"
 
@@ -31,23 +32,19 @@ import (
 )
 
 var (
-	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
-	userCfg  *users.UserCfg
-
+	mypiRoot           = flag.String("mypi-root", "", "The root of the mypi filesystem")
 	dirMypiAuthClients = "etc/mypi-auth/clients"
 )
 
 func init() {
 	flag.Parse()
-	if mypiRoot != nil && len(*mypiRoot) > 0 {
-		config.InitApp(*mypiRoot)
-	}
-
 	var err error
-	userCfg, err = users.ReadUserCfg()
-	if err != nil {
-		panic(err)
+	if mypiRoot != nil && len(*mypiRoot) > 0 {
+		err = config.InitApp(*mypiRoot)
+		panic.OnError(err)
 	}
+	_, err = users.ReadUserCfg()
+	panic.OnError(err)
 	config.GetConfig()
 }
 
@@ -96,7 +93,10 @@ func login(c *gin.Context) {
 		session.Set("secret", secret)
 		session.Set("domain", domain)
 		session.Set("username", params.Username)
-		session.Save()
+		err = session.Save()
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
 	}
 	c.Data(http.StatusOK, "text/plain", []byte("OK"))
 }
@@ -175,7 +175,11 @@ func basicAuth(c *gin.Context) string {
 }
 
 func handleOauthToken(c *gin.Context) {
-	c.Request.ParseForm()
+	err := c.Request.ParseForm()
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 	code := c.Request.Form.Get("code")
 	grantType := c.Request.Form.Get("grant_type")
 	responseType := c.Request.Form.Get("response_type")
@@ -216,7 +220,11 @@ func handleOauthToken(c *gin.Context) {
 func handleLogout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Clear()
-	session.Save()
+	err := session.Save()
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 	c.AbortWithStatus(http.StatusAccepted)
 }
 
@@ -243,10 +251,16 @@ func GenerateRsaKeyPair(privFilename, pubFilename string) error {
 	pubFilename = config.GetFilename(pubFilename)
 
 	print(path.Dir(privFilename))
-	os.MkdirAll(path.Dir(privFilename), 0755)
-	os.MkdirAll(path.Dir(pubFilename), 0755)
+	err := os.MkdirAll(path.Dir(privFilename), 0755)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(path.Dir(pubFilename), 0755)
+	if err != nil {
+		return err
+	}
 
-	err := ioutil.WriteFile(privFilename, privPEM, 0600)
+	err = os.WriteFile(privFilename, privPEM, 0600)
 	if err != nil {
 		return err
 	}
@@ -257,37 +271,31 @@ func main() {
 	if len(flag.Args()) > 0 {
 		if flag.Args()[0] == "init" {
 			err := GenerateRsaKeyPair("etc/mypi-auth/server/server_priv.pem", "etc/mypi-auth/server/server_pub.pem")
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 			os.Exit(0)
 		}
 		if flag.Args()[0] == "create-client" {
-			if len(flag.Args()) != 2 {
-				panic("create-client needs exactly one arg")
-			}
-			os.MkdirAll(config.GetFilename(dirMypiAuthClients), 0755)
-
+			panic.OnCond(len(flag.Args()) != 2, "create-client needs exactly one arg")
+			err := os.MkdirAll(config.GetFilename(dirMypiAuthClients), 0755)
+			panic.OnError(err)
 			clientID := flag.Args()[1]
 			pub, err := config.FileToString("etc/mypi-auth/server/server_pub.pem")
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 			clientConfig, err := config.GetOrCreateConfigFile(dirMypiAuthClients, clientID+".yml")
-			clientConfig.SetString("server_key", pub)
-			clientConfig.SetString("client_id", clientID)
+			panic.OnError(err)
+			err = clientConfig.SetString("server_key", pub)
+			panic.OnError(err)
+			err = clientConfig.SetString("client_id", clientID)
+			panic.OnError(err)
 			if len(clientConfig.GetString("client_secret")) == 0 {
 				clientSecret, err := rand.GetString(32)
-				if err != nil {
-					panic(err)
-				}
-				clientConfig.SetString("client_secret", clientSecret)
+				panic.OnError(err)
+				err = clientConfig.SetString("client_secret", clientSecret)
+				panic.OnError(err)
 			}
 
 			err = clientConfig.Write()
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 			os.Exit(0)
 		}
 	}
@@ -295,14 +303,10 @@ func main() {
 	r := gin.Default()
 
 	cfg, err := config.GetOrCreateConfigFile("etc/mypi-auth/mypi-auth.yml")
-	if err != nil {
-		panic(err)
-	}
+	panic.OnError(err)
 
 	err = ginutil.ConfigureSessionCookies(r, cfg, "MYPI_AUTH_SESSION")
-	if err != nil {
-		panic(err)
-	}
+	panic.OnError(err)
 
 	r.Use(cors.Default())
 

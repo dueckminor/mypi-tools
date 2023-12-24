@@ -23,7 +23,10 @@ var (
 func init() {
 	flag.Parse()
 	if mypiRoot != nil && len(*mypiRoot) > 0 {
-		config.InitApp(*mypiRoot)
+		err := config.InitApp(*mypiRoot)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -56,8 +59,10 @@ func runFFMPEG(dir, url string) {
 		cmd := exec.Command("ffmpeg", args...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Start()
-		cmd.Wait()
+		err := cmd.Start()
+		if err != nil {
+			cmd.Wait() // nolint: errcheck
+		}
 	}
 }
 
@@ -70,7 +75,10 @@ func main() {
 	}
 
 	tmpDir = path.Join(tmpDir, "videostream")
-	os.MkdirAll(tmpDir, os.ModePerm)
+	err := os.MkdirAll(tmpDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 
 	fmt.Println("Using dir:", tmpDir)
 
@@ -81,7 +89,10 @@ func main() {
 		path := fmt.Sprintf("/cams/%d/", iCam)
 		filter := fmt.Sprintf("%s/:file", path)
 
-		os.MkdirAll(dir, os.ModePerm)
+		err = os.MkdirAll(dir, os.ModePerm)
+		if err != nil {
+			panic(err)
+		}
 
 		go runFFMPEG(dir, url)
 

@@ -18,6 +18,7 @@ import (
 	"github.com/pquerna/otp/totp"
 )
 
+// nolint: all
 func main() {
 
 	r := gin.Default()
@@ -62,6 +63,7 @@ type Resp struct {
 	Error  string
 }
 
+// nolint: all
 func mainCookie() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {

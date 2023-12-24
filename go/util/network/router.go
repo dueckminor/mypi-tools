@@ -3,6 +3,7 @@ package network
 import (
 	"bytes"
 	"encoding/xml"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -12,22 +13,15 @@ import (
 type cbIPAddr func() (*net.IPAddr, error)
 
 var (
-	routerExternalName  string
 	routerExternalIP    *net.IPAddr
-	routerInternalName  string
 	routerInternalIP    *net.IPAddr
 	cbRouterInternalIPs []cbIPAddr
 )
-
-func SetRouterExternalName(name string) {
-	routerExternalName = name
-}
 
 func SetRouterInternalIP(ip *net.IPAddr) {
 	routerInternalIP = ip
 }
 func SetRouterInternalName(name string) {
-	routerInternalName = name
 	routerInternalIP, _ = net.ResolveIPAddr("", name)
 }
 
@@ -106,6 +100,9 @@ func GetRouterExternalIPUPNP() (publicIP *net.IPAddr, err error) {
 		<u:GetExternalIPAddress xmlns:u='urn:schemas-upnp-org:service:WANIPConnection:1' /> 
 	</s:Body>
 </s:Envelope>`))
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Add("Content-Type",
 		"text/xml; charset=\"utf-8\"")
 	req.Header.Add("SoapAction",
@@ -115,7 +112,10 @@ func GetRouterExternalIPUPNP() (publicIP *net.IPAddr, err error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := ioutil.ReadAll(res.Body)
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
 
 	env := getExternalIPAddressEnvelope{}
 	err = xml.Unmarshal(data, &env)

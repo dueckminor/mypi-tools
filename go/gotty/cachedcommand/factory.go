@@ -3,7 +3,6 @@ package cachedcommand
 import (
 	"io"
 	"os/exec"
-	"sync"
 
 	"github.com/dueckminor/mypi-tools/go/gotty/pty"
 	"github.com/dueckminor/mypi-tools/go/gotty/server"
@@ -26,7 +25,6 @@ type CachedCommand struct {
 	columns      int
 	rows         int
 	Pty          pty.Pty
-	mutex        sync.Mutex
 	waitForRead  bool
 	waitForReadC chan bool
 }
@@ -43,7 +41,10 @@ func New(name string) (c *CachedCommand, err error) {
 		name:         name,
 		waitForReadC: make(chan bool),
 	}
-	cachedCommand.createTty()
+	err = cachedCommand.createTty()
+	if err != nil {
+		return nil, err
+	}
 	cachedCommands[name] = cachedCommand
 
 	return cachedCommand, nil
@@ -69,7 +70,10 @@ func AttachProcess(name string, command *exec.Cmd) (err error) {
 		return err
 	}
 
-	cachedCommand.createTty()
+	err = cachedCommand.createTty()
+	if err != nil {
+		return err
+	}
 	return cachedCommand.Pty.AttachProcess(command)
 }
 
@@ -117,7 +121,6 @@ func (c *CachedCommand) WindowTitleVariables() map[string]interface{} {
 	// 	"argv":    lcmd.argv,
 	// 	"pid":     lcmd.cmd.Process.Pid,
 	// }
-	return nil
 }
 
 // ResizeTerminal sets a new size of the terminal.

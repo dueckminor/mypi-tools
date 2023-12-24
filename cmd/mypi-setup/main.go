@@ -42,10 +42,16 @@ func main() {
 	whDownloads := webhandler.NewWebhandlerDownloads()
 
 	err := wh.SetupEndpoints(r)
+	if err != nil {
+		panic(err)
+	}
 	whDownloads.SetupEndpoints(&r.RouterGroup)
 
 	certificates := setup.NewCertificates()
-	certificates.CreatePKI()
+	_, err = certificates.CreatePKI()
+	if err != nil {
+		panic(err)
+	}
 
 	webhandler.NewCertHandler(certificates).RegisterEndpoints(r)
 
@@ -58,10 +64,6 @@ func main() {
 	r.GET("/api/hosts/:host/actions/:action/webtty", webhandler.MakeForwardToHost(webhandler.GetActionWebTTY))
 
 	r.POST("/api/hosts/:host/actions/:action", webhandler.MakeForwardToHost(webhandler.GetAction))
-
-	if err != nil {
-		panic(err)
-	}
 
 	keyFile := path.Join(os.Getenv("HOME"), ".mypi", "pki", "localhost_tls_priv.pem")
 	certFile := path.Join(os.Getenv("HOME"), ".mypi", "pki", "localhost_tls_cert.pem")

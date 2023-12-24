@@ -14,7 +14,7 @@ func TestPipes(t *testing.T) {
 
 	w, r := newPipe()
 
-	w.Write([]byte{1, 2, 3})
+	g.Expect(w.Write([]byte{1, 2, 3})).To(Equal(3))
 
 	b := make([]byte, 2)
 
@@ -37,7 +37,7 @@ func TestPipesReadBeforeWrite(t *testing.T) {
 	}()
 
 	time.Sleep(time.Millisecond * 50)
-	w.Write([]byte{1, 2, 3})
+	g.Expect(w.Write([]byte{1, 2, 3})).To(Equal(3))
 
 	<-done
 }

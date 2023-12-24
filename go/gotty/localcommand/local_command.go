@@ -76,7 +76,7 @@ func New(command string, argv []string, options ...Option) (*LocalCommand, error
 			close(lcmd.ptyClosed)
 		}()
 
-		lcmd.cmd.Wait()
+		lcmd.cmd.Wait() // nolint: errcheck
 	}()
 
 	return lcmd, nil
@@ -92,14 +92,20 @@ func (lcmd *LocalCommand) Write(p []byte) (n int, err error) {
 
 func (lcmd *LocalCommand) Close() error {
 	if lcmd.cmd != nil && lcmd.cmd.Process != nil {
-		lcmd.cmd.Process.Signal(lcmd.closeSignal)
+		err := lcmd.cmd.Process.Signal(lcmd.closeSignal)
+		if err != nil {
+			return err
+		}
 	}
 	for {
 		select {
 		case <-lcmd.ptyClosed:
 			return nil
 		case <-lcmd.closeTimeoutC():
-			lcmd.cmd.Process.Signal(syscall.SIGKILL)
+			err := lcmd.cmd.Process.Signal(syscall.SIGKILL)
+			if err != nil {
+				return err
+			}
 		}
 	}
 }

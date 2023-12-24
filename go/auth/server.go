@@ -23,7 +23,6 @@ type AuthServer struct {
 
 func (a *AuthServer) Register(r *gin.Engine) {
 
-	panic("TODO: use random secrets")
 	store := cookie.NewStore([]byte("222222"), nil, []byte("333333"))
 	r.Use(cors.Default())
 
@@ -34,6 +33,8 @@ func (a *AuthServer) Register(r *gin.Engine) {
 	rg.GET("/status", a.handleStatus)
 	rg.GET("/oauth/authorize", a.handleOauthAuthorize)
 	rg.POST("/oauth/token", a.handleOauthToken)
+
+	panic("TODO: use random secrets")
 }
 
 func (a *AuthServer) login(c *gin.Context) {
@@ -81,7 +82,10 @@ func (a *AuthServer) login(c *gin.Context) {
 		session.Set("secret", secret)
 		session.Set("domain", domain)
 		session.Set("username", params.Username)
-		session.Save()
+		err = session.Save()
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
 	}
 	c.Data(http.StatusOK, "text/plain", []byte("OK"))
 }
@@ -164,7 +168,12 @@ func (a *AuthServer) basicAuth(c *gin.Context) string {
 }
 
 func (a *AuthServer) handleOauthToken(c *gin.Context) {
-	c.Request.ParseForm()
+	err := c.Request.ParseForm()
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
 	code := c.Request.Form.Get("code")
 	grantType := c.Request.Form.Get("grant_type")
 	responseType := c.Request.Form.Get("response_type")
@@ -205,7 +214,11 @@ func (a *AuthServer) handleOauthToken(c *gin.Context) {
 func (a *AuthServer) handleLogout(c *gin.Context) {
 	session := sessions.Default(c)
 	session.Clear()
-	session.Save()
+	err := session.Save()
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 	c.AbortWithStatus(http.StatusAccepted)
 }
 

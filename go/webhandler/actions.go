@@ -17,7 +17,7 @@ import (
 func GetActions(c *gin.Context) {
 	actions, err := cmd.GetCommands()
 	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
+		c.AbortWithError(http.StatusBadRequest, err) // nolint: errcheck
 	}
 	c.JSON(http.StatusOK, actions)
 }
@@ -39,22 +39,34 @@ func GetAction(c *gin.Context) {
 	if command, err := cmd.GetCommand(action); err == nil {
 		data, err := c.GetRawData()
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
+			c.AbortWithError(http.StatusBadRequest, err) // nolint: errcheck
 		}
 		parsedArgs, err := command.UnmarshalArgs(data)
 		if err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
+			c.AbortWithError(http.StatusBadRequest, err) // nolint: errcheck
 		}
 
 		data, err = json.Marshal(parsedArgs)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+		}
 
-		c := exec.Command(os.Args[0], action, "@")
-		err = cachedcommand.AttachProcess(action, c)
-		c.Stdin = bytes.NewReader(data)
+		cmd := exec.Command(os.Args[0], action, "@")
+		err = cachedcommand.AttachProcess(action, cmd)
+		if err != nil {
+			c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+		}
+		cmd.Stdin = bytes.NewReader(data)
 
 		go func() {
-			c.Start()
-			c.Wait()
+			err := cmd.Start()
+			if err != nil {
+				return
+			}
+			err = cmd.Wait()
+			if err != nil {
+				return
+			}
 		}()
 	}
 }

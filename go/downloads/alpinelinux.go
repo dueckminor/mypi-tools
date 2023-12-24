@@ -2,7 +2,6 @@ package downloads
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -68,11 +67,14 @@ func NewAlpineDownloader() (d *AlpineDownloader) {
 	d = &AlpineDownloader{}
 
 	d.TargetDir = path.Join(os.Getenv("HOME"), ".mypi", "downloads", "alpinelinux")
-	os.MkdirAll(d.TargetDir, os.ModePerm)
+	err := os.MkdirAll(d.TargetDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 
 	versionsYml := path.Join(d.TargetDir, "versions.yml")
 	if util.FileExists(versionsYml) {
-		data, err := ioutil.ReadFile(versionsYml)
+		data, err := os.ReadFile(versionsYml)
 		if err == nil {
 			err = yaml.Unmarshal(data, &d.FileMetadatas)
 			if err == nil {
@@ -86,7 +88,10 @@ func NewAlpineDownloader() (d *AlpineDownloader) {
 	if len(d.FileMetadatas) > 0 {
 		data, err := yaml.Marshal(d.FileMetadatas)
 		if err == nil {
-			ioutil.WriteFile(versionsYml, data, os.ModePerm)
+			err = os.WriteFile(versionsYml, data, os.ModePerm)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 

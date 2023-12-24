@@ -13,7 +13,7 @@ var cli *client.Client
 
 func init() {
 	var err error
-	cli, err = client.NewEnvClient()
+	cli, err = client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(err)
 	}

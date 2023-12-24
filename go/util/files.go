@@ -24,8 +24,5 @@ func FileIsSafe(filename string) bool {
 }
 
 func FileIsSafePath(filename string) bool {
-	if strings.Contains(filename, "..") {
-		return false
-	}
-	return true
+	return !strings.Contains(filename, "..")
 }

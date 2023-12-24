@@ -23,11 +23,10 @@ type FileMetadata struct {
 }
 
 type FileDownloader struct {
-	MetaData      *FileMetadata
-	mutex         sync.RWMutex
-	targetFile    string
-	receivedBytes int64
-	verified      bool
+	MetaData   *FileMetadata
+	mutex      sync.RWMutex
+	targetFile string
+	verified   bool
 }
 
 type Downloader struct {

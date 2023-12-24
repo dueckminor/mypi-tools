@@ -169,7 +169,10 @@ func (comp *component) NewCommand(ctx context.Context, name string, arg ...strin
 		"MYPI_DEBUG_SECRET="+comp.svc.svcs.authClient.LocalSecret,
 	)
 
-	tty.AttachProcess(cmd)
+	err = tty.AttachProcess(cmd)
+	if err != nil {
+		panic(err)
+	}
 	return cmd
 }
 

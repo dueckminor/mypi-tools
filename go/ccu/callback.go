@@ -40,7 +40,7 @@ func (h *HttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	body, _ := ioutil.ReadAll(req.Body)
 	response, err := xmlrpc.HandleMethodCall(body, h.ccuc)
 	if err == nil {
-		res.Write(response)
+		res.Write(response) // nolint: errcheck
 	}
 }
 
@@ -71,7 +71,7 @@ func (ccuc *CcuClientImpl) StartCallbackHandler() error {
 	ownURL := "http://" + ccuc.GetOwnIP() + ":" + port
 	ownID := "MYPI-" + ccuc.GetOwnIP() + "-" + port
 
-	go http.Serve(ln, httpHandler)
+	go http.Serve(ln, httpHandler) // nolint: errcheck
 	err = ccuc.Init(ownURL, ownID)
 	if err != nil {
 		return err
@@ -81,7 +81,7 @@ func (ccuc *CcuClientImpl) StartCallbackHandler() error {
 		for {
 			time.Sleep(15 * time.Minute)
 			fmt.Println("Init again...")
-			ccuc.Init(ownURL, ownID)
+			ccuc.Init(ownURL, ownID) // nolint: errcheck
 		}
 	}()
 

@@ -6,7 +6,7 @@ import (
 	"encoding/base32"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -130,7 +130,11 @@ func (ac *AuthClient) handleAuth(c *gin.Context) {
 func (ac *AuthClient) handleLoginCallback(c *gin.Context) {
 	fmt.Println("login callback 2")
 	session := sessions.Default(c)
-	c.Request.ParseForm()
+	err := c.Request.ParseForm()
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 	code := c.Request.Form.Get("code")
 	id := c.Request.Form.Get("id")
 
@@ -155,6 +159,10 @@ func (ac *AuthClient) handleLoginCallback(c *gin.Context) {
 	authURIOauthToken.Path = "oauth/token"
 
 	req, err := http.NewRequest("POST", authURIOauthToken.String(), strings.NewReader(v.Encode()))
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 	req.SetBasicAuth(ac.ClientID, ac.ClientSecret)
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Accept", "application/json")
@@ -165,10 +173,18 @@ func (ac *AuthClient) handleLoginCallback(c *gin.Context) {
 		return
 	}
 
-	bodyText, err := ioutil.ReadAll(resp.Body)
+	bodyText, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 
 	var data map[string]interface{}
-	json.Unmarshal(bodyText, &data)
+	err = json.Unmarshal(bodyText, &data)
+	if err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
 
 	jwtToken, ok := data["access_token"].(string)
 	if !ok {
@@ -190,7 +206,11 @@ func (ac *AuthClient) handleLoginCallback(c *gin.Context) {
 
 	session.Set("access_token", data["access_token"])
 	session.Set("hostname", ginutil.GetHostname(c))
-	session.Save()
+	err = session.Save()
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
 	c.Header("Location", path)
 	c.AbortWithStatus(http.StatusFound)
@@ -204,7 +224,10 @@ type AuthClientLocalSecret struct {
 
 func (ac *AuthClientLocalSecret) CreateLocalSecret() string {
 	buf := make([]byte, 20)
-	rand.Read(buf)
+	_, err := rand.Read(buf)
+	if err != nil {
+		panic(err)
+	}
 	ac.LocalSecret = base32.StdEncoding.EncodeToString(buf)
 	return ac.LocalSecret
 }
@@ -217,7 +240,11 @@ func (ac *AuthClientLocalSecret) GetHandler() gin.HandlerFunc {
 		secret := q.Get("local_secret")
 		if secret == ac.LocalSecret {
 			session.Set("local_secret", true)
-			session.Save()
+			err := session.Save()
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
 
 			q.Del("local_secret")
 			c.Request.URL.RawQuery = q.Encode()

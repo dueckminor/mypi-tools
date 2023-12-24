@@ -98,7 +98,7 @@ type checkMethodName struct {
 	methodNames []string
 }
 
-func (cmn checkMethodName) ParseMethodCall(methodName string, cb MethodCallParserCB) (err error) {
+func (cmn *checkMethodName) ParseMethodCall(methodName string, cb MethodCallParserCB) (err error) {
 	cmn.methodNames = append(cmn.methodNames, methodName)
 	switch methodName {
 	case "system.listMethods":
@@ -132,20 +132,20 @@ func (cmn checkMethodName) ParseMethodCall(methodName string, cb MethodCallParse
 	return nil
 }
 
-func Test_CallDecoder_listMethods(t *testing.T) {
+func TestCallDecoderListMethods(t *testing.T) {
 	CharsetReader = charset.NewReaderLabel
 
-	cmn := checkMethodName{}
+	cmn := &checkMethodName{}
 
 	if _, err := HandleMethodCall([]byte(listMethodsCall), cmn); err != nil {
 		t.Fatalf("unmarshal error: %v", err)
 	}
 }
 
-func Test_CallDecoder_multicall(t *testing.T) {
+func TestCallDecoderMultiCall(t *testing.T) {
 	CharsetReader = charset.NewReaderLabel
 
-	cmn := checkMethodName{}
+	cmn := &checkMethodName{}
 
 	if _, err := HandleMethodCall([]byte(multicall), cmn); err != nil {
 		t.Fatalf("unmarshal error: %v", err)

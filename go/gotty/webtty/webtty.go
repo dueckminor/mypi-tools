@@ -46,7 +46,10 @@ func New(masterConn Master, slave Slave, options ...Option) (*WebTTY, error) {
 	}
 
 	for _, option := range options {
-		option(wt)
+		err := option(wt)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return wt, nil
@@ -205,7 +208,7 @@ func (wt *WebTTY) handleMasterReadEvent(data []byte) error {
 			columns = int(args.Columns)
 		}
 
-		wt.slave.ResizeTerminal(columns, rows)
+		return wt.slave.ResizeTerminal(columns, rows)
 	default:
 		return errors.Errorf("unknown message type `%c`", data[0])
 	}

@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -16,26 +15,18 @@ import (
 
 var (
 	// authURI   string
-	port       = flag.Int("port", 8080, "The port")
 	mypiRoot   = flag.String("mypi-root", "", "The root of the mypi filesystem")
 	mqttBroker = flag.String("mqtt", "mqtt", "The MQTT Broker")
 	// targetURI string
-
-	hostname string
-	autoOpen = false
-	nearHome = true
 )
 
 func init() {
-	var err error
-	hostname, err = os.Hostname()
-	if err != nil {
-		panic(err)
-	}
-
 	flag.Parse()
 	if mypiRoot != nil && len(*mypiRoot) > 0 {
-		config.InitApp(*mypiRoot)
+		err := config.InitApp(*mypiRoot)
+		if err != nil {
+			panic(err)
+		}
 	}
 	config.GetConfig()
 }
@@ -128,7 +119,10 @@ func main() {
 
 	var cfg Config
 	if len(flag.Args()) == 1 {
-		config.ReadYAML(&cfg, flag.Arg(0))
+		err := config.ReadYAML(&cfg, flag.Arg(0))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	tlsconfig := tlsconfig.NewTLSConfig()

@@ -52,9 +52,11 @@ func (cmd cmdSetup) Execute(parsedArgs interface{}) error {
 	cmdSetup.Stdin = os.Stdin
 	cmdSetup.Stdout = os.Stdout
 	cmdSetup.Stderr = os.Stderr
-	cmdSetup.Start()
-	cmdSetup.Wait()
-	return nil
+	err := cmdSetup.Start()
+	if err != nil {
+		return err
+	}
+	return cmdSetup.Wait()
 }
 
 func init() {

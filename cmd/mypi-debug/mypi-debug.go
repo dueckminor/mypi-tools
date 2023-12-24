@@ -14,7 +14,10 @@ import (
 
 func main() {
 	flag.Parse()
-	config.InitApp(path.Join(os.Getenv("HOME"), ".mypi", "debug"))
+	err := config.InitApp(path.Join(os.Getenv("HOME"), ".mypi", "debug"))
+	if err != nil {
+		panic(err)
+	}
 	cfg, err := config.GetOrCreateConfigFile("etc/mypi-debug/mypi-debug.yml")
 	if err != nil {
 		panic(err)
@@ -27,7 +30,10 @@ func main() {
 		panic(err)
 	}
 
-	r.SetTrustedProxies(nil)
+	err = r.SetTrustedProxies(nil)
+	if err != nil {
+		panic(err)
+	}
 	r.Use(cors.Default())
 
 	services := debug.NewServices(r)

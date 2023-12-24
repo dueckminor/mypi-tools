@@ -45,6 +45,9 @@ func (obj PList) followPath(path ...interface{}) (interface{}, error) {
 
 func (obj PList) getSliceOfStrings(path ...interface{}) (result []string, err error) {
 	where, err := obj.followPath(path...)
+	if err != nil {
+		return nil, err
+	}
 	if arr, ok := where.([]interface{}); ok {
 		result = make([]string, len(arr))
 		for index, item := range arr {
@@ -61,6 +64,9 @@ func (obj PList) getSliceOfStrings(path ...interface{}) (result []string, err er
 
 func (obj PList) getString(path ...interface{}) (result string, err error) {
 	where, err := obj.followPath(path...)
+	if err != nil {
+		return "", err
+	}
 	if result, ok := where.(string); ok {
 		return result, nil
 	}
@@ -69,6 +75,9 @@ func (obj PList) getString(path ...interface{}) (result string, err error) {
 
 func (obj PList) getInt(path ...interface{}) (result int64, err error) {
 	where, err := obj.followPath(path...)
+	if err != nil {
+		return 0, err
+	}
 	if result, ok := where.(int64); ok {
 		return result, nil
 	}
@@ -80,6 +89,9 @@ func (obj PList) getInt(path ...interface{}) (result int64, err error) {
 
 func (obj PList) getBool(path ...interface{}) (result bool, err error) {
 	where, err := obj.followPath(path...)
+	if err != nil {
+		return false, err
+	}
 	if result, ok := where.(bool); ok {
 		return result, nil
 	}
@@ -156,6 +168,9 @@ func newDiskMacos(deviceName string) (result macosDisk, err error) {
 	}
 
 	partinfo, err := callDiskutil("list", "-plist", deviceName)
+	if err != nil {
+		return macosDisk{}, err
+	}
 
 	result.deviceName = deviceName
 	result.partitionNames, err = partinfo.GetPartitionNames(deviceName)

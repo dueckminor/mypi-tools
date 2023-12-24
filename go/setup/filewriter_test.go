@@ -17,7 +17,10 @@ var (
 func init() {
 	pc, filename, _, _ := runtime.Caller(0)
 	dirTest = path.Join(path.Dir(filename), "../../gen/test")
-	os.MkdirAll(dirTest, os.ModePerm)
+	err := os.MkdirAll(dirTest, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 
 	f := runtime.FuncForPC(pc).Name()
 	fmt.Println(f)
@@ -36,12 +39,11 @@ func TestNewFileWriter(t *testing.T) {
 	w, err := fw.CreateFile(FileInfo{Type: FileTypeFile, Name: "test.txt"})
 	g.Expect(w, err).NotTo(BeNil())
 
-	w.Write([]byte("test"))
-	w.Close()
+	g.Expect(w.Write([]byte("test"))).To(Equal(4))
+	g.Expect(w.Close()).NotTo(HaveOccurred())
 
 	w, err = fw.CreateFile(FileInfo{Type: FileTypeFile, Name: "../test.txt"})
-	g.Expect(w).To(BeNil())
-	g.Expect(err).NotTo(BeNil())
+	g.Expect(w, err).Error().To(HaveOccurred())
 
 	w, err = fw.CreateFile(FileInfo{Type: FileTypeDir, Name: "subdir"})
 	g.Expect(w, err).To(BeNil())

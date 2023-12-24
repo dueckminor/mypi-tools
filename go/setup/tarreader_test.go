@@ -56,7 +56,6 @@ var (
 			},
 		},
 	}
-	fileInfoTestTarGzWithDevNull = []fileInfoWithData{}
 )
 
 func TestTarReader(t *testing.T) {
