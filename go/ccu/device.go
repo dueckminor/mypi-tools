@@ -135,7 +135,7 @@ func equals(a, b interface{}) bool {
 	if err != nil {
 		return false
 	}
-	return bytes.Compare(da, db) == 0
+	return bytes.Equal(da, db)
 }
 
 func (dev *deviceImpl) SetValueIfChanged(valueName string, value interface{}) (changed bool, err error) {
@@ -149,15 +149,15 @@ func (dev *deviceImpl) SetValueIfChanged(valueName string, value interface{}) (c
 	return false, nil
 }
 
-func (dev deviceImpl) GetMasterDescription() (paramsetDescription ParamsetDescription, err error) {
+func (dev *deviceImpl) GetMasterDescription() (paramsetDescription ParamsetDescription, err error) {
 	return dev.ccuc.GetMasterDescription(dev.deviceDesc.Address)
 }
 
-func (dev deviceImpl) GetValueDescription() (paramsetDescription ParamsetDescription, err error) {
+func (dev *deviceImpl) GetValueDescription() (paramsetDescription ParamsetDescription, err error) {
 	return dev.ccuc.GetValueDescription(dev.deviceDesc.Address)
 }
 
-func (dev deviceImpl) GetValues() (values map[string]interface{}, err error) {
+func (dev *deviceImpl) GetValues() (values map[string]interface{}, err error) {
 	values, err = dev.ccuc.GetParamset(dev.deviceDesc.Address, "VALUES")
 	if err == nil {
 		for valueName, value := range values {

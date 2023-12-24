@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -33,11 +32,11 @@ func flashLED() {
 		return
 	}
 	for {
-		ioutil.WriteFile(led0, []byte("0"), os.ModePerm)
-		ioutil.WriteFile(led1, []byte("1"), os.ModePerm)
+		os.WriteFile(led0, []byte("0"), os.ModePerm) // nolint: errcheck
+		os.WriteFile(led1, []byte("1"), os.ModePerm) // nolint: errcheck
 		time.Sleep(time.Second)
-		ioutil.WriteFile(led0, []byte("1"), os.ModePerm)
-		ioutil.WriteFile(led1, []byte("0"), os.ModePerm)
+		os.WriteFile(led0, []byte("1"), os.ModePerm) // nolint: errcheck
+		os.WriteFile(led1, []byte("0"), os.ModePerm) // nolint: errcheck
 		time.Sleep(time.Second)
 	}
 }
@@ -62,10 +61,13 @@ func main() {
 		if _, err := cmd.GetCommand("setup"); err == nil {
 			c := exec.Command(os.Args[0], "setup", "@")
 			err = cachedcommand.AttachProcess("setup", c)
+			if err != nil {
+				panic("failed to start setup")
+			}
 			c.Stdin = bytes.NewReader([]byte("{}"))
 			go func() {
-				c.Start()
-				c.Wait()
+				c.Start() // nolint: errcheck
+				c.Wait()  // nolint: errcheck
 			}()
 		}
 	} else {
@@ -118,7 +120,7 @@ func main() {
 	server.OnDisconnect("/", func(s socketio.Conn, reason string) {
 		fmt.Println("closed", reason)
 	})
-	go server.Serve()
+	go server.Serve() // nolint: errcheck
 	defer server.Close()
 
 	wh := &webhandler.WebHandler{}

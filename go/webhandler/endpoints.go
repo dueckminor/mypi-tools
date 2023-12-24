@@ -1,7 +1,6 @@
 package webhandler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -52,19 +51,23 @@ type UserInfo struct {
 func (wh *WebHandler) getUsers(c *gin.Context) {
 	userCfg, err := users.ReadUserCfg()
 	if err != nil {
-		fmt.Println(err)
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
 	}
 	users, err := userCfg.GetUsers()
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 
-	userInfos := make([]UserInfo, len(users), len(users))
+	userInfos := make([]UserInfo, len(users))
 
 	for i, user := range users {
 		userInfos[i].Name = user.Name
 		userInfos[i].Icon = "mdi-account" // "mdi-account-star"
 	}
 
-	data, err := json.Marshal(userInfos)
-	c.Data(200, "application/json", data)
+	c.JSON(http.StatusOK, userInfos)
 }
 
 func (wh *WebHandler) getDynDNS(c *gin.Context) {
@@ -86,7 +89,10 @@ func (wh *WebHandler) getContainers(c *gin.Context) {
 
 func (wh *WebHandler) postContainersStop(c *gin.Context) {
 	id := c.Param("id")
-	wh.dockerCLI.ContainerStop(c, id, container.StopOptions{})
+	err := wh.dockerCLI.ContainerStop(c, id, container.StopOptions{})
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err) // nolint:errcheck
+	}
 }
 
 func (wh *WebHandler) postServicesStart(c *gin.Context) {
@@ -113,7 +119,7 @@ type WebHandler struct {
 
 // SetupEndpoints registers the http endpoints
 func (wh *WebHandler) SetupEndpoints(r *gin.Engine) (err error) {
-	wh.dockerCLI, err = client.NewEnvClient()
+	wh.dockerCLI, err = client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		return err
 	}

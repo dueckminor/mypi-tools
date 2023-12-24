@@ -43,7 +43,6 @@ type services struct {
 	browserStarted bool
 
 	distFolder   string
-	uiPort       int
 	fileHandler  gin.HandlerFunc
 	proxyHandler gin.HandlerFunc
 }
@@ -79,7 +78,7 @@ func NewServices(r *gin.Engine) Services {
 	// })
 
 	go func() {
-		svcs.load()
+		svcs.load() // nolint: errcheck
 	}()
 
 	return svcs
@@ -151,7 +150,7 @@ func (svcs *services) Run() {
 		for _, svc := range svcs.services {
 			if svc.Name() != "mypi-debug" {
 				for _, comp := range svc.GetComponents() {
-					comp.Start()
+					comp.Start() // nolint: errcheck
 				}
 			}
 		}
@@ -169,17 +168,22 @@ func (svcs *services) startBrowser() {
 	}
 	url := fmt.Sprintf("http://localhost:8080?local_secret=%s", svcs.authClient.LocalSecret)
 
+	fmt.Printf("\n\n%s\n\n\n", url)
+	svcs.browserStarted = true
+
 	go func() {
+		var err error
 		time.Sleep(time.Second * 1)
 		if runtime.GOOS == "darwin" {
-			exec.Command(path.Join(GetWorkspaceRoot(), "scripts", "macos-open-chrome"), url).Run()
+			err = exec.Command(path.Join(GetWorkspaceRoot(), "scripts", "macos-open-chrome"), url).Run()
 		} else if runtime.GOOS == "linux" {
-			exec.Command("xdg-open", url).Run()
+			err = exec.Command("xdg-open", url).Run()
+		}
+		if err != nil {
+			svcs.browserStarted = false
 		}
 	}()
 
-	fmt.Printf("\n\n%s\n\n\n", url)
-	svcs.browserStarted = true
 }
 
 func (svcs *services) handler(c *gin.Context) {
@@ -286,23 +290,50 @@ func (svcs *services) postComponentRestart(c *gin.Context) {
 	if component == nil {
 		return
 	}
-	component.Stop()
-	component.Start()
+	err := component.Stop()
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+		return
+	}
+	err = component.Start()
+	if err != nil {
+		c.AbortWithError(http.StatusInternalServerError, err) // nolint: errcheck
+		return
+	}
 }
 
 func (svcs *services) postComponentAction(c *gin.Context) {
+	var err error
+	defer func() {
+		if err != nil {
+			c.AbortWithStatus(http.StatusInternalServerError)
+		}
+	}()
+
 	component := svcs.ginGetComponent(c)
 	if component == nil {
 		return
 	}
 	action := c.Param("action")
 	if action == "restart" {
-		component.Stop()
-		component.Start()
+		err := component.Stop()
+		if err != nil {
+			return
+		}
+		err = component.Start()
+		if err != nil {
+			return
+		}
 	}
 	if action == "debug" {
-		component.Stop()
-		component.Debug()
+		err = component.Stop()
+		if err != nil {
+			return
+		}
+		err = component.Debug()
+		if err != nil {
+			return
+		}
 	}
 }
 
@@ -328,7 +359,10 @@ func (svcs *services) patchComponent(c *gin.Context) {
 	if len(compInfo.State) > 0 {
 		component.SetState(compInfo.State)
 	}
-	component.SetPort(compInfo.Port)
+	err = component.SetPort(compInfo.Port)
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+	}
 
 	if len(compInfo.Dist) > 0 {
 		component.SetDist(compInfo.Dist)

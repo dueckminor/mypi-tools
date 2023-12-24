@@ -61,16 +61,19 @@ func (ccuc *CcuClientImpl) ParseMethodCall(methodName string, cb xmlrpc.MethodCa
 		if dev, ok := ccuc.devices[address]; ok {
 			dev.putValue(valueKey, value)
 		}
-		cb.PutResult(nil)
-		return nil
+		return cb.PutResult(nil)
 	case "system.listMethods":
-		cb.IgnoreParams()
-		cb.PutResult([]string{})
-		return nil
+		err = cb.IgnoreParams()
+		if err != nil {
+			return err
+		}
+		return cb.PutResult([]string{})
 	default:
-		cb.IgnoreParams()
-		cb.PutResult(nil)
-		return nil
+		err = cb.IgnoreParams()
+		if err != nil {
+			return err
+		}
+		return cb.PutResult(nil)
 	}
 }
 
@@ -165,7 +168,7 @@ func (ccuc *CcuClientImpl) getDevices() (err error) {
 
 		addrParts := strings.Split(dev.Address, ":")
 		if len(addrParts) > 1 {
-			devImpl := newDevices[addrParts[0]].(deviceInt)
+			devImpl := newDevices[addrParts[0]]
 			devImpl.setSubdevice(device)
 		}
 

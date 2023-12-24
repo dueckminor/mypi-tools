@@ -72,5 +72,5 @@ func server(ctx context.Context, address string) (err error) {
 }
 
 func main() {
-	server(context.Background(), ":514")
+	panic(server(context.Background(), ":514"))
 }

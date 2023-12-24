@@ -102,14 +102,13 @@ func handleRemoteConn(remote_conn net.Conn, dial Dial) {
 	done := make(chan bool)
 
 	go func() {
-		io.Copy(remote_conn, local_conn)
+		io.Copy(remote_conn, local_conn) // nolint: errcheck
 		done <- true
 	}()
 
-	io.Copy(local_conn, remote_conn)
+	io.Copy(local_conn, remote_conn) // nolint: errcheck
 
 	<-done
-	return
 }
 
 func (c *Client) RemoteForwardDial(ctx context.Context, remoteAddr string, dial Dial) error {

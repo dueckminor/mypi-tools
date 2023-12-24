@@ -11,10 +11,6 @@ import (
 	"github.com/dueckminor/mypi-tools/go/util"
 )
 
-func init() {
-
-}
-
 func updateCertificate(filename string, dNSNames []string) error {
 	ca, err := pki.LoadCA("/opt/mypi/config/pki/root_ca")
 	if err != nil {
@@ -44,7 +40,10 @@ func updateCertificate(filename string, dNSNames []string) error {
 	if err != nil {
 		panic(err)
 	}
-	id.Save(filename)
+	err = id.Save(filename)
+	if err != nil {
+		panic(err)
+	}
 
 	return nil
 }

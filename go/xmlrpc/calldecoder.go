@@ -128,7 +128,10 @@ func (dec *calldecoder) readNamedString(name string) (methodName string, err err
 		return "", err
 	}
 
-	dec.waitForEndElement(name)
+	err = dec.waitForEndElement(name)
+	if err != nil {
+		return "", err
+	}
 
 	return string(data), nil
 }
@@ -154,7 +157,6 @@ type MethodCallParserCB interface {
 type methodCallParserCB struct {
 	dec      *calldecoder
 	elements []string
-	result   interface{}
 }
 
 func (cb *methodCallParserCB) GetCallParam(v interface{}) (err error) {
@@ -196,6 +198,9 @@ func (dec *calldecoder) parseMethodCall(mcp MethodCallParser) (err error) {
 		return err
 	}
 	methodName, err := dec.readMethodName()
+	if err != nil {
+		return err
+	}
 	_, err = dec.waitForStartElement("params")
 	if err != nil {
 		return err
@@ -246,6 +251,9 @@ func (dec *calldecoder) parseMethodCall(mcp MethodCallParser) (err error) {
 			return err
 		}
 		name, err = dec.readNamedString("name")
+		if err != nil {
+			return err
+		}
 		if name != "params" {
 			return invalidXmlError
 		}
@@ -258,7 +266,10 @@ func (dec *calldecoder) parseMethodCall(mcp MethodCallParser) (err error) {
 			dec:      dec,
 			elements: []string{"value"},
 		}
-		mcp.ParseMethodCall(methodName, cb)
+		err = mcp.ParseMethodCall(methodName, cb)
+		if err != nil {
+			return err
+		}
 		dec.result = append(dec.result, []byte("<value><array><data>")...)
 		dec.result = append(dec.result, []byte("<value></value>")...)
 		dec.result = append(dec.result, []byte("</data></array></value>")...)

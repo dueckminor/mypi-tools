@@ -1,32 +1,36 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
-	"syscall"
-	"flag"
 	"os/signal"
+	"syscall"
+
 	"github.com/dueckminor/mypi-tools/go/config"
 	"github.com/dueckminor/mypi-tools/go/users"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 var (
-	mypiRoot = flag.String("mypi-root","","The root of the mypi filesystem")
+	mypiRoot = flag.String("mypi-root", "", "The root of the mypi filesystem")
 )
 
 func init() {
 	flag.Parse()
-	if (mypiRoot != nil && len(*mypiRoot) > 0) {
-		config.InitApp(*mypiRoot)
+	if mypiRoot != nil && len(*mypiRoot) > 0 {
+		err := config.InitApp(*mypiRoot)
+		if err != nil {
+			panic(err)
+		}
 	}
-	
-	state, _ := terminal.GetState(int(syscall.Stdin))
-	c := make(chan os.Signal)
+
+	state, _ := term.GetState(int(syscall.Stdin))
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	go func() {
 		<-c
-		terminal.Restore(int(syscall.Stdin),state)
+		term.Restore(int(syscall.Stdin), state) // nolint: errcheck
 		fmt.Println("")
 		os.Exit(1)
 	}()
@@ -34,7 +38,7 @@ func init() {
 
 func readPassword(prompt string) string {
 	fmt.Print(prompt + ": ")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
+	bytePassword, err := term.ReadPassword(int(syscall.Stdin))
 	fmt.Println("")
 	if err != nil {
 		return ""
@@ -61,7 +65,7 @@ func main() {
 	}
 
 	err := users.AddUser(username, password)
-	if (err != nil) {
+	if err != nil {
 		panic(err)
 	}
 

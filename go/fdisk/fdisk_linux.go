@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// nolint: unused
 type linuxSFDiskPartition struct {
 	Node  string `json:"node"`
 	Start string `json:"start"`
@@ -13,18 +14,21 @@ type linuxSFDiskPartition struct {
 	Type  string `json:"type"`
 }
 
+// nolint: unused
 type linuxSFDiskPartitionTable struct {
 	Label      string                 `json:"label"`
 	Id         string                 `json:"id"`
 	Device     string                 `json:"device"`
 	Unit       string                 `json:"unit"`
-	Partitions []linuxSFDiskPartition `json:"device"`
+	Partitions []linuxSFDiskPartition `json:"partitions"`
 }
 
+// nolint: unused
 type linuxSFDiskInfo struct {
 	PartitionTable linuxSFDiskPartitionTable `json:"partitiontable"`
 }
 
+// nolint: unused
 func makeDevName(diskName string) string {
 	if strings.HasPrefix(diskName, "/dev/") {
 		return diskName
@@ -32,36 +36,53 @@ func makeDevName(diskName string) string {
 	return "/dev/" + diskName
 }
 
+// nolint: unused
 type linuxDisk struct {
 	devName string
 	size    int64
 }
 
+// nolint: unused
 func (d *linuxDisk) GetDeviceName() string {
 	return d.devName
 }
+
+// nolint: unused
 func (d *linuxDisk) GetDeviceFileName() string {
 	return d.devName
 }
+
+// nolint: unused
 func (d *linuxDisk) GetName() string {
 	return d.devName
 }
+
+// nolint: unused
 func (d *linuxDisk) GetSize() int64 {
 	return 0
 }
+
+// nolint: unused
 func (d *linuxDisk) IsRemovable() bool {
 	return false
 }
+
+// nolint: unused
 func (d *linuxDisk) GetPartitions() ([]Partition, error) {
 	return nil, nil
 }
+
+// nolint: unused
 func (d *linuxDisk) InitializePartitions(Type string, partitionInfos ...PartitionInfo) error {
 	return nil
 }
+
+// nolint: unused
 func (d *linuxDisk) CreatePartitions(partitionInfos ...PartitionInfo) error {
 	return nil
 }
 
+// nolint: unused
 func newLinuxDisk(diskName string) (Disk, error) {
 	diskName = makeDevName(diskName)
 

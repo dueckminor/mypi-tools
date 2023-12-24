@@ -38,7 +38,11 @@ func (h *CertHandler) GetCertificates(c *gin.Context) {
 }
 
 func (h *CertHandler) PostCertificates(c *gin.Context) {
-	h.certificates.CreatePKI()
+	_, err := h.certificates.CreatePKI()
+	if err != nil {
+		c.AbortWithStatus(http.StatusInternalServerError)
+		return
+	}
 	result, err := h.certificates.Get()
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)

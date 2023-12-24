@@ -52,7 +52,7 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) Service {
 	}
 
 	svcs.Subscribe("mypi-router/go/port", func(topic string, value any) {
-		comp.connector.SetLocalRouterPort(value.(int))
+		comp.connector.SetLocalRouterPort(value.(int)) // nolint: errcheck
 	})
 
 	sshFS, err := comp.connector.GetHttpFS()
@@ -62,7 +62,10 @@ func newServiceDebug(svcs *services, rgAPI *gin.RouterGroup) Service {
 
 	ccNodejs := newComponent(svc, "web")
 
-	ccNodejs.Start()
+	err = ccNodejs.Start()
+	if err != nil {
+		comp.SetState("failed")
+	}
 	svc.GetComponent("web")
 
 	return svc

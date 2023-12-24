@@ -32,7 +32,10 @@ func NewServer(f Factory) (s *Server, err error) {
 		Factory: f,
 	}
 
-	utils.ApplyDefaultValues(s.Opt)
+	err = utils.ApplyDefaultValues(s.Opt)
+	if err != nil {
+		return nil, err
+	}
 	s.Opt.PermitWrite = true
 	s.titleTemplate, err = texttemplate.New("title").Parse(s.Opt.TitleFormat)
 	return s, err
@@ -56,7 +59,10 @@ func Handler(ctx context.Context, w http.ResponseWriter, r *http.Request, f Fact
 		fmt.Println("Failed to set websocket upgrade: %V", err)
 		return
 	}
-	srv.ProcessWSConn(ctx, conn)
+	err = srv.ProcessWSConn(ctx, conn)
+	if err != nil {
+		fmt.Println("Failed to process websocket: %V", err)
+	}
 }
 
 func (server *Server) titleVariables(order []string, varUnits map[string]map[string]interface{}) map[string]interface{} {

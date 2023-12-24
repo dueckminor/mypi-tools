@@ -20,7 +20,10 @@ var (
 func init() {
 	flag.Parse()
 	if mypiRoot != nil && len(*mypiRoot) > 0 {
-		config.InitApp(*mypiRoot)
+		err := config.InitApp(*mypiRoot)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 

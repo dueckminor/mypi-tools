@@ -54,7 +54,10 @@ func (p *PkiGenerator) GenerateRoot() (err error) {
 }
 
 func (p *PkiGenerator) GenerateServerCert(name string, dns ...string) (err error) {
-	p.GenerateRoot()
+	err = p.GenerateRoot()
+	if err != nil {
+		return err
+	}
 
 	id, err := CreateIdentity()
 	if err != nil {
@@ -68,7 +71,10 @@ func (p *PkiGenerator) GenerateServerCert(name string, dns ...string) (err error
 		NotAfter:  time.Now().AddDate(1, 0, 0),
 	}
 
-	p.CA.IssueCertificate(id, template)
+	_, err = p.CA.IssueCertificate(id, template)
+	if err != nil {
+		return err
+	}
 
 	return id.Save(p.getFileName(name, "tls"))
 }
@@ -112,7 +118,10 @@ func Setup() {
 		if err != nil {
 			panic(err)
 		}
-		id.Save(mypiRoot + "/config/pki/tls")
+		err = id.Save(mypiRoot + "/config/pki/tls")
+		if err != nil {
+			panic(err)
+		}
 	}
 
 }

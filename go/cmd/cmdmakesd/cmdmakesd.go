@@ -18,6 +18,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	"github.com/dueckminor/mypi-tools/go/downloads"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
+	"github.com/dueckminor/mypi-tools/go/util/panic"
 	"github.com/fatih/color"
 	"gopkg.in/yaml.v3"
 
@@ -133,7 +134,10 @@ func createAPKOVL(w DirWriter, filename string, settings *settings) error {
 		return err
 	}
 	var staticFileInfos staticFileInfos
-	yaml.Unmarshal(staticFileInfosYml, &staticFileInfos)
+	err = yaml.Unmarshal(staticFileInfosYml, &staticFileInfos)
+	if err != nil {
+		return err
+	}
 
 	err = filepath.Walk(staticFiles, func(fileName string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -261,14 +265,6 @@ func (cmd cmdMakeSD) UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}
 	return settings, err
 }
 
-func createSSHKeys(settings *settings) error {
-	// ssh-keygen -t dsa -b 1024 -f ssh_host_dsa_key -N ""
-	// ssh-keygen -t rsa -b 3072 -f ssh_host_rsa_key -N ""
-	// ssh-keygen -t ecdsa -f ssh_host_ecdsa_key -N ""
-	// ssh-keygen -t ed25519 -f ssh_host_ed25519_key -N ""
-	return nil
-}
-
 func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	settings, ok := parsedArgs.(*settings)
 	if !ok {
@@ -319,68 +315,49 @@ func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
 	dirTarget := settings.DirTarget
 	if len(settings.ZipTarget) > 0 {
 		filewriter, err := os.Create(settings.ZipTarget)
-		if err != nil {
-			panic(err)
-		}
+		panic.OnError(err)
 		w, err = NewZipWriter(filewriter)
-		if err != nil {
-			panic(err)
-		}
+		panic.OnError(err)
 	} else {
 		if len(dirTarget) == 0 {
 			disk, err := fdisk.GetDisk(settings.Disk)
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 
 			if !disk.IsRemovable() {
 				return nil
 			}
 
-			disk.InitializePartitions("MBR", fdisk.PartitionInfo{
+			err = disk.InitializePartitions("MBR", fdisk.PartitionInfo{
 				Size:   256 * 1024 * 1024,
 				Format: "FAT32",
 				Type:   7,
 				Name:   "RPI-BOOT",
 			})
+			panic.OnError(err)
 
 			disk, err = fdisk.GetDisk(settings.Disk)
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 
 			partitions, err := disk.GetPartitions()
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 
 			dirTarget, err = partitions[0].GetMountPoint()
-			if err != nil {
-				panic(err)
-			}
+			panic.OnError(err)
 		}
 		w, err = NewFileWriter(dirTarget)
-		if err != nil {
-			panic(err)
-		}
+		panic.OnError(err)
 	}
 	defer w.Close()
 
 	err = TarGzFileExtract(alpineFileDownloader.GetTargetFile(), w)
-	if err != nil {
-		panic(err)
-	}
+	panic.OnError(err)
 
 	// there has to be exactly ONE `*.apkovl.tar.gz` in the root-directory
 	err = createAPKOVL(w, settings.Hostname+".apkovl.tar.gz", settings)
-	if err != nil {
-		panic(err)
-	}
+	panic.OnError(err)
 
 	err = writeSimpleFile(w, "mypiuuid.txt", []byte(settings.MypiUUID+"\n"))
-	if err != nil {
-		panic(err)
-	}
+	panic.OnError(err)
 
 	fmt.Println("")
 	c.Print("                   ")

@@ -31,7 +31,6 @@ func NewBufferedTty() (tty BufferedTty, err error) {
 ///////////////////////////////////////////////////////////////////
 
 type bufferedTty struct {
-	instance  int
 	first     chan *line
 	active    chan *line
 	activePty pty.Pty
@@ -69,8 +68,11 @@ func (t *bufferedTty) CreatePTY() (pty.Pty, error) {
 	t.activePty = pty
 
 	go func() {
-		io.Copy(t, pty)
-		pty.Close()
+		defer pty.Close()
+		_, err = io.Copy(t, pty)
+		if err != nil {
+			return
+		}
 		t.activePty = nil
 	}()
 

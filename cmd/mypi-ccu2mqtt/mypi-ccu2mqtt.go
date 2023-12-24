@@ -81,7 +81,9 @@ func main() {
 	devices, _ := ccuc.GetDevices()
 
 	for _, device := range devices {
-		device.GetValues()
+		if _, err := device.GetValues(); err != nil {
+			continue
+		}
 		topic := "hm/" + device.Address() + "/@TYPE"
 		payload := device.Type()
 		mqttClient.Publish(topic, 2, true, payload)
@@ -106,7 +108,10 @@ func main() {
 
 		if device != nil && err == nil {
 			var value interface{}
-			json.Unmarshal(msg.Payload(), &value)
+			err = json.Unmarshal(msg.Payload(), &value)
+			if err != nil {
+				return
+			}
 			changed, _ := device.SetValueIfChanged(valueName, value)
 			if changed {
 				fmt.Println("->", topic, value)

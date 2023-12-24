@@ -3,7 +3,7 @@ package xmlrpc
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -18,8 +18,8 @@ type book struct {
 }
 
 type bookUnexported struct {
-	title  string
-	amount int
+	title  string //nolint: unused
+	amount int    //nolint: unused
 }
 
 var unmarshalTests = []struct {
@@ -50,14 +50,14 @@ var unmarshalTests = []struct {
 	{-12.134, new(*float32), "<value><double>-12.134</double></value>"},
 
 	// datetime.iso8601
-	{_time("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12Z</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12-01:00"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12-01:00</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12+01:00"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12+01:00</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12Z</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12-01:00"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12-01:00</dateTime.iso8601></value>"},
-	{_time("2013-12-09T21:00:12+01:00"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12+01:00</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12Z</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12-01:00"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12-01:00</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12+01:00"), new(*time.Time), "<value><dateTime.iso8601>20131209T21:00:12+01:00</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12Z"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12Z</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12-01:00"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12-01:00</dateTime.iso8601></value>"},
+	{makeTime("2013-12-09T21:00:12+01:00"), new(*time.Time), "<value><dateTime.iso8601>2013-12-09T21:00:12+01:00</dateTime.iso8601></value>"},
 
 	// array
 	{[]int{1, 5, 7}, new(*[]int), "<value><array><data><value><int>1</int></value><value><int>5</int></value><value><int>7</int></value></data></array></value>"},
@@ -71,7 +71,7 @@ var unmarshalTests = []struct {
 	{map[string]interface{}{}, new(interface{}), "<value><struct></struct></value>"},
 }
 
-func _time(s string) time.Time {
+func makeTime(s string) time.Time {
 	t, err := time.Parse(time.RFC3339, s)
 	if err != nil {
 		panic(fmt.Sprintf("time parsing error: %v", err))
@@ -79,7 +79,7 @@ func _time(s string) time.Time {
 	return t
 }
 
-func Test_unmarshal(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	for _, tt := range unmarshalTests {
 		v := reflect.New(reflect.TypeOf(tt.value))
 		if err := unmarshal([]byte(tt.xml), v.Interface()); err != nil {
@@ -88,21 +88,21 @@ func Test_unmarshal(t *testing.T) {
 
 		v = v.Elem()
 
-		if v.Kind() == reflect.Slice {
-			vv := reflect.ValueOf(tt.value)
-			if vv.Len() != v.Len() {
-				t.Fatalf("unmarshal error:\nexpected: %v\n     got: %v", tt.value, v.Interface())
-			}
-			for i := 0; i < v.Len(); i++ {
-				if v.Index(i).Interface() != vv.Index(i).Interface() {
-					t.Fatalf("unmarshal error:\nexpected: %v\n     got: %v", tt.value, v.Interface())
-				}
-			}
-		} else {
+		if v.Kind() != reflect.Slice {
 			a1 := v.Interface()
 			a2 := interface{}(tt.value)
 
 			if !reflect.DeepEqual(a1, a2) {
+				t.Fatalf("unmarshal error:\nexpected: %v\n     got: %v", tt.value, v.Interface())
+			}
+			continue
+		}
+		vv := reflect.ValueOf(tt.value)
+		if vv.Len() != v.Len() {
+			t.Fatalf("unmarshal error:\nexpected: %v\n     got: %v", tt.value, v.Interface())
+		}
+		for i := 0; i < v.Len(); i++ {
+			if v.Index(i).Interface() != vv.Index(i).Interface() {
 				t.Fatalf("unmarshal error:\nexpected: %v\n     got: %v", tt.value, v.Interface())
 			}
 		}
@@ -117,7 +117,7 @@ func Test_unmarshal(t *testing.T) {
 // 	}
 // }
 
-func Test_typeMismatchError(t *testing.T) {
+func TestTypeMismatchError(t *testing.T) {
 	var s string
 
 	encoded := "<value><int>100</int></value>"
@@ -132,30 +132,13 @@ func Test_typeMismatchError(t *testing.T) {
 	}
 }
 
-func Test_unmarshalEmptyValueTag(t *testing.T) {
+func TestUnmarshalEmptyValueTag(t *testing.T) {
 	var v int
 
 	if err := unmarshal([]byte("<value/>"), &v); err != nil {
 		t.Fatalf("unmarshal error: %v", err)
 	}
 }
-
-const structEmptyXML = `
-<value>
-  <struct>
-  </struct>
-</value>
-`
-
-// func Test_unmarshalEmptyStruct(t *testing.T) {
-// 	var v interface{}
-// 	if err := unmarshal([]byte(structEmptyXML), &v); err != nil {
-// 		t.Fatal(err)
-// 	}
-// 	if v == nil {
-// 		t.Fatalf("got nil map")
-// 	}
-// }
 
 const arrayValueXML = `
 <value>
@@ -170,7 +153,7 @@ const arrayValueXML = `
 </value>
 `
 
-func Test_unmarshalExistingArray(t *testing.T) {
+func TestUnmarshalExistingArray(t *testing.T) {
 
 	var (
 		v1 int
@@ -202,8 +185,8 @@ func Test_unmarshalExistingArray(t *testing.T) {
 	}
 }
 
-func Test_decodeNonUTF8Response(t *testing.T) {
-	data, err := ioutil.ReadFile("fixtures/cp1251.xml")
+func TestDecodeNonUTF8Response(t *testing.T) {
+	data, err := os.ReadFile("fixtures/cp1251.xml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,7 +222,7 @@ type ParameterDescription struct {
 
 type ParamsetDescription map[string]*ParameterDescription
 
-func Test_decodeCCU(t *testing.T) {
+func TestDecodeCCU(t *testing.T) {
 	data := []byte(`<?xml version="1.0" encoding="UTF-8"?>
 	<methodResponse>
 	   <params>

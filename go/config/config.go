@@ -66,6 +66,9 @@ func findRoot() string {
 	}
 	if nil == mypiConfig {
 		mypiConfig, err = readConfigFile(mypiYML)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return mypiRoot
 }
@@ -235,7 +238,6 @@ func (c *configImpl) GetBool(path ...interface{}) bool {
 	default:
 		return false
 	}
-	return false
 }
 
 func (c *configImpl) GetArray(path ...interface{}) []Config {
@@ -357,7 +359,10 @@ func InitApp(root string) (err error) {
 	if err != nil {
 		return err
 	}
-	cfg.SetString("root", root)
+	err = cfg.SetString("root", root)
+	if err != nil {
+		return err
+	}
 
 	fmt.Println(mypiConfig.GetString("config", "root"))
 

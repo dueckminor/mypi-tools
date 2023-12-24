@@ -1,7 +1,7 @@
 package webhandler
 
 import (
-	"encoding/json"
+	"net/http"
 
 	"github.com/dueckminor/mypi-tools/go/fdisk"
 	"github.com/gin-gonic/gin"
@@ -25,6 +25,5 @@ func GetDisks(c *gin.Context) {
 			}
 		}
 	}
-	data, err := json.Marshal(diskInfos)
-	c.Data(200, "application/json", data)
+	c.JSON(http.StatusOK, diskInfos)
 }

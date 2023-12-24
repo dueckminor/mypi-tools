@@ -36,7 +36,10 @@ func ApplyDefaultValues(struct_ interface{}) (err error) {
 		default:
 			val = field.Value()
 		}
-		field.Set(val)
+		err = field.Set(val)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }

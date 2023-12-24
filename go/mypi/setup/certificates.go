@@ -44,9 +44,17 @@ func (c *Certificates) Get() (certs []*Certificate, err error) {
 
 func (c *Certificates) CreatePKI() (certs []*Certificate, err error) {
 	generator := c.pkiDir.GetGenerator()
-	generator.GenerateRoot()
-	generator.GenerateServerCert("localhost", "localhost")
-	generator.GenerateServerCert("mypi.fritz.box", "mypi.fritz.box")
-
+	err = generator.GenerateRoot()
+	if err != nil {
+		return nil, err
+	}
+	err = generator.GenerateServerCert("localhost", "localhost")
+	if err != nil {
+		return nil, err
+	}
+	err = generator.GenerateServerCert("mypi.fritz.box", "mypi.fritz.box")
+	if err != nil {
+		return nil, err
+	}
 	return c.Get()
 }
