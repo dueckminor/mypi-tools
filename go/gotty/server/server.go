@@ -115,7 +115,7 @@ func (server *Server) ProcessWSConn(ctx context.Context, conn *websocket.Conn) e
 		[]string{"server", "master", "slave"},
 		map[string]map[string]interface{}{
 			"server": server.Opt.TitleVariables,
-			"master": map[string]interface{}{
+			"master": {
 				"remote_addr": conn.RemoteAddr(),
 			},
 			"slave": slave.WindowTitleVariables(),
