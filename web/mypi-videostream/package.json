@@ -29,7 +29,7 @@
     "eslint": "^8.0.0",
     "eslint-plugin-vue": "^9.0.0",
     "vue-cli-plugin-vuetify": "~2.5.1",
-    "webpack-plugin-vuetify": "^2.0.0"
+    "webpack-plugin-vuetify": "^3.0.0"
   },
   "eslintConfig": {
     "root": true,
