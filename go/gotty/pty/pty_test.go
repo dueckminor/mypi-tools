@@ -31,8 +31,13 @@ func TestPtyLines(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		n, err := pty.Read(buf)
-		g.Expect(n, err).To(Equal(4))
+		read := 0
+		for read < 4 {
+			n, err := pty.Read(buf[read : read+2])
+			g.Expect(err).To(BeNil())
+			read += n
+		}
+		g.Expect(read).To(Equal(4))
 	}()
 
 	err = cmd.Wait()
