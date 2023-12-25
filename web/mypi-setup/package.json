@@ -15,24 +15,23 @@
     "hack-font": "^3.3.0",
     "material-design-icons-iconfont": "^6.7.0",
     "roboto-fontface": "^0.10.0",
-    "vue": "^3.2.45",
-    "vue-router": "^4.1.6",
-    "vuetify": "^3.0.1",
+    "vue": "^3.3.13",
+    "vue-router": "^4.2.5",
+    "vuetify": "^3.4.8",
     "webfontloader": "^1.6.28",
-    "xterm": "^5.1.0",
+    "xterm": "^5.3.0",
     "xterm-addon-fit": "^0.8.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.2",
-    "@babel/eslint-parser": "^7.19.1",
+    "@babel/core": "^7.23.6",
+    "@babel/eslint-parser": "^7.23.3",
     "@vue/cli-plugin-babel": "^5.0.8",
     "@vue/cli-plugin-eslint": "^5.0.8",
     "@vue/cli-plugin-router": "^5.0.8",
     "@vue/cli-service": "^5.0.8",
-    "eslint": "^8.28.0",
+    "eslint": "^8.56.0",
     "eslint-plugin-vue": "^9.0.0",
-    "vue-cli-plugin-vuetify": "^2.5.8",
-    "webpack-plugin-vuetify": "^3.0.0"
+    "vue-cli-plugin-vuetify": "^2.5.8"
   },
   "eslintConfig": {
     "root": true,
