@@ -36,6 +36,7 @@ func (ff *FFMPEG) makeArgs() []string {
 	return args
 }
 
+// nolint: unused
 func (ff *FFMPEG) makeArgsDash() []string {
 	args := []string{"-i", ff.url}
 
@@ -74,7 +75,7 @@ func (ff *FFMPEG) exec(ctx context.Context) (done chan bool, err error) {
 	done = make(chan bool)
 
 	go func(cmd *exec.Cmd) {
-		cmd.Wait()
+		cmd.Wait() // nolint: errcheck
 		ff.cmd = nil
 		done <- true
 	}(ff.cmd)
@@ -137,7 +138,7 @@ func (ff *FFMPEG) Run(ctx context.Context) (err error) {
 
 		if deadCount >= 3 {
 			fmt.Println("ffmpeg is running, but stopped writing files -> restart now")
-			ff.cmd.Process.Kill()
+			ff.cmd.Process.Kill() // nolint: errcheck
 		} else {
 			fmt.Println("ffmpeg is running, but stopped writing files -> restart soon")
 		}
@@ -149,5 +150,8 @@ func Run(ctx context.Context, dir, url string) {
 		dir: dir,
 		url: url,
 	}
-	ff.Run(ctx)
+	err := ff.Run(ctx)
+	if err != nil {
+		fmt.Println("ffmpeg ist not running anymore:", err)
+	}
 }
