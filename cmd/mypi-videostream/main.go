@@ -1,14 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"time"
 
 	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/ffmpeg"
 	"github.com/dueckminor/mypi-tools/go/restapi"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -28,45 +28,6 @@ func init() {
 		if err != nil {
 			panic(err)
 		}
-	}
-}
-
-func runFFMPEG(dir, url string) {
-	for {
-		args := []string{"-i", url}
-
-		args = append(args, "-an")
-		args = append(args, "-c:v")
-		args = append(args, "copy")
-
-		args = append(args, "-f")
-		args = append(args, "hls")
-		args = append(args, "-hls_flags")
-		args = append(args, "delete_segments")
-		args = append(args, "-hls_list_size")
-		args = append(args, "4")
-
-		args = append(args, path.Join(dir, "stream.m3u8"))
-
-		// args = append(args, "-an")
-		// args = append(args, "-c:v")
-		// args = append(args, "copy")
-		// args = append(args, "-f")
-		// args = append(args, "dash")
-		// args = append(args, "-window_size")
-		// args = append(args, "4")
-		// args = append(args, path.Join(dir, "stream.mpd"))
-
-		cmd := exec.Command("ffmpeg", args...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		err := cmd.Start()
-		if err != nil {
-			fmt.Println("ffmpeg failed to start:", err)
-			time.Sleep(time.Second * 30)
-			continue
-		}
-		cmd.Wait() // nolint: errcheck
 	}
 }
 
@@ -98,7 +59,7 @@ func main() {
 			panic(err)
 		}
 
-		go runFFMPEG(dir, url)
+		go ffmpeg.Run(context.Background(), dir, url)
 
 		r.GET(filter, func(c *gin.Context) {
 			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
