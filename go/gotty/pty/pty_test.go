@@ -1,12 +1,26 @@
 package pty
 
 import (
+	"io"
 	"os/exec"
 	"sync"
 	"testing"
 
 	. "github.com/onsi/gomega"
 )
+
+func readSomeData(reader io.Reader, buf []byte, atLeast int) (read int, err error) {
+	read = 0
+	for read < atLeast {
+		var n int
+		n, err = reader.Read(buf[read:])
+		read += n
+		if err != nil {
+			break
+		}
+	}
+	return read, err
+}
 
 func TestPtyLines(t *testing.T) {
 	g := NewGomegaWithT(t)
@@ -31,13 +45,8 @@ func TestPtyLines(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		read := 0
-		for read < 4 {
-			n, err := pty.Read(buf[read : read+2])
-			g.Expect(err).To(BeNil())
-			read += n
-		}
-		g.Expect(read).To(Equal(4))
+		read, err := readSomeData(pty, buf, 4)
+		g.Expect(read, err).To(Equal(4))
 	}()
 
 	err = cmd.Wait()
@@ -66,7 +75,7 @@ func TestPtyCols(t *testing.T) {
 	g.Expect(err).To(BeNil())
 
 	buf := make([]byte, 20)
-	n, err := pty.Read(buf)
+	n, err := readSomeData(pty, buf, 4)
 	g.Expect(n, err).To(Equal(4))
 
 	err = cmd.Wait()
