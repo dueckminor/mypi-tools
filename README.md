@@ -29,7 +29,7 @@ Runs on your Raspberry-PI and
     - `docker`
     - `bash`
     - `jq`
-- provides a managment Web-UI
+- provides a management Web-UI
 
 ### mypi-auth
 
@@ -47,55 +47,27 @@ Allows to access web-cams
 
 Reacts on owntracks events. It opens my gate when I come home.
 
-## Used Ports
-
-| Component   | Port | Webpack-Port |
-|-------------|------|--------------|
-| admin       | 9000 | 9001         |
-| auth        | 9100 | 9101         |
-| router      | 9200 | N/A          |
-| videostream | 9300 | 9301         |
-| owntracks   | 9400 | N/A          |
-| setup       | 9500 | 9501         |
-| control     | 9600 | 9601         |
-
 ## Dev-Environment
 
 To allow debugging of the GoLang and Web Applications you could use do the
 following:
 
-1. mount your `mypi` installation of your Raspberry-PI in the same directory
-as it is remote:
+```bash
+ssh mypi
+mypi service mypi-debug start
+```
+
+This starts a docker container with an `sshd` to allow port forwarding back
+to the developer notebook/pc.
 
 ```bash
-sshfs pi@rpi.fritz.box:/opt/mypi /opt/mypi
+./scripts/debug
 ```
 
-2. call the `prepare_debug` script:
+This starts the mypi-debug application which
 
-```bash
-./scripts/prepare_debug
-```
+- provides a web UI allowing to start/stop the different tools
+- establishes an SSH-tunnel to the docker container
+- uses the mypi-router code to forward requests to the correct tool
 
-
-
-```txt
-Developer-PC                 | Raspberry-PI
------------------------------+----------------------
-                             |
-+--------------+             | 443  +-------+
-| Browser      |-------------|--->--| ngnix |----+
-+--------------+             |      +-------+    |
-                             |                   |
-+-------------+  8080   +----+--------+          |
-| MyPI-Admin  |----<----|  SSH-Tunnel |-----<----+
-| (GO)        |---->----|             |-->--+
-+-------------+  11111  +-------------+     |
-      |                      |              |
-      | 9100                 |              |
-      |                      |  +--------------+
-+------------|               |  | Docker-API   |
-| MyPI-Admin |               |  +--------------+
-| (JS)       |               |
-+------------+               |
-```
+![mypi-debug](docs/mypi-debug.svg)
