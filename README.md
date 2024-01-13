@@ -37,7 +37,26 @@ The user authentication service. Provides a Login-UI.
 
 ### mypi-router
 
-Allows to add authentication in front of apps.
+All requests from the internet are routed to the applications by the
+`mypi-router`. Plain HTTP requests will just be redirected to HTTPS, the only
+exception are lets-encrypt challenges.
+
+To decide, how HTTPS connections shall be routed, the `mypi-router` parses,
+the first TLS packet and extracts the SNI extension. If the SNI extension is
+missing, or the requested server-name is unknown, the `mypi-router` will just
+close the connection. This filters out most unwanted traffic without giving
+potential attackers to much information.
+
+For known server-names, the `mypi-router` supports different routing methods:
+
+- forward to application directly (the application has to perform
+  the TLS handshake itself)
+- terminate the TLS connection and forward the HTTP content to the application
+  - without modifying the headers
+  - with an additional layer of authentication (using `mypi-auth`)
+  - use HTTPS to connect to the application
+
+![mypi-router](docs/mypi-router.svg)
 
 ### mypi-videostream
 
