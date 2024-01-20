@@ -6,7 +6,6 @@ import (
 
 	"github.com/dueckminor/mypi-tools/go/users"
 
-	"github.com/docker/docker/api/types"
 	"github.com/dueckminor/mypi-tools/go/docker"
 
 	"github.com/docker/docker/api/types/container"
@@ -79,7 +78,7 @@ func (wh *WebHandler) putDynDNS(c *gin.Context) {
 }
 
 func (wh *WebHandler) getContainers(c *gin.Context) {
-	containers, err := wh.dockerCLI.ContainerList(c, types.ContainerListOptions{})
+	containers, err := wh.dockerCLI.ContainerList(c, container.ListOptions{})
 	if err != nil {
 		c.AbortWithStatus(http.StatusInternalServerError)
 	}
