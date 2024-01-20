@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 )
 
@@ -22,7 +23,7 @@ type Container struct {
 }
 
 func GetContainersRaw(ctx context.Context) (containers []types.Container, err error) {
-	return cli.ContainerList(ctx, types.ContainerListOptions{})
+	return cli.ContainerList(ctx, container.ListOptions{})
 }
 
 func makeContainer(dockerContainer types.Container) *Container {
@@ -39,7 +40,7 @@ func makeContainer(dockerContainer types.Container) *Container {
 }
 
 func GetContainers(ctx context.Context) (containers []*Container, err error) {
-	dockerContainers, err := cli.ContainerList(ctx, types.ContainerListOptions{})
+	dockerContainers, err := cli.ContainerList(ctx, container.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +54,10 @@ func GetContainers(ctx context.Context) (containers []*Container, err error) {
 	return containers, nil
 }
 
-func GetContainer(ctx context.Context, name string) (container *Container, err error) {
+func GetContainer(ctx context.Context, name string) (result *Container, err error) {
 	args := filters.NewArgs()
 	args.Add("name", "/"+name)
-	dockerContainers, err := cli.ContainerList(ctx, types.ContainerListOptions{
+	dockerContainers, err := cli.ContainerList(ctx, container.ListOptions{
 		Filters: args,
 	})
 	if err != nil {
