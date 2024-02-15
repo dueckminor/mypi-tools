@@ -211,6 +211,7 @@ type AuthConfig struct {
 	ClientID     string `yaml:"client_id"`
 	ClientSecret string `yaml:"client_secret"`
 	ServerKey    string `yaml:"server_key"`
+	Secret       string `yaml:"secret"`
 }
 
 // /////////////////////////////////////////////////////////////////////////////
@@ -579,6 +580,7 @@ func (c *GatewayConfig) GetAuthClient() *auth.AuthClient {
 	ac.AuthURI = c.Auth.URI
 	ac.ClientID = c.Auth.ClientID
 	ac.ClientSecret = c.Auth.ClientSecret
+	ac.Secret = c.Auth.Secret
 
 	ServerKey := c.Auth.ServerKey
 

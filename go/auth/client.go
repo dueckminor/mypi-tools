@@ -22,6 +22,7 @@ type AuthClient struct {
 	ClientID     string
 	ClientSecret string
 	ServerKey    *rsa.PublicKey
+	Secret       string
 }
 
 func (ac *AuthClient) RegisterHandler(e *gin.Engine) {
@@ -91,6 +92,21 @@ func (ac *AuthClient) handleAuthForApi(c *gin.Context) {
 func (ac *AuthClient) handleAuth(c *gin.Context) {
 	if ac.verifySession(c) || c.IsAborted() {
 		return
+	}
+
+	if ac.Secret != "" {
+		secret := c.Request.URL.Query().Get("mypi-secret")
+		if secret == ac.Secret {
+			session := sessions.Default(c)
+			session.Set("access_token", "anonymous")
+			session.Set("hostname", ginutil.GetHostname(c))
+			err := session.Save()
+			if err != nil {
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+			return
+		}
 	}
 
 	scheme := ginutil.GetScheme(c)
