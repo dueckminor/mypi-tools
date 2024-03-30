@@ -8,7 +8,7 @@
     "lint": "eslint . --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@mdi/font": "7.0.96",
+    "@mdi/font": "7.4.47",
     "axios": "^1.6.8",
     "core-js": "^3.34.0",
     "hack-font": "^3.3.0",
