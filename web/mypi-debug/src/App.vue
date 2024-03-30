@@ -1,5 +1,5 @@
 <template>
-  <v-app light id="app">
+  <v-app id="app">
     <v-navigation-drawer app v-model="drawer" hide-overlay stateless>
       <v-list nav>
         <v-list-item v-for="item in items" :key="item" :title="item.title" :prepend-icon="item.icon" :to="item.url"/>
@@ -16,51 +16,10 @@
   </v-app>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
+<script setup>
 import { useServiceStore } from "@/stores/ServiceStore";
 
-
-export default defineComponent({
-  name: "app",
-  sockets: {
-    connect() {
-      console.log('socket connected')
-    },
-    customEmit() {
-      console.log('this method was fired by the socket server. eg: io.emit("customEmit", data)')
-    }
-  },
-  setup() {
-    const serviceStore = useServiceStore()
-    console.log("serviceStore.fill")
-    serviceStore.fill()
-  },
-  components: {
-  },
-  created() {
-    // eslint-disable-next-line no-console
-    //console.log(serviceStore);
-    console.log("app-created");
-  },
-  mounted() {
-    // eslint-disable-next-line no-console
-    console.log("app-mounted");
-  },
-  data: function() {
-    return {
-      showLogin: true,
-      drawer: null,
-      items: [
-        {
-          title: "Debug",
-          url: "/debug",
-        },
-      ],
-    };
-  },
-  methods: {},
-});
+const serviceStore = useServiceStore()
+console.log("serviceStore.fill")
+serviceStore.fill()
 </script>
-
-<style></style>

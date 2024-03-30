@@ -1,20 +1,20 @@
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
-import 'hack-font/build/web/hack.css'
+/**
+ * main.js
+ *
+ * Bootstraps Vuetify and other plugins then mounts the App`
+ */
 
-import { createApp } from 'vue'
-import { createPinia } from 'pinia';
-import vuetify from './plugins/vuetify'
-import { loadFonts } from './plugins/webfontloader'
-import router from './router'
+// Plugins
+import { registerPlugins } from '@/plugins'
+
+// Components
 import App from './App.vue'
 
+// Composables
+import { createApp } from 'vue'
+
 const app = createApp(App)
-app.use(createPinia())
 
-loadFonts()
-
-app.use(router)
-app.use(vuetify)
+registerPlugins(app)
 
 app.mount('#app')
-

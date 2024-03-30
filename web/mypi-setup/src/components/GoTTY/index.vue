@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { Terminal as Xterm } from "xterm";
+import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 import "hack-font/build/web/hack.css";
@@ -13,12 +13,20 @@ import { WebTTY, protocols } from "./webtty";
 import { ConnectionFactory } from "./websocket";
 
 export default {
-  name: "XTerm",
+  name: "go-tty",
   props: ["path"],
   mounted() {
+    // eslint-disable-next-line no-console
+    console.log("mounted");
+
     var that = this;
     that.$nextTick(function() {
-      that._xterm = new Xterm({ fontFamily: "Hack, monospace" });
+      if (that._xterm) {
+        return
+      }
+      // eslint-disable-next-line no-console
+      console.log("creating xterm");
+      that._xterm = new Terminal({ fontFamily: "Hack, monospace", rows:10 });
       that._fitAddon = new FitAddon();
       that._xterm.open(that.$refs["xterm"]);
 
@@ -42,6 +50,8 @@ export default {
     });
   },
   beforeUnmount() {
+    // eslint-disable-next-line no-console
+    console.log("beforeUnmount");
     window.removeEventListener("resize", this.handleResize);
     this._xterm.dispose();
   },
@@ -99,6 +109,8 @@ export default {
       this._xterm.blur();
     },
     close() {
+      // eslint-disable-next-line no-console
+      console.log("close");
       this._xterm.destroy();
     }
   }

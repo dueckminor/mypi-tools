@@ -1,12 +1,20 @@
-import 'material-design-icons-iconfont/dist/material-design-icons.css'
-import { createApp } from 'vue'
+/**
+ * main.js
+ *
+ * Bootstraps Vuetify and other plugins then mounts the App`
+ */
+
+// Plugins
+import { registerPlugins } from '@/plugins'
+
+// Components
 import App from './App.vue'
-import vuetify from './plugins/vuetify'
-import { loadFonts } from './plugins/webfontloader'
-import router from './router'
 
-loadFonts()
+// Composables
+import { createApp } from 'vue'
 
-createApp(App).use(router)
-  .use(vuetify)
-  .mount('#app')
+const app = createApp(App)
+
+registerPlugins(app)
+
+app.mount('#app')

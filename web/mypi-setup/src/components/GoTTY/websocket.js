@@ -1,51 +1,45 @@
 "use strict";
-exports.__esModule = true;
-var ConnectionFactory = /** @class */ (function () {
-    function ConnectionFactory(url, protocols) {
+
+export class ConnectionFactory {
+    constructor(url, protocols) {
         this.url = url;
         this.protocols = protocols;
     }
-    ConnectionFactory.prototype.create = function () {
+    create() {
         return new Connection(this.url, this.protocols);
-    };
-    return ConnectionFactory;
-}());
-exports.ConnectionFactory = ConnectionFactory;
-var Connection = /** @class */ (function () {
-    function Connection(url, protocols) {
+    }
+}
+
+export class Connection {
+    constructor(url, protocols) {
         this.bare = new WebSocket(url, protocols);
     }
-    Connection.prototype.open = function () {
-        // nothing todo for websocket
-    };
-    Connection.prototype.close = function () {
+    open() {
+        // noop
+    }
+    close() {
         this.bare.close();
-    };
-    Connection.prototype.send = function (data) {
+    }
+    send(data) {
         this.bare.send(data);
-    };
-    Connection.prototype.isOpen = function () {
-        if (this.bare.readyState == WebSocket.CONNECTING ||
-            this.bare.readyState == WebSocket.OPEN) {
-            return true;
-        }
-        return false;
-    };
-    Connection.prototype.onOpen = function (callback) {
+    }
+    isOpen() {
+        return (this.bare.readyState == WebSocket.CONNECTING ||
+            this.bare.readyState == WebSocket.OPEN)
+    }
+    onOpen(callback) {
         this.bare.onopen = function ( /*event*/) {
             callback();
         };
-    };
-    Connection.prototype.onReceive = function (callback) {
+    }
+    onReceive(callback) {
         this.bare.onmessage = function (event) {
             callback(event.data);
         };
-    };
-    Connection.prototype.onClose = function (callback) {
+    }
+    onClose(callback) {
         this.bare.onclose = function ( /*event*/) {
             callback();
         };
-    };
-    return Connection;
-}());
-exports.Connection = Connection;
+    }
+}

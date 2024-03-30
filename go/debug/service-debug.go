@@ -25,7 +25,7 @@ func (comp *componentDebug) startSSH(ctx context.Context) (result chan error, er
 		comp.connector = new(sshConnector)
 	}
 
-	result, err = comp.connector.Run(ctx, "ssh://pi@mypi:2022", 8443, pty)
+	result, err = comp.connector.Run(ctx, "ssh://pi@192.168.0.61:2022", 8443, pty)
 	if err != nil {
 		return nil, err
 	}

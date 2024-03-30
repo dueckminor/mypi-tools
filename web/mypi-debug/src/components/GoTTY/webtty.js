@@ -1,38 +1,39 @@
 "use strict";
-exports.__esModule = true;
-exports.protocols = ["webtty"];
-exports.msgInputUnknown = '0';
-exports.msgInput = '1';
-exports.msgPing = '2';
-exports.msgResizeTerminal = '3';
-exports.msgUnknownOutput = '0';
-exports.msgOutput = '1';
-exports.msgPong = '2';
-exports.msgSetWindowTitle = '3';
-exports.msgSetPreferences = '4';
-exports.msgSetReconnect = '5';
-var WebTTY = /** @class */ (function () {
-    function WebTTY(term, connectionFactory, args, authToken) {
+
+export const protocols = ["webtty"];
+export const msgInputUnknown = '0';
+export const msgInput = '1';
+export const msgPing = '2';
+export const msgResizeTerminal = '3';
+export const msgUnknownOutput = '0';
+export const msgOutput = '1';
+export const msgPong = '2';
+export const msgSetWindowTitle = '3';
+export const msgSetPreferences = '4';
+export const msgSetReconnect = '5';
+
+export class WebTTY {
+    constructor(term, connectionFactory, args, authToken) {
         this.term = term;
         this.connectionFactory = connectionFactory;
         this.args = args;
         this.authToken = authToken;
         this.reconnect = -1;
     }
-    WebTTY.prototype.open = function () {
-        var _this = this;
-        var connection = this.connectionFactory.create();
-        var pingTimer;
-        var reconnectTimeout;
-        var setup = function () {
+    open() {
+        let _this = this;
+        let connection = this.connectionFactory.create();
+        let pingTimer;
+        let reconnectTimeout;
+        let setup = function () {
             connection.onOpen(function () {
-                var termInfo = _this.term.info();
+                let termInfo = _this.term.info();
                 connection.send(JSON.stringify({
                     Arguments: _this.args,
                     AuthToken: _this.authToken
                 }));
-                var resizeHandler = function (colmuns, rows) {
-                    connection.send(exports.msgResizeTerminal + JSON.stringify({
+                let resizeHandler = function (colmuns, rows) {
+                    connection.send(msgResizeTerminal + JSON.stringify({
                         columns: colmuns,
                         rows: rows
                     }));
@@ -40,35 +41,29 @@ var WebTTY = /** @class */ (function () {
                 _this.term.onResize(resizeHandler);
                 resizeHandler(termInfo.columns, termInfo.rows);
                 _this.term.onInput(function (input) {
-                    connection.send(exports.msgInput + input);
+                    connection.send(msgInput + input);
                 });
                 pingTimer = setInterval(function () {
-                    connection.send(exports.msgPing);
+                    connection.send(msgPing);
                 }, 30 * 1000);
             });
             connection.onReceive(function (data) {
-                var payload = data.slice(1);
+                let payload = data.slice(1);
                 switch (data[0]) {
-                    case exports.msgOutput:
+                    case msgOutput:
                         _this.term.output(atob(payload));
                         break;
-                    case exports.msgPong:
+                    case msgPong:
                         break;
-                    case exports.msgSetWindowTitle:
+                    case msgSetWindowTitle:
                         _this.term.setWindowTitle(payload);
                         break;
-                    case exports.msgSetPreferences:
-                        {
-                            var preferences = JSON.parse(payload);
-                            _this.term.setPreferences(preferences);
-                        }
+                    case msgSetPreferences:
+                        _this.term.setPreferences(JSON.parse(payload));
                         break;
-                    case exports.msgSetReconnect:
-                        {
-                            var autoReconnect = JSON.parse(payload);
-                            //console.log("Enabling reconnect: " + autoReconnect + " seconds")
-                            _this.reconnect = autoReconnect;
-                        }
+                    case msgSetReconnect:
+                        //console.log("Enabling reconnect: " + autoReconnect + " seconds")
+                        _this.reconnect = JSON.parse(payload);
                         break;
                 }
             });
@@ -91,7 +86,5 @@ var WebTTY = /** @class */ (function () {
             clearTimeout(reconnectTimeout);
             connection.close();
         };
-    };
-    return WebTTY;
-}());
-exports.WebTTY = WebTTY;
+    }
+}

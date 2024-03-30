@@ -1,22 +1,16 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import DebugView from "../views/DebugView.vue";
+/**
+ * router/index.ts
+ *
+ * Automatic routes for `./src/pages/*.vue`
+ */
 
-const routes = [
-  {
-    path: "/",
-    name: "home",
-    component: DebugView,
-  },
-  {
-    path: "/debug",
-    name: "terminal",
-    component: DebugView,
-  },
-]
+// Composables
+import { createRouter, createWebHistory } from 'vue-router/auto'
+import { setupLayouts } from 'virtual:generated-layouts'
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
-  routes
+  history: createWebHistory(import.meta.env.BASE_URL),
+  extendRoutes: setupLayouts,
 })
 
 export default router

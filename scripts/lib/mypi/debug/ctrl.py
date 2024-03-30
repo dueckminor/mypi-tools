@@ -162,14 +162,27 @@ class CtrlWeb(Ctrl):
         w = WaitForDist(self, os.path.join(cwd,"dist"))
 
         subprocess.run(args=['npm','install'],cwd=cwd)
-        subprocess.run(args=
-            [
-                os.path.join(cwd,'node_modules/.bin/vue-cli-service'),
-                'build',
-                '--mode=development',
-                '--watch',
-                '--no-clean'
-            ],cwd=cwd)
+
+        vite = os.path.join(cwd,'node_modules/.bin/vite')
+        if os.path.exists(vite):
+            subprocess.run(args=
+                [
+                    vite,
+                    'build',
+                    '--mode=development',
+                    '--watch',
+                ],cwd=cwd)
+
+        else:
+            vue_cli_service = os.path.join(cwd,'node_modules/.bin/vue-cli-service')
+            subprocess.run(args=
+                [
+                    vue_cli_service,
+                    'build',
+                    '--mode=development',
+                    '--watch',
+                    '--no-clean'
+                ],cwd=cwd)
 
         w.stopped = True
         self.set_state("stopped")
