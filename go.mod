@@ -15,7 +15,7 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gin-contrib/cors v1.7.1
 	github.com/gin-contrib/sessions v0.0.5
-	github.com/gin-contrib/static v1.1.0
+	github.com/gin-contrib/static v1.1.1
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/googollee/go-socket.io v1.7.0
