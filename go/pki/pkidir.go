@@ -1,7 +1,7 @@
 package pki
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 	"strings"
 )
@@ -27,7 +27,7 @@ func (p *pkiDir) GetGenerator() *PkiGenerator {
 }
 
 func (p *pkiDir) GetIdentities() (identities []Identity, err error) {
-	files, err := ioutil.ReadDir(p.dir)
+	files, err := os.ReadDir(p.dir)
 	if err != nil {
 		return nil, err
 	}

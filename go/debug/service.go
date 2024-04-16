@@ -1,7 +1,7 @@
 package debug
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 
 	"golang.org/x/exp/maps"
@@ -85,7 +85,7 @@ func newGenericService(svcs *services, name string) Service {
 
 	servicesDir := path.Join(GetWorkspaceRoot(), "debug", "services", name, "components")
 
-	files, err := ioutil.ReadDir(servicesDir)
+	files, err := os.ReadDir(servicesDir)
 	if err != nil {
 		return nil
 	}

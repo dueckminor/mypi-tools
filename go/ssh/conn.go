@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -30,7 +29,7 @@ func (c *Client) AddPrivateKeyFile(filename string) (err error) {
 		}
 		filename = path.Join(user.HomeDir, ".ssh", filename)
 	}
-	key, err := ioutil.ReadFile(filename)
+	key, err := os.ReadFile(filename)
 	if err != nil {
 		return err
 	}

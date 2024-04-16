@@ -2,7 +2,6 @@ package setup
 
 import (
 	"io"
-	"io/ioutil"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -98,7 +97,7 @@ func TestTarReader(t *testing.T) {
 	f, err := tr.OpenFile()
 	g.Expect(f, err).NotTo(BeNil())
 
-	b, err := ioutil.ReadAll(f)
+	b, err := io.ReadAll(f)
 	g.Expect(b, err).To(Equal([]byte("b\n")))
 
 	fi, err = tr.NextFile()

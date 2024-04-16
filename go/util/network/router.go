@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/xml"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -72,7 +71,7 @@ func GetRouterExternalIPIpify() (publicIP *net.IPAddr, err error) {
 	if err != nil {
 		return nil, err
 	}
-	ip, err := ioutil.ReadAll(res.Body)
+	ip, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
 	}

@@ -3,7 +3,7 @@ package xmlrpc
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/rpc"
@@ -94,7 +94,7 @@ func (codec *clientCodec) ReadResponseHeader(response *rpc.Response) (err error)
 		return nil
 	}
 
-	body, err := ioutil.ReadAll(httpResponse.Body)
+	body, err := io.ReadAll(httpResponse.Body)
 	if err != nil {
 		response.Error = err.Error()
 		return nil

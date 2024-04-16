@@ -7,8 +7,8 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
 	"math/big"
+	"os"
 	"path/filepath"
 	"time"
 )
@@ -70,7 +70,7 @@ func (id *IdentityImpl) PrivateKey() *rsa.PrivateKey {
 
 func (id *IdentityImpl) Load(filename string) error {
 	id.label = filepath.Base(filename)
-	pem, err := ioutil.ReadFile(filename + "_priv.pem")
+	pem, err := os.ReadFile(filename + "_priv.pem")
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (id *IdentityImpl) Load(filename string) error {
 		return err
 	}
 	id.publicKey = &id.privateKey.PublicKey
-	pem, err = ioutil.ReadFile(filename + "_cert.pem")
+	pem, err = os.ReadFile(filename + "_cert.pem")
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func (id *IdentityImpl) Load(filename string) error {
 func (id *IdentityImpl) Save(filename string) error {
 	if id.privateKey != nil {
 		binary := x509.MarshalPKCS1PrivateKey(id.privateKey)
-		err := ioutil.WriteFile(filename+"_priv.pem", pem.EncodeToMemory(&pem.Block{
+		err := os.WriteFile(filename+"_priv.pem", pem.EncodeToMemory(&pem.Block{
 			Type:  "RSA PRIVATE KEY",
 			Bytes: binary,
 		}), 0600)
@@ -102,7 +102,7 @@ func (id *IdentityImpl) Save(filename string) error {
 		}
 	}
 	if id.certificate != nil {
-		err := ioutil.WriteFile(filename+"_cert.pem", pem.EncodeToMemory(&pem.Block{
+		err := os.WriteFile(filename+"_cert.pem", pem.EncodeToMemory(&pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: id.certificate.Raw,
 		}), 0644)

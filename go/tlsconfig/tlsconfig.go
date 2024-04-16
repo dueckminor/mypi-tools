@@ -3,7 +3,7 @@ package tlsconfig
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 )
 
 func NewTLSConfig() *tls.Config {
@@ -11,7 +11,7 @@ func NewTLSConfig() *tls.Config {
 	// Alternatively, manually add CA certificates to
 	// default openssl CA bundle.
 	certpool := x509.NewCertPool()
-	pemCerts, err := ioutil.ReadFile("/opt/mypi/config/pki/root_ca_cert.pem")
+	pemCerts, err := os.ReadFile("/opt/mypi/config/pki/root_ca_cert.pem")
 	if err == nil {
 		certpool.AppendCertsFromPEM(pemCerts)
 	}

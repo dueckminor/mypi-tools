@@ -2,7 +2,7 @@ package ccu
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -37,7 +37,7 @@ func resolveHostIp() string {
 
 func (h *HttpHandler) ServeHTTP(res http.ResponseWriter, req *http.Request) {
 	defer req.Body.Close()
-	body, _ := ioutil.ReadAll(req.Body)
+	body, _ := io.ReadAll(req.Body)
 	response, err := xmlrpc.HandleMethodCall(body, h.ccuc)
 	if err == nil {
 		res.Write(response) // nolint: errcheck

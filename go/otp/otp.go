@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/pquerna/otp"
 
@@ -40,7 +40,7 @@ func main() {
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080
 
-	dat, err := ioutil.ReadFile("config/mypi.json")
+	dat, err := os.ReadFile("config/mypi.json")
 	fmt.Print(string(dat))
 
 	cli, err := docker.NewEnvClient()
