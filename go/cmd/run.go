@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 )
 
@@ -14,7 +14,7 @@ func UnmarshalAndExecute(args []string) (done bool, err error) {
 	var parsedArgs interface{}
 	if len(args) == 2 && args[1] == "@" {
 		var data []byte
-		data, err = ioutil.ReadAll(os.Stdin)
+		data, err = io.ReadAll(os.Stdin)
 		if err == nil {
 			parsedArgs, err = command.UnmarshalArgs(data)
 		}

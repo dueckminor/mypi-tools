@@ -2,8 +2,8 @@ package debug
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"os/exec"
 	"path"
 	"runtime"
@@ -87,7 +87,7 @@ func NewServices(r *gin.Engine) Services {
 func (svcs *services) load() error {
 	servicesDir := path.Join(GetWorkspaceRoot(), "debug", "services")
 
-	files, err := ioutil.ReadDir(servicesDir)
+	files, err := os.ReadDir(servicesDir)
 	if err != nil {
 		return err
 	}

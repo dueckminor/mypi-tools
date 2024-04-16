@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"flag"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -264,7 +263,7 @@ func GenerateRsaKeyPair(privFilename, pubFilename string) error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(pubFilename, pubPEM, 0644)
+	return os.WriteFile(pubFilename, pubPEM, 0644)
 }
 
 func main() {

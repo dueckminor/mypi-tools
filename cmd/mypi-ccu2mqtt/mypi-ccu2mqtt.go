@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -35,7 +34,7 @@ func main() {
 	var cfg Config
 
 	if (len(os.Args) == 2) && !strings.HasPrefix(os.Args[1], "-") && util.FileExists(os.Args[1]) {
-		data, err := ioutil.ReadFile(os.Args[1])
+		data, err := os.ReadFile(os.Args[1])
 		if err != nil {
 			panic(err)
 		}

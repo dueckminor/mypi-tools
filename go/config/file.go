@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	yaml "gopkg.in/yaml.v3"
@@ -21,7 +21,7 @@ func GetFilename(filenameParts ...string) string {
 }
 
 func FileToBytes(filenameParts ...string) ([]byte, error) {
-	dat, err := ioutil.ReadFile(GetFilename(filenameParts...))
+	dat, err := os.ReadFile(GetFilename(filenameParts...))
 	if err != nil {
 		return nil, err
 	}

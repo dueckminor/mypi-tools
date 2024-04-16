@@ -3,7 +3,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -285,11 +284,11 @@ func (c *configImplOnFile) Write() error {
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(c.filename, data, 0644)
+	return os.WriteFile(c.filename, data, 0644)
 }
 
 func readConfigFile(filename string) (Config, error) {
-	dat, err := ioutil.ReadFile(filename)
+	dat, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -19,7 +18,7 @@ import (
 )
 
 func getCPUSample() (idle, total uint64) {
-	contents, err := ioutil.ReadFile("/proc/stat")
+	contents, err := os.ReadFile("/proc/stat")
 	if err != nil {
 		return
 	}
@@ -92,7 +91,7 @@ type Report struct {
 }
 
 func getMemInfo() (memInfo MemInfo) {
-	contents, err := ioutil.ReadFile("/proc/meminfo")
+	contents, err := os.ReadFile("/proc/meminfo")
 	if err != nil {
 		return
 	}

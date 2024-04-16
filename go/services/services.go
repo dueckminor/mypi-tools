@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"io/ioutil"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/dueckminor/mypi-tools/go/docker"
@@ -33,7 +33,7 @@ var (
 func initServices() {
 	initOnce.Do(func() {
 		config.GetRoot()
-		files, err := ioutil.ReadDir(config.GetRoot() + "/services")
+		files, err := os.ReadDir(config.GetRoot() + "/services")
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -7,7 +7,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -129,7 +128,7 @@ func createAPKOVL(w DirWriter, filename string, settings *settings) error {
 
 	staticFiles := path.Join(settings.DirSetup, "static")
 
-	staticFileInfosYml, err := ioutil.ReadFile(path.Join(staticFiles, "fileinfos.yml"))
+	staticFileInfosYml, err := os.ReadFile(path.Join(staticFiles, "fileinfos.yml"))
 	if err != nil {
 		return err
 	}
@@ -180,7 +179,7 @@ func createAPKOVL(w DirWriter, filename string, settings *settings) error {
 		}
 		relativePath := path.Join(".", fileName[len(templateFiles):])
 
-		data, err := ioutil.ReadFile(fileName)
+		data, err := os.ReadFile(fileName)
 		if err != nil {
 			return err
 		}
