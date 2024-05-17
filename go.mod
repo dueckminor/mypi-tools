@@ -2,7 +2,7 @@ module github.com/dueckminor/mypi-tools
 
 go 1.21
 
-toolchain go1.22.2
+toolchain go1.22.3
 
 replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.5.1
 
