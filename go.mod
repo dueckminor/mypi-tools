@@ -20,7 +20,7 @@ require (
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-contrib/static v1.1.2
-	github.com/gin-gonic/gin v1.9.1
+	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/googollee/go-socket.io v1.7.0
 	github.com/gorilla/websocket v1.5.1
@@ -32,7 +32,7 @@ require (
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
 	golang.org/x/crypto v0.23.0
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842
-	golang.org/x/net v0.24.0
+	golang.org/x/net v0.25.0
 	golang.org/x/term v0.20.0
 	golang.org/x/text v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -102,6 +102,6 @@ require (
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.20.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
-	google.golang.org/protobuf v1.34.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gotest.tools/v3 v3.0.3 // indirect
 )
