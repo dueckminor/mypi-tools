@@ -14,7 +14,7 @@ require (
 	github.com/creack/pty v1.1.21
 	github.com/docker/docker v26.1.3+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.3
-	github.com/fatih/color v1.16.0
+	github.com/fatih/color v1.17.0
 	github.com/fatih/structs v1.1.0
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/gin-contrib/cors v1.7.1
