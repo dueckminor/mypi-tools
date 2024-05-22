@@ -25,4 +25,9 @@ mkdir -p "${DIR_ROOT}/build/mypi-owntracks"
 GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-owntracks/mypi-owntracks-linux-arm64" cmd/mypi-admin/*.go
 GOOS=linux GOARCH=arm go build -o "${DIR_ROOT}/build/mypi-owntracks/mypi-owntracks-linux-arm" cmd/mypi-admin/*.go
 
+echo "compiling mypi-mqtt-bridge..."
+mkdir -p "${DIR_ROOT}/build/mypi-mqtt-bridge"
+GOOS=linux GOARCH=arm64 go build -o "${DIR_ROOT}/build/mypi-mqtt-bridge/mypi-mqtt-bridge-linux-arm64" cmd/mypi-mqtt-bridge/*.go
+GOOS=linux GOARCH=arm go build -o "${DIR_ROOT}/build/mypi-mqtt-bridge/mypi-mqtt-bridge-linux-arm" cmd/mypi-mqtt-bridge/*.go
+
 go test ./... -race -coverprofile=coverage.txt -covermode=atomic
