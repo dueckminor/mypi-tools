@@ -4,19 +4,24 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"os"
+
+	"github.com/dueckminor/mypi-tools/go/config"
 )
 
 func NewTLSConfig() *tls.Config {
 	// Import trusted certificates from CAfile.pem.
 	// Alternatively, manually add CA certificates to
 	// default openssl CA bundle.
+
+	rootCaCert := config.GetFilename("config/pki/root_ca_cert.pem")
+
 	certpool := x509.NewCertPool()
-	pemCerts, err := os.ReadFile("/opt/mypi/config/pki/root_ca_cert.pem")
+	pemCerts, err := os.ReadFile(rootCaCert)
 	if err == nil {
 		certpool.AppendCertsFromPEM(pemCerts)
 	}
 	// Import client certificate/key pair
-	cert, err := tls.LoadX509KeyPair("/opt/mypi/config/pki/tls_cert.pem", "/opt/mypi/config/pki/tls_priv.pem")
+	cert, err := tls.LoadX509KeyPair(config.GetFilename("config/pki/tls_cert.pem"), config.GetFilename("config/pki/tls_priv.pem"))
 	if err != nil {
 		panic(err)
 	}
