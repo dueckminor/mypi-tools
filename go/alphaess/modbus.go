@@ -53,7 +53,10 @@ func RegisterSensors(ha homeassistant.HomeAssistantMqtt) {
 				Manufacturer: "Alpha ESS",
 			},
 		}
-		ha.AddSensorConfig("alphaess", sensorInfo.Name, config)
+		err := ha.AddSensorConfig("alphaess", sensorInfo.Name, config)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
@@ -68,12 +71,14 @@ func Run(uri string, mqttClient mqtt.Client, influx influxdb.Client) {
 	}
 
 	err = client.Open()
-
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	client.SetUnitId(0x55)
+	err = client.SetUnitId(0x55)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	for {
 		for _, sensorInfo := range sensorInfos {
