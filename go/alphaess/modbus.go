@@ -40,7 +40,7 @@ func RegisterSensors(ha homeassistant.HomeAssistantMqtt) {
 	for _, sensorInfo := range sensorInfos {
 		config := homeassistant.Config{
 			DeviceClass:       "energy",
-			StateClass:        "measurement",
+			StateClass:        "total",
 			Name:              sensorInfo.Name,
 			StateTopic:        fmt.Sprintf("alphaess/sensor/%s/state", sensorInfo.Name),
 			UnitOfMeasurement: sensorInfo.Unit,
