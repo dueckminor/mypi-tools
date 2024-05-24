@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/dueckminor/mypi-tools/go/mqtt"
 )
 
 type DeviceConfig struct {
@@ -32,12 +32,13 @@ type HomeAssistantMqtt interface {
 }
 
 type homeAssistantMqtt struct {
-	mqttClient mqtt.Client
+	broker mqtt.Broker
+	conn   mqtt.Conn
 }
 
-func NewHomeAssistantMqtt(mqttClient mqtt.Client) HomeAssistantMqtt {
+func NewHomeAssistantMqtt(broker mqtt.Broker) HomeAssistantMqtt {
 	return &homeAssistantMqtt{
-		mqttClient: mqttClient,
+		broker: broker,
 	}
 }
 
@@ -49,6 +50,11 @@ func (h *homeAssistantMqtt) AddSensorConfig(node string, sensor string, config C
 		return err
 	}
 
-	h.mqttClient.Publish(topic, 0, true, configBytes)
+	h.conn, err = h.broker.Dial("mypi-mqtt-bridge", "")
+	if err != nil {
+		return err
+	}
+
+	h.conn.PublishRetain(topic, string(configBytes))
 	return nil
 }

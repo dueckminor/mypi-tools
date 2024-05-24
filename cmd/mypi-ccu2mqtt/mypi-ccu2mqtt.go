@@ -8,16 +8,10 @@ import (
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/ccu"
-	"github.com/dueckminor/mypi-tools/go/tlsconfig"
+	"github.com/dueckminor/mypi-tools/go/mqtt"
 	"github.com/dueckminor/mypi-tools/go/util"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"gopkg.in/yaml.v3"
 )
-
-type MQTTClientConfig struct {
-	URI      string `yaml:"uri"`
-	ClientID string `yaml:"client_id"`
-}
 
 type CCUClientConfig struct {
 	URI      string `yaml:"uri"`
@@ -26,8 +20,8 @@ type CCUClientConfig struct {
 }
 
 type Config struct {
-	MQTT MQTTClientConfig `yaml:"mqtt"`
-	CCU  CCUClientConfig  `yaml:"ccu"`
+	MQTT mqtt.MQTTClientConfig `yaml:"mqtt"`
+	CCU  CCUClientConfig       `yaml:"ccu"`
 }
 
 func main() {
@@ -44,14 +38,8 @@ func main() {
 		}
 	}
 
-	tlsconfig := tlsconfig.NewTLSConfig()
-	opts := mqtt.NewClientOptions()
-	opts.AddBroker(cfg.MQTT.URI)
-	opts.SetClientID(cfg.MQTT.ClientID).SetTLSConfig(tlsconfig)
-	mqttClient := mqtt.NewClient(opts)
-	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
+	broker := mqtt.NewBroker(cfg.MQTT.URI)
+	mqttClient, err := broker.Dial(cfg.MQTT.ClientID, "")
 
 	uri := cfg.CCU.URI
 	if len(cfg.CCU.Username) > 0 {
@@ -73,7 +61,7 @@ func main() {
 
 		payload, _ := json.Marshal(value)
 
-		mqttClient.Publish(topic, 2, false, string(payload))
+		mqttClient.Publish(topic, string(payload))
 		fmt.Println("<-", topic, string(payload))
 	})
 
@@ -85,20 +73,19 @@ func main() {
 		}
 		topic := "hm/" + device.Address() + "/@TYPE"
 		payload := device.Type()
-		mqttClient.Publish(topic, 2, true, payload)
+		mqttClient.PublishRetain(topic, payload)
 		fmt.Println("<-", topic, payload)
 	}
 
-	mqttClient.Subscribe("hm/#", 2, func(client mqtt.Client, msg mqtt.Message) {
-		topic := msg.Topic()
+	mqttClient.Subscribe("hm/#", func(topic string, payload string) {
 		topicParts := strings.Split(topic, "/")
 		addr := topicParts[1]
 		valueName := topicParts[2]
 
 		device, err := ccuc.GetDevice(addr)
 
-		if valueName == "_TYPE_" || (nil == device && msg.Retained()) {
-			mqttClient.Publish(topic, 2, true, "")
+		if valueName == "_TYPE_" || (nil == device) {
+			mqttClient.PublishRetain(topic, "")
 			return
 		}
 		if len(valueName) == 0 || valueName[0] == '@' {
@@ -107,7 +94,7 @@ func main() {
 
 		if device != nil && err == nil {
 			var value interface{}
-			err = json.Unmarshal(msg.Payload(), &value)
+			err = json.Unmarshal([]byte(payload), &value)
 			if err != nil {
 				return
 			}

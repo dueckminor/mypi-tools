@@ -41,7 +41,9 @@ func (cl *client) SendMetric(name string, value float64) {
 	point.AddTag("entity_id", name)
 	point.SetTime(time.Now())
 	err := cl.writeAPI.WritePoint(context.Background(), point)
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println("send metric to influxdb failed:", err)
+	}
 }
 
 func NewClient(config Config) Client {

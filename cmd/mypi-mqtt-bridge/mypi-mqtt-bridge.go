@@ -1,26 +1,16 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/url"
 	"os"
 	"strings"
 
 	"github.com/dueckminor/mypi-tools/go/alphaess"
-	"github.com/dueckminor/mypi-tools/go/ccu"
 	"github.com/dueckminor/mypi-tools/go/homeassistant"
 	"github.com/dueckminor/mypi-tools/go/influxdb"
-	"github.com/dueckminor/mypi-tools/go/tlsconfig"
+	"github.com/dueckminor/mypi-tools/go/mqtt"
 	"github.com/dueckminor/mypi-tools/go/util"
-	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"gopkg.in/yaml.v3"
 )
-
-type MQTTClientConfig struct {
-	URI      string `yaml:"uri"`
-	ClientID string `yaml:"client_id"`
-}
 
 type HomematicClientConfig struct {
 	URI      string `yaml:"uri"`
@@ -37,7 +27,7 @@ type AlphaEssConfig struct {
 }
 
 type Config struct {
-	MQTT         MQTTClientConfig      `yaml:"mqtt"`
+	MQTT         mqtt.MQTTClientConfig `yaml:"mqtt"`
 	CCU          HomematicClientConfig `yaml:"homematic"`
 	Homeassisant HomeassistantConfig   `yaml:"homeassistant"`
 	AlphaEss     AlphaEssConfig        `yaml:"alphaess"`
@@ -58,18 +48,11 @@ func main() {
 		}
 	}
 
-	tlsconfig := tlsconfig.NewTLSConfig()
-	opts := mqtt.NewClientOptions()
-	opts.AddBroker(cfg.MQTT.URI)
-	opts.SetClientID(cfg.MQTT.ClientID).SetTLSConfig(tlsconfig)
-	mqttClient := mqtt.NewClient(opts)
-	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
-		panic(token.Error())
-	}
+	broker := mqtt.NewBroker(cfg.MQTT.URI)
 
 	var ha homeassistant.HomeAssistantMqtt
 	if cfg.Homeassisant.Enabled {
-		ha = homeassistant.NewHomeAssistantMqtt(mqttClient)
+		ha = homeassistant.NewHomeAssistantMqtt(broker)
 	}
 
 	var influx influxdb.Client
@@ -82,81 +65,81 @@ func main() {
 		if ha != nil {
 			alphaess.RegisterSensors(ha)
 		}
-		alphaess.Run(alphaEssURI, mqttClient, influx)
+		alphaess.Run(alphaEssURI, broker, influx)
 	}
 
-	uri := cfg.CCU.URI
-	if uri != "" {
+	// uri := cfg.CCU.URI
+	// if uri != "" {
 
-		if len(cfg.CCU.Username) > 0 {
-			parsedURI, err := url.Parse(uri)
-			if err != nil {
-				panic(err)
-			}
-			parsedURI.User = url.UserPassword(cfg.CCU.Username, cfg.CCU.Password)
-			uri = parsedURI.String()
-		}
+	// 	if len(cfg.CCU.Username) > 0 {
+	// 		parsedURI, err := url.Parse(uri)
+	// 		if err != nil {
+	// 			panic(err)
+	// 		}
+	// 		parsedURI.User = url.UserPassword(cfg.CCU.Username, cfg.CCU.Password)
+	// 		uri = parsedURI.String()
+	// 	}
 
-		ccuc, err := ccu.NewCcuClient(uri)
-		if err != nil {
-			panic(err)
-		}
+	// 	ccuc, err := ccu.NewCcuClient(uri)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
 
-		ccuc.SetCallback(func(dev ccu.Device, valueKey string, value interface{}) {
-			topic := "hm/" + dev.Address() + "/" + valueKey
+	// 	ccuc.SetCallback(func(dev ccu.Device, valueKey string, value interface{}) {
+	// 		topic := "hm/" + dev.Address() + "/" + valueKey
 
-			payload, _ := json.Marshal(value)
+	// 		payload, _ := json.Marshal(value)
 
-			mqttClient.Publish(topic, 2, false, string(payload))
-			fmt.Println("<-", topic, string(payload))
-		})
+	// 		mqttClient.Publish(topic, 2, false, string(payload))
+	// 		fmt.Println("<-", topic, string(payload))
+	// 	})
 
-		devices, _ := ccuc.GetDevices()
+	// 	devices, _ := ccuc.GetDevices()
 
-		for _, device := range devices {
-			if _, err := device.GetValues(); err != nil {
-				continue
-			}
-			topic := "hm/" + device.Address() + "/@TYPE"
-			payload := device.Type()
-			mqttClient.Publish(topic, 2, true, payload)
-			fmt.Println("<-", topic, payload)
-		}
+	// 	for _, device := range devices {
+	// 		if _, err := device.GetValues(); err != nil {
+	// 			continue
+	// 		}
+	// 		topic := "hm/" + device.Address() + "/@TYPE"
+	// 		payload := device.Type()
+	// 		mqttClient.Publish(topic, 2, true, payload)
+	// 		fmt.Println("<-", topic, payload)
+	// 	}
 
-		mqttClient.Subscribe("hm/#", 2, func(client mqtt.Client, msg mqtt.Message) {
-			topic := msg.Topic()
-			topicParts := strings.Split(topic, "/")
-			addr := topicParts[1]
-			valueName := topicParts[2]
+	// 	mqttClient.Subscribe("hm/#", 2, func(client mqtt.Client, msg mqtt.Message) {
+	// 		topic := msg.Topic()
+	// 		topicParts := strings.Split(topic, "/")
+	// 		addr := topicParts[1]
+	// 		valueName := topicParts[2]
 
-			device, err := ccuc.GetDevice(addr)
+	// 		device, err := ccuc.GetDevice(addr)
 
-			if valueName == "_TYPE_" || (nil == device && msg.Retained()) {
-				mqttClient.Publish(topic, 2, true, "")
-				return
-			}
-			if len(valueName) == 0 || valueName[0] == '@' {
-				return
-			}
+	// 		if valueName == "_TYPE_" || (nil == device && msg.Retained()) {
+	// 			mqttClient.Publish(topic, 2, true, "")
+	// 			return
+	// 		}
+	// 		if len(valueName) == 0 || valueName[0] == '@' {
+	// 			return
+	// 		}
 
-			if device != nil && err == nil {
-				var value interface{}
-				err = json.Unmarshal(msg.Payload(), &value)
-				if err != nil {
-					return
-				}
-				changed, _ := device.SetValueIfChanged(valueName, value)
-				if changed {
-					fmt.Println("->", topic, value)
-				}
-			}
-		})
+	// 		if device != nil && err == nil {
+	// 			var value interface{}
+	// 			err = json.Unmarshal(msg.Payload(), &value)
+	// 			if err != nil {
+	// 				return
+	// 			}
+	// 			changed, _ := device.SetValueIfChanged(valueName, value)
+	// 			if changed {
+	// 				fmt.Println("->", topic, value)
+	// 			}
+	// 		}
+	// 	})
 
-		err = ccuc.StartCallbackHandler()
-		if err != nil {
-			panic(err)
-		}
-	}
+	// 	err = ccuc.StartCallbackHandler()
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
 
 	done := make(chan bool)
 
