@@ -1,4 +1,4 @@
-package ccu
+package homematic
 
 import "net/url"
 

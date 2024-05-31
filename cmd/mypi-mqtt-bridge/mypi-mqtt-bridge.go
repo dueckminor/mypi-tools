@@ -4,10 +4,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dueckminor/mypi-tools/go/alphaess"
-	"github.com/dueckminor/mypi-tools/go/homeassistant"
-	"github.com/dueckminor/mypi-tools/go/influxdb"
-	"github.com/dueckminor/mypi-tools/go/mqtt"
+	"github.com/dueckminor/mypi-tools/go/automation"
+	"github.com/dueckminor/mypi-tools/go/automation/alphaess"
+	"github.com/dueckminor/mypi-tools/go/protocols/influxdb"
+	"github.com/dueckminor/mypi-tools/go/protocols/mqtt"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"gopkg.in/yaml.v3"
 )
@@ -22,15 +22,11 @@ type HomeassistantConfig struct {
 	Enabled bool `yaml:"enabled"`
 }
 
-type AlphaEssConfig struct {
-	URI string `yaml:"uri"`
-}
-
 type Config struct {
 	MQTT         mqtt.MQTTClientConfig `yaml:"mqtt"`
-	CCU          HomematicClientConfig `yaml:"homematic"`
+	Homematic    HomematicClientConfig `yaml:"homematic"`
 	Homeassisant HomeassistantConfig   `yaml:"homeassistant"`
-	AlphaEss     AlphaEssConfig        `yaml:"alphaess"`
+	AlphaEss     alphaess.Config       `yaml:"alphaess"`
 	InfluxDB     influxdb.Config       `yaml:"influxdb"`
 }
 
@@ -48,24 +44,24 @@ func main() {
 		}
 	}
 
-	broker := mqtt.NewBroker(cfg.MQTT.URI)
+	registry := automation.GetRegistry()
 
-	var ha homeassistant.HomeAssistantMqtt
+	broker := mqtt.NewBroker(cfg.MQTT.URI)
+	registry.EnableMqtt(broker)
+
 	if cfg.Homeassisant.Enabled {
-		ha = homeassistant.NewHomeAssistantMqtt(broker)
+		registry.EnableHomeAssistant()
 	}
 
 	var influx influxdb.Client
 	if cfg.InfluxDB.Uri != "" {
 		influx = influxdb.NewClient(cfg.InfluxDB)
+		registry.EnableInfluxDB(influx)
 	}
 
 	alphaEssURI := cfg.AlphaEss.URI
 	if alphaEssURI != "" {
-		if ha != nil {
-			alphaess.RegisterSensors(ha)
-		}
-		alphaess.Run(alphaEssURI, broker, influx)
+		alphaess.Run(alphaEssURI)
 	}
 
 	// uri := cfg.CCU.URI

@@ -1,4 +1,4 @@
-package ccu
+package homematic
 
 type DeviceDescription struct {
 	Type              string   `xmlrpc:"TYPE"`

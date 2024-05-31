@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dueckminor/mypi-tools/go/ccu"
-	"github.com/dueckminor/mypi-tools/go/mqtt"
+	"github.com/dueckminor/mypi-tools/go/automation/homematic"
+	"github.com/dueckminor/mypi-tools/go/protocols/mqtt"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"gopkg.in/yaml.v3"
 )
@@ -51,12 +51,12 @@ func main() {
 		uri = parsedURI.String()
 	}
 
-	ccuc, err := ccu.NewCcuClient(uri)
+	ccuc, err := homematic.NewCcuClient(uri)
 	if err != nil {
 		panic(err)
 	}
 
-	ccuc.SetCallback(func(dev ccu.Device, valueKey string, value interface{}) {
+	ccuc.SetCallback(func(dev homematic.Device, valueKey string, value interface{}) {
 		topic := "hm/" + dev.Address() + "/" + valueKey
 
 		payload, _ := json.Marshal(value)
