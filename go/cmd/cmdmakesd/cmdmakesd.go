@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/user"
 	"path"
 	"path/filepath"
 	"strings"
@@ -17,6 +18,7 @@ import (
 	"github.com/dueckminor/mypi-tools/go/cmd"
 	"github.com/dueckminor/mypi-tools/go/downloads"
 	"github.com/dueckminor/mypi-tools/go/fdisk"
+	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/dueckminor/mypi-tools/go/util/panic"
 	"github.com/fatih/color"
 	"gopkg.in/yaml.v3"
@@ -53,6 +55,20 @@ type settings struct {
 	SSH          settingsSSH
 }
 
+func (s *settings) AddSSHKey() *settings {
+	if s.SSH.AuthorizedKeys == "" {
+		usr, _ := user.Current()
+		pub := path.Join(usr.HomeDir, ".ssh/id_rsa.pub")
+		if util.FileExists(pub) {
+			pubBytes, err := os.ReadFile(pub)
+			if err == nil {
+				s.SSH.AuthorizedKeys = string(pubBytes)
+			}
+		}
+	}
+	return s
+}
+
 func writeSimpleFile(w DirWriter, filename string, content []byte) error {
 
 	f, err := w.CreateFile(FileInfo{Type: FileTypeFile, Name: filename})
@@ -67,12 +83,15 @@ func writeSimpleFile(w DirWriter, filename string, content []byte) error {
 	return nil
 }
 
-type staticFileInfos struct {
+type specialFileInfos struct {
 	Executables []string
 	Softlinks   map[string]string
 }
 
-func (s *staticFileInfos) GetLinkInfo(fileName string) (linkTarget string, ok bool) {
+func (s *specialFileInfos) GetLinkInfo(fileName string) (linkTarget string, ok bool) {
+	if s.Softlinks == nil {
+		return "", false
+	}
 	fileName = strings.TrimPrefix(fileName, "./")
 	if linkTarget, ok = s.Softlinks[fileName]; ok {
 		return linkTarget, ok
@@ -80,7 +99,10 @@ func (s *staticFileInfos) GetLinkInfo(fileName string) (linkTarget string, ok bo
 	return "", false
 }
 
-func (s *staticFileInfos) GetFileMode(fileName string) (fileMode int64, ok bool) {
+func (s *specialFileInfos) GetFileMode(fileName string) (fileMode int64, ok bool) {
+	if s.Executables == nil {
+		return int64(0644), true
+	}
 	fileName = strings.TrimPrefix(fileName, "./")
 	if fileName == "fileinfos.yml" {
 		return 0, false
@@ -110,6 +132,40 @@ func (s *staticFileInfos) GetFileMode(fileName string) (fileMode int64, ok bool)
 	return int64(0644), true
 }
 
+func createAPKOVLCopyTree(tw *TarWriter, targetDir string, srcDir string, specialFileInfos specialFileInfos) error {
+	return filepath.Walk(srcDir, func(fileName string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		relativePath := path.Join(".", fileName[len(srcDir):])
+		if linkTarget, ok := specialFileInfos.GetLinkInfo(relativePath); ok {
+			return tw.AddLink(relativePath, linkTarget, int64(0644))
+		} else if fileMode, ok := specialFileInfos.GetFileMode(relativePath); ok {
+			if targetDir != "" {
+				relativePath = path.Join(targetDir, relativePath)
+			}
+			w, err := tw.CreateFile(relativePath, fileMode, info.Size())
+			if err != nil {
+				return err
+			}
+			f, err := os.Open(fileName)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			_, err = io.Copy(w, f)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+}
+
 func createAPKOVL(w DirWriter, filename string, settings *settings) error {
 	file, err := w.CreateFile(FileInfo{Type: FileTypeFile, Name: filename})
 	if err != nil {
@@ -132,39 +188,12 @@ func createAPKOVL(w DirWriter, filename string, settings *settings) error {
 	if err != nil {
 		return err
 	}
-	var staticFileInfos staticFileInfos
+	var staticFileInfos specialFileInfos
 	err = yaml.Unmarshal(staticFileInfosYml, &staticFileInfos)
 	if err != nil {
 		return err
 	}
-
-	err = filepath.Walk(staticFiles, func(fileName string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		relativePath := path.Join(".", fileName[len(staticFiles):])
-		if linkTarget, ok := staticFileInfos.GetLinkInfo(relativePath); ok {
-			return tw.AddLink(relativePath, linkTarget, int64(0644))
-		} else if fileMode, ok := staticFileInfos.GetFileMode(relativePath); ok {
-			w, err := tw.CreateFile(relativePath, fileMode, info.Size())
-			if err != nil {
-				return err
-			}
-			f, err := os.Open(fileName)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			_, err = io.Copy(w, f)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	err = createAPKOVLCopyTree(tw, "", staticFiles, staticFileInfos)
 	if err != nil {
 		return err
 	}
@@ -211,22 +240,15 @@ func createAPKOVL(w DirWriter, filename string, settings *settings) error {
 		return err
 	}
 
-	mypiControl := path.Join(settings.DirDist, "mypi-control", "mypi-control-linux-arm64")
+	mypiControl := path.Join(settings.DirDist, "mypi-control-linux-arm64")
 	fmt.Println("checking for mypi-control:", mypiControl)
-	stat, err := os.Stat(mypiControl)
+	_, err = os.Stat(mypiControl)
 	if err != nil {
 		return err
 	}
-	w2, err := tw.CreateFile("mypi-control/bin/mypi-control", 0755, stat.Size())
-	if err != nil {
-		return err
-	}
-	f, err := os.Open(mypiControl)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = io.Copy(w2, f)
+	err = createAPKOVLCopyTree(tw, "mypi-control/bin", mypiControl, specialFileInfos{
+		Executables: []string{"mypi-control"},
+	})
 
 	return err
 }
@@ -265,10 +287,13 @@ func (cmd cmdMakeSD) UnmarshalArgs(marshaledArgs []byte) (parsedArgs interface{}
 }
 
 func (cmd cmdMakeSD) Execute(parsedArgs interface{}) error {
+	fmt.Println(parsedArgs)
 	settings, ok := parsedArgs.(*settings)
 	if !ok {
 		return os.ErrInvalid
 	}
+
+	settings.AddSSHKey()
 
 	c := color.New(color.BgBlue).Add(color.FgHiYellow)
 

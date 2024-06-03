@@ -8,6 +8,8 @@ const (
 	Unit_Number Unit = iota
 	Unit_Wh
 	Unit_kWh
+	Unit_W
+	Unit_kW
 	Unit_Percent
 )
 
@@ -19,6 +21,10 @@ func (u Unit) String() string {
 		return "Wh"
 	case Unit_kWh:
 		return "kWh"
+	case Unit_W:
+		return "W"
+	case Unit_kW:
+		return "kW"
 	case Unit_Percent:
 		return "%"
 	default:
@@ -63,6 +69,29 @@ func (dc DeviceClass) String() string {
 	}
 }
 
+////////////////////////////////////////////////////////////////////// enum Icon
+
+type Icon int64
+
+const (
+	Icon_Wh Icon = iota
+	Icon_W
+	Icon_Battery
+)
+
+func (i Icon) String() string {
+	switch i {
+	case Icon_Wh:
+		return "mdi:lightning-bolt"
+	case Icon_W:
+		return "mdi:flash"
+	case Icon_Battery:
+		return "mdi:battery-10"
+	default:
+		panic("unsupported 'Icon'")
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 type ObjectTemplate struct {
@@ -72,6 +101,7 @@ type ObjectTemplate struct {
 
 type SensorTemplate struct {
 	ObjectTemplate
+	icon        Icon
 	unit        Unit
 	deviceClass DeviceClass
 	stateClass  StateClass
@@ -80,6 +110,11 @@ type SensorTemplate struct {
 
 func MakeSensorTemplate(name string) *SensorTemplate {
 	return &SensorTemplate{ObjectTemplate: ObjectTemplate{name: name}}
+}
+
+func (t *SensorTemplate) SetIcon(icon Icon) *SensorTemplate {
+	t.icon = icon
+	return t
 }
 
 func (t *SensorTemplate) SetUnit(unit Unit) *SensorTemplate {

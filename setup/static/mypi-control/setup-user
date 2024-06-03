@@ -7,16 +7,24 @@ set -e
 
 USERNAME="pi"
 
-apk add sudo bash
+apk add sudo bash zsh shadow
 
-if ! id "${USERNAME}" &>/dev/null; then
-    adduser -D -s "$(command -v bash)" "${USERNAME}"
+if [ ! -f /etc/sudoers.d/wheel ]; then
+    echo '%wheel ALL=(ALL) ALL' > /etc/sudoers.d/wheel
+fi
+
+if ! id "${USERNAME}" >/dev/null 2> /dev/null; then
+    addgroup "${USERNAME}"
+    adduser -D -s "$(command -v zsh)" "${USERNAME}" -G "${USERNAME}"
 fi
 
 SSH_DIR="/home/${USERNAME}/.ssh"
 SSH_AUTHORIZED_KEYS_FILE="${SSH_DIR}/authorized_keys"
 
 if [ -n "${SSH_AUTHORIZED_KEYS}" ]; then
+    mkdir -p /root/.ssh
+    echo "${SSH_AUTHORIZED_KEYS}" > /root/.ssh/authorized_keys
+    
     mkdir -p "/home/${USERNAME}/.ssh"
     echo "${SSH_AUTHORIZED_KEYS}" >> "${SSH_AUTHORIZED_KEYS_FILE}"
     awk '!a[$0]++' < "${SSH_AUTHORIZED_KEYS_FILE}" > "${SSH_AUTHORIZED_KEYS_FILE}.new"
@@ -30,4 +38,7 @@ mkdir -p /opt/mypi
 chown "${USERNAME}:${USERNAME}" /opt/mypi
 chmod 755 /opt
 
-addgroup pi docker
+chsh --shell /bin/zsh "${USERNAME}"
+
+addgroup "${USERNAME}" docker
+addgroup "${USERNAME}" wheel

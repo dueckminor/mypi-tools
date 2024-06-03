@@ -45,5 +45,5 @@ func MakeForwardToHost(f func(c *gin.Context)) func(c *gin.Context) {
 
 // GetHosts return list of hosts
 func GetHosts(c *gin.Context) {
-	c.JSON(http.StatusOK, []string{"localhost", "mypi"})
+	c.JSON(http.StatusOK, []string{"localhost", "mypi", "rpi5"})
 }

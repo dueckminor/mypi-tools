@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"time"
 
 	"github.com/dueckminor/mypi-tools/go/mypi/setup"
 	"github.com/dueckminor/mypi-tools/go/restapi"
@@ -22,6 +23,8 @@ import (
 
 func main() {
 	if len(os.Args) > 1 {
+		time.Sleep(time.Second * 5)
+		fmt.Println(os.Args)
 		done, err := cmd.UnmarshalAndExecute(os.Args[1:])
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)

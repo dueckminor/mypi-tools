@@ -237,10 +237,6 @@ func (dev macosDisk) InitializePartitions(Type string, partitionInfos ...Partiti
 	if err != nil {
 		return err
 	}
-	err = cmd.Wait()
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

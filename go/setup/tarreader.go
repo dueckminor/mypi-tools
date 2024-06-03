@@ -37,6 +37,7 @@ func TarExtract(r io.Reader, w DirWriter) error {
 		if err != nil {
 			return err
 		}
+		fmt.Println(fi.Name)
 		fw, err := w.CreateFile(fi)
 		if err != nil {
 			return err

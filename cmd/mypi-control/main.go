@@ -22,21 +22,45 @@ import (
 	_ "github.com/dueckminor/mypi-tools/go/cmd/cmdsetup"
 
 	_ "github.com/dueckminor/mypi-tools/go/restapi/http"
-	"github.com/dueckminor/mypi-tools/go/restapi/https"
+	//"github.com/dueckminor/mypi-tools/go/restapi/https"
 )
 
-func flashLED() {
-	const led0 = "/sys/class/leds/led0/brightness"
-	const led1 = "/sys/class/leds/led1/brightness"
-	if !util.FileExists(led0) {
-		return
+type led struct {
+	file     string
+	inverted bool
+}
+
+func (l led) exists() bool {
+	return util.FileExists(l.file)
+}
+
+func (l led) set(state bool) {
+	if l.inverted {
+		state = !state
 	}
+	if !state {
+		os.WriteFile(l.file, []byte("0"), os.ModePerm)
+	} else {
+		os.WriteFile(l.file, []byte("1"), os.ModePerm)
+	}
+}
+
+func flashLED() {
+	led0 := led{file: "/sys/class/leds/led0/brightness"}
+	led1 := led{file: "/sys/class/leds/led1/brightness"}
+
+	if !led0.exists() || !led1.exists() {
+		led0 = led{file: "/sys/class/leds/ACT/brightness", inverted: true}
+		led1 = led{file: "/sys/class/leds/PWR/brightness"}
+		if !led0.exists() || !led1.exists() {
+			return
+		}
+	}
+	state := false
 	for {
-		os.WriteFile(led0, []byte("0"), os.ModePerm) // nolint: errcheck
-		os.WriteFile(led1, []byte("1"), os.ModePerm) // nolint: errcheck
-		time.Sleep(time.Second)
-		os.WriteFile(led0, []byte("1"), os.ModePerm) // nolint: errcheck
-		os.WriteFile(led1, []byte("0"), os.ModePerm) // nolint: errcheck
+		led0.set(state)
+		state = !state
+		led1.set(state)
 		time.Sleep(time.Second)
 	}
 }
@@ -138,6 +162,6 @@ func main() {
 	r.GET("/api/hosts/:host/actions/:action/webtty", webhandler.MakeForwardToHost(webhandler.GetActionWebTTY))
 	r.POST("/api/hosts/:host/actions/:action", webhandler.MakeForwardToHost(webhandler.GetAction))
 
-	https.SetKeyFiles("priv.pem", "cert.pem")
+	//https.SetKeyFiles("priv.pem", "cert.pem")
 	restapi.Run(r)
 }

@@ -25,10 +25,14 @@ if [ "$(hostname)" = "localhost" ]; then
 fi
 
 if [ -z "$(ifconfig)" ]; then
-    # there is no network configured yet... lets do it
+    echo "there is no network configured yet... lets do it"
     echo "${INTERFACESOPTS}" | /sbin/setup-interfaces -i
     # start networking...
     /etc/init.d/networking --quiet start >/dev/null
+
+    echo " --------- "
+    ifconfig
+    echo " --------- "
 
     # ensure that the time is not to far in the past
     date -s "@$(date -r /mypi-control/config "+%s")"
@@ -36,6 +40,17 @@ if [ -z "$(ifconfig)" ]; then
     # but lets try to use NTP to get the correct time
     # shellcheck disable=SC2086
     /sbin/setup-ntp ${NTPOPTS}
+
+    echo " --------- "
+    ifconfig
+    echo " --------- "
+
+    /etc/init.d/networking restart
+
+    echo " --------- "
+    ifconfig
+    echo " --------- "
+
 fi
 
 if [ -f /mypi-control/bin/mypi-control ]; then

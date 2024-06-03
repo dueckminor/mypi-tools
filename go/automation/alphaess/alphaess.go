@@ -12,35 +12,6 @@ type Config struct {
 	URI string `yaml:"uri"`
 }
 
-type SensorInfo struct {
-	Addr     uint16
-	Scale    float64
-	Template automation.SensorTemplate
-}
-
-func SensorWh(addr uint16, name string) SensorInfo {
-	return SensorInfo{
-		Addr:  addr,
-		Scale: 10,
-		Template: *automation.MakeSensorTemplate(name).
-			SetUnit(automation.Unit_Wh).SetPrecision(0).
-			SetStateClass(automation.StateClass_Total).
-			SetDeviceClass(automation.DeviceClass_Energy),
-	}
-}
-
-var sensorInfos = []SensorInfo{
-	SensorWh(0x0010, "to_grid"),
-	SensorWh(0x0012, "from_grid"),
-	SensorWh(0x0090, "total_to_grid"),
-	SensorWh(0x0092, "total_from_grid"),
-	SensorWh(0x0120, "battery_charge"),
-	SensorWh(0x0122, "battery_discharge"),
-	SensorWh(0x0124, "battery_charge_from_grid"),
-	SensorWh(0x0720, "inverter_total_pv_energy"),
-	SensorWh(0x08D2, "solar_production"),
-}
-
 type scanner struct {
 	client *modbus.ModbusClient
 
@@ -51,20 +22,72 @@ type scanner struct {
 }
 
 type sensor struct {
-	SensorInfo
-	sensor automation.Sensor
+	automation.Sensor
+	Addr  uint16
+	Words int
+	Scale float64
 }
 
 func (s *scanner) init() {
 	s.registry = automation.GetRegistry()
 	s.node = s.registry.CreateNode("alphaess")
+	s.sensorWh(0x0010, "to_grid")
+	s.sensorWh(0x0012, "from_grid")
+	s.sensorWh(0x0090, "total_to_grid")
+	s.sensorWh(0x0092, "total_from_grid")
+	s.sensorWh(0x0120, "battery_charge")
+	s.sensorWh(0x0122, "battery_discharge")
+	s.sensorWh(0x0124, "battery_charge_from_grid")
+	s.sensorWh(0x0720, "inverter_total_pv_energy")
+	s.sensorWh(0x08D2, "solar_production")
+	s.sensorPercent(0x0102, "battery_soc")
+	s.sensorW(0x001b, "active_power_l1")
+	s.sensorW(0x001d, "active_power_l2")
+	s.sensorW(0x001f, "active_power_l3")
+	s.sensorW(0x0021, "active_power")
+	s.sensorW(0x0023, "reactive_power_l1")
+	s.sensorW(0x0025, "reactive_power_l2")
+	s.sensorW(0x0027, "reactive_power_l3")
+	s.sensorW(0x0029, "reactive_power")
+}
 
-	for _, sensorInfo := range sensorInfos {
-		s.sensors = append(s.sensors, sensor{
-			SensorInfo: sensorInfo,
-			sensor:     s.node.CreateSensor(&sensorInfo.Template),
-		})
-	}
+func (s *scanner) sensorWh(addr uint16, name string) {
+	s.sensors = append(s.sensors, sensor{
+		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
+			SetIcon(automation.Icon_Wh).
+			SetUnit(automation.Unit_Wh).SetPrecision(0).
+			SetStateClass(automation.StateClass_Total).
+			SetDeviceClass(automation.DeviceClass_Energy)),
+		Addr:  addr,
+		Words: 2,
+		Scale: 10,
+	})
+}
+
+func (s *scanner) sensorW(addr uint16, name string) {
+	s.sensors = append(s.sensors, sensor{
+		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
+			SetIcon(automation.Icon_W).
+			SetUnit(automation.Unit_W).SetPrecision(0).
+			SetStateClass(automation.StateClass_Total).
+			SetDeviceClass(automation.DeviceClass_Energy)),
+		Addr:  addr,
+		Words: 2,
+		Scale: 10,
+	})
+}
+
+func (s *scanner) sensorPercent(addr uint16, name string) {
+	s.sensors = append(s.sensors, sensor{
+		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
+			SetIcon(automation.Icon_Battery).
+			SetUnit(automation.Unit_Percent).SetPrecision(1).
+			SetStateClass(automation.StateClass_Measurement).
+			SetDeviceClass(automation.DeviceClass_Energy)),
+		Addr:  addr,
+		Words: 1,
+		Scale: 0.1,
+	})
 }
 
 func (s *scanner) modbusConnect() (err error) {
@@ -121,12 +144,19 @@ func (s *scanner) handleModbus() {
 
 	for {
 		for _, sensor := range s.sensors {
-			value, err := s.client.ReadUint32(sensor.Addr, modbus.HOLDING_REGISTER)
+			var value uint32
+			if sensor.Words == 1 {
+				var value16 uint16
+				value16, err = s.client.ReadRegister(sensor.Addr, modbus.HOLDING_REGISTER)
+				value = uint32(value16)
+			} else if sensor.Words == 2 {
+				value, err = s.client.ReadUint32(sensor.Addr, modbus.HOLDING_REGISTER)
+			}
 			if err != nil {
 				fmt.Println(err)
 			}
 			scaledValue := float64(value) * sensor.Scale
-			sensor.sensor.SetState(scaledValue)
+			sensor.SetState(scaledValue)
 		}
 		time.Sleep(time.Minute)
 	}

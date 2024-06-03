@@ -87,6 +87,9 @@ func (c *CachedCommand) Read(p []byte) (n int, err error) {
 			<-c.waitForReadC
 			c.waitForRead = false
 		}
+		if c.Pty == nil {
+			return
+		}
 		n, err = c.Pty.Read(p)
 		if err == nil {
 			return
@@ -125,6 +128,9 @@ func (c *CachedCommand) WindowTitleVariables() map[string]interface{} {
 
 // ResizeTerminal sets a new size of the terminal.
 func (c *CachedCommand) ResizeTerminal(columns int, rows int) error {
+	if c.Pty == nil {
+		return nil
+	}
 	c.columns = columns
 	c.rows = rows
 	return c.Pty.SetSize(columns, rows)

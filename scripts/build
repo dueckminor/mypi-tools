@@ -6,13 +6,15 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__),'lib'))
 
 from mypi import golang
+from mypi import web
+from mypi import build_dir,repo_dir
 
-root_dir = os.path.dirname(os.path.dirname(__file__))
-build_dir = os.path.join(root_dir,"build")
+os.chdir(repo_dir)
+
 mypi_setup_dist_dir = os.path.join(build_dir,"mypi-setup")
 
-if not os.path.exists(os.path.join(mypi_setup_dist_dir,"mypi-control")):
-    os.makedirs(os.path.join(mypi_setup_dist_dir,"mypi-control"))
+if not os.path.exists(os.path.join(mypi_setup_dist_dir,"mypi-control-linux-arm64")):
+    os.makedirs(os.path.join(mypi_setup_dist_dir,"mypi-control-linux-arm64"))
 
 golang.build("mypi-control", goos="linux", goarch="aarch64")
 
@@ -22,4 +24,8 @@ golang.build("mypi-setup", goos="darwin", goarch="aarch64")
 golang.build("mypi-setup", goos="darwin", goarch="amd64")
 golang.build("mypi-setup", goos="windows", goarch="amd64")
 
-shutil.copy(os.path.join(build_dir,"linux-aarch64/mypi-control"),os.path.join(mypi_setup_dist_dir,"mypi-control/mypi-control-linux-arm64"))
+shutil.copy(os.path.join(build_dir,"linux-aarch64/mypi-control"),os.path.join(mypi_setup_dist_dir,"mypi-control-linux-arm64/mypi-control"))
+
+web.build('mypi-control')
+
+shutil.copytree(os.path.join(repo_dir,'web/mypi-control/dist'), os.path.join(mypi_setup_dist_dir,"mypi-control-linux-arm64/dist"),dirs_exist_ok=True)

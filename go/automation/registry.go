@@ -188,7 +188,7 @@ func (node *node) CreateSensor(template *SensorTemplate) Sensor {
 			AvailabilityTopic: sensor.availabilityTopic,
 			UnitOfMeasurement: sensor.template.unit.String(),
 			UniqueId:          fmt.Sprintf("%s.%s", node.name, template.name),
-			Icon:              "mdi:lightning-bolt",
+			Icon:              sensor.template.icon.String(),
 			Device: &homeassistant.DeviceConfig{
 				Identifiers:  []string{fmt.Sprintf("%s_sensor", node.name)},
 				Name:         "Alpha ESS",

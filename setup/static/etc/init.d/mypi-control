@@ -1,5 +1,9 @@
 #!/sbin/openrc-run
 
+depend() {
+    after ntpd
+}
+
 start()
 {
     if [ -f /mypi-control/setup ]

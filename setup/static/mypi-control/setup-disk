@@ -72,6 +72,7 @@ sed '/floppy/d' -i etc/fstab
 
 {
     echo "${PARTITION_BOOT_DEVICE} /media/${PARTITION_BOOT_DEVICE_NAME} vfat defaults 0 0"
+    echo "${PARTITION_ROOT_DEVICE} / ext4 rw,relatime,rshared 0 1"
     echo "tmpfs /var/log tmpfs defaults 0 0"
     echo "tmpfs /tmp tmpfs defaults 0 0"
 } >> etc/fstab

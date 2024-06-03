@@ -9,7 +9,7 @@ set -e
 rc-update del hwclock boot > /dev/null 2>&1 || true
 rc-update add swclock boot
 
-apk add bash htop jq docker perl sudo git
+apk add bash zsh htop jq docker python3 sudo git
 
 rc-update add docker boot
 service docker start
@@ -19,3 +19,5 @@ if [ -n "${WLAN_SSID}" ] && [ -n "${WLAN_PASSWORD}" ]; then
 fi
 
 /mypi-control/setup-ssh
+
+/mypi-control/setup-user

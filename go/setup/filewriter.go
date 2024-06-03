@@ -16,6 +16,9 @@ func (w *fileWriter) CreateFile(fi FileInfo) (io.WriteCloser, error) {
 	if strings.Contains(fi.Name, "..") {
 		return nil, fmt.Errorf("filenames with .. are not allowed")
 	}
+	if fi.Name == "./" {
+		return nil, nil
+	}
 	absFilename := filepath.Join(w.baseDir, fi.Name)
 	absDirname := filepath.Dir(absFilename)
 	err := os.MkdirAll(absDirname, os.ModePerm)
