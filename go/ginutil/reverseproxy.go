@@ -12,7 +12,15 @@ import (
 
 func SingleHostReverseProxy(target string, options ...string) gin.HandlerFunc {
 	url, _ := url.Parse(target)
-	proxy := httputil.NewSingleHostReverseProxy(url)
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(r *httputil.ProxyRequest) {
+			r.SetURL(url)
+			r.SetXForwarded()
+			r.Out.Host = r.In.Host // if desired
+			//fmt.Println(r.Out.Header)
+		},
+	}
+
 	useExternalHostname := false
 
 	proxy.ModifyResponse = func(resp *http.Response) error {
