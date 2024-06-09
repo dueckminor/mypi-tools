@@ -23,35 +23,55 @@ type scanner struct {
 
 type sensor struct {
 	automation.Sensor
-	Addr  uint16
-	Words int
-	Scale float64
+	Addr   uint16
+	Signed bool
+	Words  int
+	Scale  float64
 }
 
 func (s *scanner) init() {
 	s.registry = automation.GetRegistry()
 	s.node = s.registry.CreateNode("alphaess")
-	s.sensorWh(0x0010, "to_grid")
-	s.sensorWh(0x0012, "from_grid")
-	s.sensorWh(0x0090, "total_to_grid")
-	s.sensorWh(0x0092, "total_from_grid")
-	s.sensorWh(0x0120, "battery_charge")
-	s.sensorWh(0x0122, "battery_discharge")
-	s.sensorWh(0x0124, "battery_charge_from_grid")
-	s.sensorWh(0x0720, "inverter_total_pv_energy")
-	s.sensorWh(0x08D2, "solar_production")
+	// -------------------------------------------------------------------- grid
+	s.sensor10Wh(0x0010, "to_grid")
+	s.sensor10Wh(0x0012, "from_grid")
+	s.sensor1V(0x0014, "grid_voltage_l1")
+	s.sensor1V(0x0015, "grid_voltage_l2")
+	s.sensor1V(0x0016, "grid_voltage_l3")
+	s.sensor100mA(0x0017, "grid_current_l1")
+	s.sensor100mA(0x0018, "grid_current_l2")
+	s.sensor100mA(0x0019, "grid_current_l3")
+	// s.sensorHz(0x001a, "grid_freq")
+	s.sensor1W(0x001b, "grid_active_power_l1")
+	s.sensor1W(0x001d, "grid_active_power_l2")
+	s.sensor1W(0x001f, "grid_active_power_l3")
+	s.sensor1W(0x0021, "grid_active_power")
+	s.sensor1W(0x0023, "grid_reactive_power_l1")
+	s.sensor1W(0x0025, "grid_reactive_power_l2")
+	s.sensor1W(0x0027, "grid_reactive_power_l3")
+	s.sensor1W(0x0029, "grid_reactive_power")
+	s.sensor1W(0x002b, "grid_apparent_power_l1")
+	s.sensor1W(0x002d, "grid_apparent_power_l2")
+	s.sensor1W(0x002f, "grid_apparent_power_l3")
+	s.sensor1W(0x0031, "grid_apparent_power")
+	// ---------------------------------------------------------------- pv meter
+	s.sensor10Wh(0x0090, "total_to_grid")
+	s.sensor10Wh(0x0092, "total_from_grid")
+	// ----------------------------------------------------------------- battery
+	s.sensor100mV(0x0100, "battery_voltage")
+	s.sensor100mA(0x0101, "battery_current")
+	s.sensor10Wh(0x0120, "battery_charge")
+	s.sensor10Wh(0x0122, "battery_discharge")
+	s.sensor10Wh(0x0124, "battery_charge_from_grid")
+	s.sensor1W(0x0126, "battery_power")
+
+	s.sensor10Wh(0x0720, "inverter_total_pv_energy")
+	s.sensor10Wh(0x08D2, "solar_production")
 	s.sensorPercent(0x0102, "battery_soc")
-	s.sensorW(0x001b, "active_power_l1")
-	s.sensorW(0x001d, "active_power_l2")
-	s.sensorW(0x001f, "active_power_l3")
-	s.sensorW(0x0021, "active_power")
-	s.sensorW(0x0023, "reactive_power_l1")
-	s.sensorW(0x0025, "reactive_power_l2")
-	s.sensorW(0x0027, "reactive_power_l3")
-	s.sensorW(0x0029, "reactive_power")
+
 }
 
-func (s *scanner) sensorWh(addr uint16, name string) {
+func (s *scanner) sensor10Wh(addr uint16, name string) {
 	s.sensors = append(s.sensors, sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_Wh).
@@ -64,16 +84,57 @@ func (s *scanner) sensorWh(addr uint16, name string) {
 	})
 }
 
-func (s *scanner) sensorW(addr uint16, name string) {
+func (s *scanner) sensor1W(addr uint16, name string) {
 	s.sensors = append(s.sensors, sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_W).
 			SetUnit(automation.Unit_W).SetPrecision(0).
 			SetStateClass(automation.StateClass_Total).
 			SetDeviceClass(automation.DeviceClass_Energy)),
+		Addr:   addr,
+		Signed: true,
+		Words:  2,
+		Scale:  1,
+	})
+}
+
+func (s *scanner) sensor1V(addr uint16, name string) {
+	s.sensors = append(s.sensors, sensor{
+		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
+			SetIcon(automation.Icon_V).
+			SetUnit(automation.Unit_V).SetPrecision(0).
+			SetStateClass(automation.StateClass_Measurement).
+			SetDeviceClass(automation.DeviceClass_Energy)),
 		Addr:  addr,
-		Words: 2,
-		Scale: 10,
+		Words: 1,
+		Scale: 1,
+	})
+}
+
+func (s *scanner) sensor100mV(addr uint16, name string) {
+	s.sensors = append(s.sensors, sensor{
+		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
+			SetIcon(automation.Icon_V).
+			SetUnit(automation.Unit_V).SetPrecision(1).
+			SetStateClass(automation.StateClass_Measurement).
+			SetDeviceClass(automation.DeviceClass_Energy)),
+		Addr:  addr,
+		Words: 1,
+		Scale: 0.1,
+	})
+}
+
+func (s *scanner) sensor100mA(addr uint16, name string) {
+	s.sensors = append(s.sensors, sensor{
+		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
+			SetIcon(automation.Icon_A).
+			SetUnit(automation.Unit_A).SetPrecision(1).
+			SetStateClass(automation.StateClass_Measurement).
+			SetDeviceClass(automation.DeviceClass_Energy)),
+		Addr:   addr,
+		Signed: true,
+		Words:  1,
+		Scale:  0.1,
 	})
 }
 
@@ -144,13 +205,23 @@ func (s *scanner) handleModbus() {
 
 	for {
 		for _, sensor := range s.sensors {
-			var value uint32
+			var value int64
 			if sensor.Words == 1 {
 				var value16 uint16
 				value16, err = s.client.ReadRegister(sensor.Addr, modbus.HOLDING_REGISTER)
-				value = uint32(value16)
+				if sensor.Signed {
+					value = int64(int16(value16))
+				} else {
+					value = int64(value16)
+				}
 			} else if sensor.Words == 2 {
-				value, err = s.client.ReadUint32(sensor.Addr, modbus.HOLDING_REGISTER)
+				var value32 uint32
+				value32, err = s.client.ReadUint32(sensor.Addr, modbus.HOLDING_REGISTER)
+				if sensor.Signed {
+					value = int64(int32(value32))
+				} else {
+					value = int64(value32)
+				}
 			}
 			if err != nil {
 				fmt.Println(err)

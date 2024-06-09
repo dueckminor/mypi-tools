@@ -10,6 +10,8 @@ const (
 	Unit_kWh
 	Unit_W
 	Unit_kW
+	Unit_V
+	Unit_A
 	Unit_Percent
 )
 
@@ -25,6 +27,10 @@ func (u Unit) String() string {
 		return "W"
 	case Unit_kW:
 		return "kW"
+	case Unit_V:
+		return "V"
+	case Unit_A:
+		return "A"
 	case Unit_Percent:
 		return "%"
 	default:
@@ -76,6 +82,8 @@ type Icon int64
 const (
 	Icon_Wh Icon = iota
 	Icon_W
+	Icon_V
+	Icon_A
 	Icon_Battery
 )
 
@@ -83,7 +91,7 @@ func (i Icon) String() string {
 	switch i {
 	case Icon_Wh:
 		return "mdi:lightning-bolt"
-	case Icon_W:
+	case Icon_W, Icon_V, Icon_A:
 		return "mdi:flash"
 	case Icon_Battery:
 		return "mdi:battery-10"
