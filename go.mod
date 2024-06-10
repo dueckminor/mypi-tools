@@ -2,7 +2,7 @@ module github.com/dueckminor/mypi-tools
 
 go 1.21
 
-toolchain go1.22.3
+toolchain go1.22.4
 
 replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.5.1
 
@@ -25,6 +25,7 @@ require (
 	github.com/googollee/go-socket.io v1.7.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
+	github.com/miekg/dns v1.1.59
 	github.com/onsi/gomega v1.33.1
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.6
@@ -82,7 +83,6 @@ require (
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/miekg/dns v1.1.59 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
