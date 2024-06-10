@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -61,7 +62,10 @@ func main() {
 
 	alphaEssURI := cfg.AlphaEss.URI
 	if alphaEssURI != "" {
-		alphaess.Run(alphaEssURI)
+		err := alphaess.Run(alphaEssURI)
+		if err != nil {
+			fmt.Println("Failed to start alphaess:", err)
+		}
 	}
 
 	// uri := cfg.CCU.URI

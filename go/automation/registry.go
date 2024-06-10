@@ -196,7 +196,10 @@ func (node *node) CreateSensor(template *SensorTemplate) Sensor {
 				Manufacturer: "Alpha ESS",
 			},
 		}
-		node.registry.publishHomeAssistantConfig(node.name, "sensor", config)
+		err := node.registry.publishHomeAssistantConfig(node.name, "sensor", config)
+		if err != nil {
+			fmt.Println("Failed to publish home-assistant config:", err)
+		}
 
 	}
 
@@ -271,10 +274,4 @@ func (sensor *sensor) float2string(value float64) string {
 	default:
 		return fmt.Sprintf("%f", value)
 	}
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-type climate struct {
-	object
 }

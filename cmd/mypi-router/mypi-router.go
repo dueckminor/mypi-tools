@@ -19,6 +19,7 @@ import (
 
 	"github.com/dueckminor/mypi-tools/go/auth"
 	"github.com/dueckminor/mypi-tools/go/config"
+	"github.com/dueckminor/mypi-tools/go/dns"
 	"github.com/dueckminor/mypi-tools/go/ginutil"
 	"github.com/dueckminor/mypi-tools/go/util"
 	"github.com/dueckminor/mypi-tools/go/util/network"
@@ -608,6 +609,9 @@ func main() {
 		panic.OnError(err)
 	}
 
+	_, err := dns.NewServer()
+	panic.OnError(err)
+
 	if len(gatewayInternalName) > 0 {
 		network.SetRouterInternalName(gatewayInternalName)
 	}
@@ -620,7 +624,7 @@ func main() {
 	fmt.Println("Router external IP:", ip)
 
 	key := make([]byte, 64)
-	_, err := rand.Read(key)
+	_, err = rand.Read(key)
 	panic.OnError(err)
 	store = memstore.NewStore([]byte(key))
 

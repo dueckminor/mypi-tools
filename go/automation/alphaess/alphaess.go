@@ -226,9 +226,15 @@ func Run(uri string) (err error) {
 
 func (s *scanner) handleModbus() {
 	defer func() {
-		s.client.Close()
-		s.node.Disconnect()
-		if err := recover(); err != nil {
+		err := s.client.Close()
+		if err != nil {
+			fmt.Println("failed to close modbus client:", err)
+		}
+		err = s.node.Disconnect()
+		if err != nil {
+			fmt.Println("failed to disconnect:", err)
+		}
+		if r := recover(); r != nil {
 			fmt.Println("crash in handleModbus")
 		}
 	}()
@@ -239,7 +245,11 @@ func (s *scanner) handleModbus() {
 		return
 	}
 
-	s.node.Connect()
+	err = s.node.Connect()
+	if err != nil {
+		fmt.Println("node connect failed: ", err)
+		return
+	}
 
 	for {
 		for _, sensor := range s.sensors {

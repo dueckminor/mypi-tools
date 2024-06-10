@@ -38,10 +38,14 @@ func (l led) set(state bool) {
 	if l.inverted {
 		state = !state
 	}
+	var err error
 	if !state {
-		os.WriteFile(l.file, []byte("0"), os.ModePerm)
+		err = os.WriteFile(l.file, []byte("0"), os.ModePerm)
 	} else {
-		os.WriteFile(l.file, []byte("1"), os.ModePerm)
+		err = os.WriteFile(l.file, []byte("1"), os.ModePerm)
+	}
+	if err != nil {
+		fmt.Println("Failed to flash led:", err)
 	}
 }
 

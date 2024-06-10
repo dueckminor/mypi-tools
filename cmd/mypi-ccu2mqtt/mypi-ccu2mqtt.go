@@ -40,6 +40,9 @@ func main() {
 
 	broker := mqtt.NewBroker(cfg.MQTT.URI)
 	mqttClient, err := broker.Dial(cfg.MQTT.ClientID, "")
+	if err != nil {
+		panic(err)
+	}
 
 	uri := cfg.CCU.URI
 	if len(cfg.CCU.Username) > 0 {

@@ -18,7 +18,9 @@ type Config struct {
 
 type Client interface {
 	Close() error
+	Flush()
 	SendMetric(name string, value float64)
+	SendMetricAtTs(name string, value float64, ts time.Time)
 }
 
 type client struct {
@@ -31,7 +33,15 @@ func (cl *client) Close() error {
 	return nil
 }
 
+func (cl *client) Flush() {
+	cl.writeAPI.Flush(context.Background())
+}
+
 func (cl *client) SendMetric(name string, value float64) {
+	cl.SendMetricAtTs(name, value, time.Now())
+}
+
+func (cl *client) SendMetricAtTs(name string, value float64, ts time.Time) {
 	point := influxdb2.NewPointWithMeasurement("Wh")
 	point.AddField("value", value)
 	point.AddTag("device_class", "energy")
@@ -39,7 +49,7 @@ func (cl *client) SendMetric(name string, value float64) {
 	point.AddTag("device", "alphaess")
 	point.AddTag("source", "mypi")
 	point.AddTag("entity_id", name)
-	point.SetTime(time.Now())
+	point.SetTime(ts)
 	err := cl.writeAPI.WritePoint(context.Background(), point)
 	if err != nil {
 		fmt.Println("send metric to influxdb failed:", err)
