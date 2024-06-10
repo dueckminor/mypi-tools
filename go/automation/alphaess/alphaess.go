@@ -292,6 +292,8 @@ func (s *scanner) handleModbus() {
 			sensor.SetState(sensor.Current)
 		}
 
+		s.sensorSolarProduction.Current -= s.correctionSolarProduction
+
 		time.Sleep(time.Minute)
 	}
 
