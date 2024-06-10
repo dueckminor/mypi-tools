@@ -18,7 +18,10 @@ type scanner struct {
 	registry automation.Registry
 	node     automation.Node
 
-	sensors []sensor
+	sensors                   []*sensor
+	sensorSolarProduction     *sensor
+	correctionSolarProduction float64
+	sensorToGrid              *sensor
 }
 
 type sensor struct {
@@ -27,13 +30,17 @@ type sensor struct {
 	Signed bool
 	Words  int
 	Scale  float64
+
+	Last    float64
+	Current float64
 }
 
 func (s *scanner) init() {
 	s.registry = automation.GetRegistry()
 	s.node = s.registry.CreateNode("alphaess")
 	// -------------------------------------------------------------------- grid
-	s.sensor10Wh(0x0010, "to_grid")
+	s.sensorToGrid =
+		s.sensor10Wh(0x0010, "to_grid")
 	s.sensor10Wh(0x0012, "from_grid")
 	s.sensor1V(0x0014, "grid_voltage_l1")
 	s.sensor1V(0x0015, "grid_voltage_l2")
@@ -66,13 +73,16 @@ func (s *scanner) init() {
 	s.sensor1W(0x0126, "battery_power")
 
 	s.sensor10Wh(0x0720, "inverter_total_pv_energy")
-	s.sensor10Wh(0x08D2, "solar_production")
+
+	s.sensorSolarProduction =
+		s.sensor10Wh(0x08D2, "solar_production")
+	s.correctionSolarProduction = 0.0
 	s.sensorPercent(0x0102, "battery_soc")
 
 }
 
-func (s *scanner) sensor10Wh(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensor10Wh(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_Wh).
 			SetUnit(automation.Unit_Wh).SetPrecision(0).
@@ -81,11 +91,14 @@ func (s *scanner) sensor10Wh(addr uint16, name string) {
 		Addr:  addr,
 		Words: 2,
 		Scale: 10,
-	})
+	}
+
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
-func (s *scanner) sensor100Wh(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensor100Wh(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_Wh).
 			SetUnit(automation.Unit_Wh).SetPrecision(0).
@@ -94,11 +107,13 @@ func (s *scanner) sensor100Wh(addr uint16, name string) {
 		Addr:  addr,
 		Words: 2,
 		Scale: 100,
-	})
+	}
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
-func (s *scanner) sensor1W(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensor1W(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_W).
 			SetUnit(automation.Unit_W).SetPrecision(0).
@@ -108,11 +123,13 @@ func (s *scanner) sensor1W(addr uint16, name string) {
 		Signed: true,
 		Words:  2,
 		Scale:  1,
-	})
+	}
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
-func (s *scanner) sensor1V(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensor1V(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_V).
 			SetUnit(automation.Unit_V).SetPrecision(0).
@@ -121,11 +138,13 @@ func (s *scanner) sensor1V(addr uint16, name string) {
 		Addr:  addr,
 		Words: 1,
 		Scale: 1,
-	})
+	}
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
-func (s *scanner) sensor100mV(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensor100mV(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_V).
 			SetUnit(automation.Unit_V).SetPrecision(1).
@@ -134,11 +153,13 @@ func (s *scanner) sensor100mV(addr uint16, name string) {
 		Addr:  addr,
 		Words: 1,
 		Scale: 0.1,
-	})
+	}
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
-func (s *scanner) sensor100mA(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensor100mA(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_A).
 			SetUnit(automation.Unit_A).SetPrecision(1).
@@ -148,11 +169,13 @@ func (s *scanner) sensor100mA(addr uint16, name string) {
 		Signed: true,
 		Words:  1,
 		Scale:  0.1,
-	})
+	}
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
-func (s *scanner) sensorPercent(addr uint16, name string) {
-	s.sensors = append(s.sensors, sensor{
+func (s *scanner) sensorPercent(addr uint16, name string) *sensor {
+	sensor := &sensor{
 		Sensor: s.node.CreateSensor(automation.MakeSensorTemplate(name).
 			SetIcon(automation.Icon_Battery).
 			SetUnit(automation.Unit_Percent).SetPrecision(1).
@@ -161,7 +184,9 @@ func (s *scanner) sensorPercent(addr uint16, name string) {
 		Addr:  addr,
 		Words: 1,
 		Scale: 0.1,
-	})
+	}
+	s.sensors = append(s.sensors, sensor)
+	return sensor
 }
 
 func (s *scanner) modbusConnect() (err error) {
@@ -239,9 +264,35 @@ func (s *scanner) handleModbus() {
 			if err != nil {
 				fmt.Println(err)
 			}
-			scaledValue := float64(value) * sensor.Scale
-			sensor.SetState(scaledValue)
+			sensor.Last = sensor.Current
+			sensor.Current = float64(value) * sensor.Scale
 		}
+
+		if s.sensorSolarProduction.Current == s.sensorSolarProduction.Last {
+			if s.sensorToGrid.Current > s.sensorToGrid.Last {
+				fmt.Println("increasing solar production correction")
+				s.correctionSolarProduction +=
+					(s.sensorToGrid.Current - s.sensorToGrid.Last)
+				fmt.Println("new solar production correction:", s.correctionSolarProduction)
+			}
+		} else if s.correctionSolarProduction > 0 {
+			if s.sensorSolarProduction.Current >= s.sensorSolarProduction.Last {
+				fmt.Println("reseting solar production correction")
+				s.correctionSolarProduction = 0
+			} else {
+				fmt.Println("reducing solar production correction")
+				s.correctionSolarProduction = s.sensorSolarProduction.Last - s.sensorSolarProduction.Current
+				fmt.Println("new solar production correction:", s.correctionSolarProduction)
+			}
+		}
+
+		s.sensorSolarProduction.Current += s.correctionSolarProduction
+
+		for _, sensor := range s.sensors {
+			sensor.SetState(sensor.Current)
+		}
+
 		time.Sleep(time.Minute)
 	}
+
 }
