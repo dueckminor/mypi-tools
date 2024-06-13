@@ -25,7 +25,7 @@ require (
 	github.com/googollee/go-socket.io v1.7.0
 	github.com/gorilla/websocket v1.5.2
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
-	github.com/miekg/dns v1.1.59
+	github.com/miekg/dns v1.1.61
 	github.com/onsi/gomega v1.33.1
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/sftp v1.13.6
