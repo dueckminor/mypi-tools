@@ -23,7 +23,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/googollee/go-socket.io v1.7.0
-	github.com/gorilla/websocket v1.5.2
+	github.com/gorilla/websocket v1.5.3
 	github.com/influxdata/influxdb-client-go/v2 v2.13.0
 	github.com/miekg/dns v1.1.59
 	github.com/onsi/gomega v1.33.1
