@@ -28,7 +28,7 @@ require (
 	github.com/miekg/dns v1.1.61
 	github.com/onsi/gomega v1.33.1
 	github.com/pkg/errors v0.9.1
-	github.com/pkg/sftp v1.13.6
+	github.com/pkg/sftp v1.13.7
 	github.com/pquerna/otp v1.4.0
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/simonvetter/modbus v1.6.1
