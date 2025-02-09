@@ -4,7 +4,7 @@ go 1.21
 
 toolchain go1.22.4
 
-replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.5.1
+replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.5.2
 
 replace github.com/docker/distribution v2.8.1+incompatible => github.com/docker/distribution v2.8.3+incompatible
 
