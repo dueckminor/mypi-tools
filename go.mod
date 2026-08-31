@@ -1,8 +1,6 @@
 module github.com/dueckminor/mypi-tools
 
-go 1.21
-
-toolchain go1.22.4
+go 1.25.0
 
 replace github.com/docker/docker/internal/testutil => gotest.tools/v3 v3.5.1
 
@@ -33,11 +31,11 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/simonvetter/modbus v1.6.1
 	github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e
-	golang.org/x/crypto v0.31.0
+	golang.org/x/crypto v0.52.0
 	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
-	golang.org/x/net v0.33.0
-	golang.org/x/term v0.29.0
-	golang.org/x/text v0.21.0
+	golang.org/x/net v0.54.0
+	golang.org/x/term v0.43.0
+	golang.org/x/text v0.37.0
 	gopkg.in/yaml.v3 v3.0.1
 	howett.net/plist v1.0.1
 )
@@ -105,10 +103,10 @@ require (
 	go.opentelemetry.io/otel/sdk v1.25.0 // indirect
 	go.opentelemetry.io/otel/trace v1.25.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
-	golang.org/x/mod v0.18.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/tools v0.22.0 // indirect
+	golang.org/x/mod v0.35.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/tools v0.44.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gotest.tools/v3 v3.0.3 // indirect
 )
