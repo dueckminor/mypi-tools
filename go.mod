@@ -11,7 +11,7 @@ replace github.com/docker/distribution v2.8.1+incompatible => github.com/docker/
 require (
 	docker.io/go-docker v1.0.0
 	github.com/bhendo/go-powershell v0.0.0-20190719160123-219e7fb4e41e
-	github.com/creack/pty v1.1.21
+	github.com/creack/pty v1.1.24
 	github.com/docker/docker v27.1.1+incompatible
 	github.com/eclipse/paho.mqtt.golang v1.4.3
 	github.com/fatih/color v1.17.0
